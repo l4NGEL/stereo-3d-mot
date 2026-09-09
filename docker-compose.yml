@@ -1,0 +1,17 @@
+# Development container: source is bind-mounted so edits on the host rebuild
+# incrementally inside Linux.
+#
+#   docker compose build
+#   docker compose run --rm dev          # interactive shell
+#   docker compose run --rm dev cmake --build build --parallel
+services:
+  dev:
+    build: .
+    image: stereo-3d-mot:dev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    environment:
+      - CMAKE_BUILD_TYPE=RelWithDebInfo
+    stdin_open: true
+    tty: true

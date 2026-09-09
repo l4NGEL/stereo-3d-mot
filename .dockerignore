@@ -1,0 +1,10 @@
+.git
+build/
+build-*/
+out/
+data/*
+!data/.gitkeep
+.vscode/
+.idea/
+*.md
+!README.md

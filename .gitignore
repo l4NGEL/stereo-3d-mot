@@ -1,0 +1,27 @@
+# Build output
+build/
+build-*/
+out/
+install/
+cmake-build-*/
+
+# Datasets (downloaded locally, never committed)
+data/*
+!data/.gitkeep
+!data/README.md
+
+# Compiler / tooling artifacts
+*.o
+*.a
+*.so
+*.dylib
+compile_commands.json
+.cache/
+.ccls-cache/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.user
+*.swp
+.DS_Store

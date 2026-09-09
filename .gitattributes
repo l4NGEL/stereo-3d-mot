@@ -1,0 +1,13 @@
+# Normalise line endings so the tree built on Windows still works inside the
+# Linux build container.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.bash text eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.pfm  binary
+*.onnx binary
