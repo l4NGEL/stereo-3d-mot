@@ -21,7 +21,19 @@ add_executable(s3m_tests
     test_pfm.cpp
     test_synthetic_source.cpp
     test_kalman_filter.cpp
-    test_config.cpp)
+    test_config.cpp
+    test_letterbox.cpp
+    test_nms.cpp)
+
+if(S3M_ONNX_ENABLED)
+    # Copy the ONNX fixture next to the test binary so the suite is relocatable
+    # (works from the build tree with no source checkout mounted).
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data/tiny_yolov8.onnx"
+         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/data")
+    target_sources(s3m_tests PRIVATE test_onnx_detector.cpp)
+    target_compile_definitions(s3m_tests PRIVATE
+        "S3M_TEST_DATA_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/data\"")
+endif()
 
 target_link_libraries(s3m_tests PRIVATE s3m::s3m GTest::gtest GTest::gtest_main)
 s3m_set_target_warnings(s3m_tests)

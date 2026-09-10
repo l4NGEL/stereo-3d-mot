@@ -14,18 +14,19 @@
 
 ```
             ┌─────────────────────────────────────────────┐
-  apps/     │  stereo_depth_demo        benchmark_depth    │
+  apps/     │  stereo_depth_demo   benchmark_depth         │
+            │  benchmark_detect                            │
             └───────────────┬─────────────────────────────┘
                             │  uses
             ┌───────────────▼─────────────────────────────┐
-  s3m::s3m  │  io   →  depth  →  geometry  →  tracking     │
-   library  │        ↑         ↖ camera ↗                 │
-            │      viz        core (types, config, timer)  │
+  s3m::s3m  │  io  →  depth  →  geometry  →  detection  →  │
+   library  │       ↑        ↖ camera ↗      tracking      │
+            │     viz       core (types, config, timer)    │
             └───────────────┬─────────────────────────────┘
                             │  links
             ┌───────────────▼─────────────────────────────┐
-            │  OpenCV 4 (core imgproc calib3d              │
-            │  imgcodecs objdetect)        Eigen 3         │
+            │  OpenCV 4 (core imgproc calib3d imgcodecs    │
+            │  objdetect)   Eigen 3   ONNX Runtime (opt.)  │
             └─────────────────────────────────────────────┘
 ```
 
@@ -77,9 +78,19 @@
   (endianness + bottom-to-top rows handled).
 - `writePointCloudPly` — coloured ASCII PLY for MeshLab / CloudCompare.
 
-### `detection` (Phase 2 seam)
-- `Detector` interface; `NullDetector`; `HogPeopleDetector` (OpenCV's built-in
-  HOG+SVM, no model file). `OnnxDetector` will implement the same interface.
+### `detection`
+- `Detector` interface; `NullDetector`; `HogPeopleDetector` (OpenCV HOG+SVM, no
+  model file).
+- `OnnxDetector` — ONNX Runtime (CPU EP), PIMPL so the ORT API never leaks into
+  the rest of the tree. Auto-detects the output layout: YOLOv8 `[1, 4+nc, N]`
+  (channels-first, no objectness) or YOLOv5 `[1, N, 5+nc]`. Built only when
+  `-DS3M_WITH_ONNX=ON` **and** ORT is found; otherwise the target silently omits
+  it and `S3M_WITH_ONNX` stays undefined.
+- `letterbox` — aspect-preserving resize + centre pad, with `toOriginal()` to map
+  detections back. `nms` / `nmsClassAware` — greedy NMS; the class-aware variant
+  offsets boxes into per-class lanes so one pass suffices. `coco.hpp` — the 80
+  class names. Each is a separately unit-tested unit (`test_letterbox`,
+  `test_nms`, `test_onnx_detector`).
 
 ### `tracking` (Phase 3 seam)
 - `KalmanFilter` — generic linear KF (dynamic Eigen matrices), plus
@@ -102,8 +113,8 @@ FrameSource::next() ──► StereoFrame{ left, right, [gt_disparity, gt_depth]
       ├─ disparityToDepthMap(disparity, rig) ───────────► depth      (CV_32F m)
       ├─ reproject(disparity, rig, &mask) ──────────────► cloud      (CV_32FC3)
       │
-      ├─ [Phase 2] detector.detect(left) ───────────────► {Detection2D}
-      ├─ [Phase 2] promoteTo3D(dets, depth, rig) ───────► {Detection3D}
+      ├─ detector.detect(left) ────────────────────────► {Detection2D}
+      ├─ promoteTo3D(dets, depth, rig) ─────────────────► {Detection3D}
       └─ [Phase 3] tracker.update({Detection3D}) ───────► {TrackState}
 
   if gt present: evaluate(estimate, gt, …) ─────────────► DepthMetrics
@@ -118,5 +129,10 @@ FrameSource::next() ──► StereoFrame{ left, right, [gt_disparity, gt_depth]
   disparity must equal the known shift (`test_stereo_matcher`).
 - **Synthetic source** is checked for internal GT consistency and for the full
   matcher→depth path staying within generous error bounds (`test_synthetic_source`).
+- **Detection** — `test_letterbox` (aspect ratio, padding, inverse-map
+  round-trip), `test_nms` (suppression, thresholds, class-awareness),
+  `test_onnx_detector` runs the real ORT session against a 99 KB hand-built ONNX
+  fixture (`scripts/make_test_model.py`) with detections baked into the output
+  tensor, so parse → NMS → letterbox inversion is verified end-to-end offline.
 - **Metrics**, **PFM**, **config**, **Kalman/Track** have focused unit tests.
-- `benchmark_depth` is the quantitative harness for real datasets.
+- `benchmark_depth` / `benchmark_detect` are the quantitative harnesses.

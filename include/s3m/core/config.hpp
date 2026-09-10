@@ -28,6 +28,16 @@ struct DepthEvalParams {
     std::vector<double> bad_thresholds{1.0, 2.0, 4.0};  ///< disparity-px error thresholds
 };
 
+/// Parameters for the object detector (see apps: --detector / --model).
+struct DetectorParams {
+    std::string type = "none";        ///< "none" | "hog" | "onnx"
+    std::string model_path;           ///< ONNX model file (type == "onnx")
+    double score_threshold = 0.25;
+    double nms_iou = 0.45;
+    int input_size = 640;             ///< square network input (type == "onnx")
+    std::vector<int> keep_classes;    ///< COCO ids to keep; empty -> all
+};
+
 /// Parameters for the 3D constant-velocity tracker.
 struct TrackingParams {
     double dt = 0.1;                 ///< seconds between frames
@@ -42,6 +52,7 @@ struct TrackingParams {
 struct Config {
     StereoMatcherParams stereo_matcher;
     DepthEvalParams depth_eval;
+    DetectorParams detector;
     TrackingParams tracking;
 
     /// Parse a cv::FileStorage YAML file. Unknown or missing keys keep the

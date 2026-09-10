@@ -2,10 +2,15 @@
 
 #include <cstdint>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
+#include <utility>
 
 #include "s3m/io/middlebury_source.hpp"
 #include "s3m/io/synthetic_source.hpp"
+#if defined(S3M_WITH_ONNX)
+#include "s3m/detection/onnx_detector.hpp"
+#endif
 
 namespace s3m::app {
 
@@ -86,6 +91,36 @@ std::unique_ptr<FrameSource> makeSource(const Args& args) {
         return std::make_unique<SyntheticStereoSource>(options);
     }
     return std::make_unique<MiddleburySource>(source);
+}
+
+std::unique_ptr<Detector> makeDetector(const Args& args, const Config& cfg) {
+    const std::string type = args.get("detector", cfg.detector.type);
+
+    if (type == "none" || type.empty()) {
+        return std::make_unique<NullDetector>();
+    }
+    if (type == "hog") {
+        return std::make_unique<HogPeopleDetector>();
+    }
+    if (type == "onnx") {
+#if defined(S3M_WITH_ONNX)
+        OnnxDetector::Options o;
+        o.model_path = args.get("model", cfg.detector.model_path);
+        o.input_size = args.getInt("input-size", cfg.detector.input_size);
+        o.score_threshold =
+            static_cast<float>(args.getDouble("score", cfg.detector.score_threshold));
+        o.nms_iou = static_cast<float>(args.getDouble("nms-iou", cfg.detector.nms_iou));
+        o.num_threads = args.getInt("threads", 0);
+        o.keep_classes = cfg.detector.keep_classes;
+        return std::make_unique<OnnxDetector>(std::move(o));
+#else
+        std::cerr << "warning: this build has no ONNX Runtime (S3M_WITH_ONNX=OFF); "
+                     "falling back to the null detector\n";
+        return std::make_unique<NullDetector>();
+#endif
+    }
+
+    throw std::runtime_error("makeDetector: unknown detector type '" + type + "'");
 }
 
 }  // namespace s3m::app

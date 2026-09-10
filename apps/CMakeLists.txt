@@ -12,3 +12,4 @@ endfunction()
 
 s3m_add_app(stereo_depth_demo)
 s3m_add_app(benchmark_depth)
+s3m_add_app(benchmark_detect)

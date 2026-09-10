@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
         ninja-build \
+        curl \
         git \
         ca-certificates \
         pkg-config \
@@ -19,6 +20,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libeigen3-dev \
         libgtest-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# ONNX Runtime (CPU) -- prebuilt release, used by the optional OnnxDetector.
+ARG ORT_VERSION=1.19.2
+RUN curl -fsSL -o /tmp/ort.tgz \
+        "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
+    && mkdir -p /opt/onnxruntime \
+    && tar -xzf /tmp/ort.tgz -C /opt/onnxruntime --strip-components=1 \
+    && rm /tmp/ort.tgz
+ENV ONNXRUNTIME_ROOT=/opt/onnxruntime \
+    LD_LIBRARY_PATH=/opt/onnxruntime/lib
 
 WORKDIR /workspace
 

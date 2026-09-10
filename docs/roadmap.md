@@ -14,14 +14,20 @@ next one slots into an interface that already exists.
 - [x] `stereo_depth_demo`, `benchmark_depth`
 - [x] GoogleTest suite, Dockerfile, docker-compose, Makefile, GitHub Actions CI
 
-## Phase 2 — Detection in the loop
+## Phase 2 — Detection in the loop  ✅ done
 
-- [ ] `OnnxDetector` implementing `Detector` (ONNX Runtime, YOLO-style export)
-- [ ] letterbox pre-processing, NMS, class map
-- [ ] wire `detector → promoteTo3D` into `stereo_depth_demo` with overlays
-- [ ] a Python `scripts/export_model.py` (train/convert → ONNX) — Python for
-      training, C++ for inference
-- [ ] detection latency added to the profiler report
+- [x] `OnnxDetector` implementing `Detector` (ONNX Runtime CPU, auto-detects the
+      YOLOv8 `[1,4+nc,N]` and YOLOv5 `[1,N,5+nc]` output layouts)
+- [x] `letterbox` pre-processing + inverse mapping, class-aware `nms`, COCO names
+      — each a separately unit-tested unit
+- [x] wired `detector → promoteTo3D` into `stereo_depth_demo` (3D box overlays,
+      per-detection `Z` + camera-frame position, `detect` in the profiler)
+- [x] `benchmark_detect` app: latency p50/p90/p99 + throughput
+- [x] `scripts/export_yolov8.py` (Ultralytics → ONNX) — training/export in
+      Python, inference in C++
+- [x] hermetic test: `scripts/make_test_model.py` builds a tiny ONNX fixture so
+      `test_onnx_detector` runs with no download and no real weights
+- [x] optional build (`-DS3M_WITH_ONNX`): the geometry path never depends on ORT
 
 ## Phase 3 — 3D multi-object tracking
 

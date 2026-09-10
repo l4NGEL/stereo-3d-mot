@@ -6,9 +6,17 @@ install/
 cmake-build-*/
 
 # Datasets (downloaded locally, never committed)
-data/*
-!data/.gitkeep
-!data/README.md
+/data/*
+!/data/.gitkeep
+!/data/README.md
+
+# Model weights: export / download locally (see scripts/export_yolov8.py).
+# The small hand-built ONNX fixture under tests/data/ is committed on purpose.
+/models/*
+!/models/.gitkeep
+*.pt
+/onnxruntime*/
+ort.tgz
 
 # Compiler / tooling artifacts
 *.o

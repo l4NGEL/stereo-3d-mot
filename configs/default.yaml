@@ -22,6 +22,15 @@ depth_eval:
   max_depth: 100.0
   bad_thresholds: [1.0, 2.0, 4.0]   # disparity px error thresholds for bad-N%
 
+detector:
+  # none | hog | onnx        (CLI: --detector, --model)
+  type: "none"
+  model_path: ""             # e.g. models/yolov8n.onnx  (see scripts/export_yolov8.py)
+  score_threshold: 0.25
+  nms_iou: 0.45
+  input_size: 640
+  keep_classes: []           # COCO ids to keep, e.g. [0, 1, 2]; empty -> all
+
 tracking:
   dt: 0.1                     # seconds between frames (10 Hz)
   process_noise: 1.0          # accel std [m/s^2]

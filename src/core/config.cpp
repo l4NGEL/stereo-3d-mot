@@ -36,6 +36,15 @@ void readDoubleVector(const cv::FileNode& parent, const char* key, std::vector<d
     if (!values.empty()) out = values;
 }
 
+void readIntVector(const cv::FileNode& parent, const char* key, std::vector<int>& out) {
+    if (parent.isNone() || parent.empty()) return;
+    const cv::FileNode node = parent[key];
+    if (node.isNone() || node.empty() || !node.isSeq()) return;
+    std::vector<int> values;
+    node >> values;
+    out = values;  // an explicit list (even empty) is a valid override
+}
+
 }  // namespace
 
 Config Config::load(const std::string& path) {
@@ -64,6 +73,14 @@ Config Config::load(const std::string& path) {
     readScalar(de, "min_depth", cfg.depth_eval.min_depth);
     readScalar(de, "max_depth", cfg.depth_eval.max_depth);
     readDoubleVector(de, "bad_thresholds", cfg.depth_eval.bad_thresholds);
+
+    const cv::FileNode det = fs["detector"];
+    readScalar(det, "type", cfg.detector.type);
+    readScalar(det, "model_path", cfg.detector.model_path);
+    readScalar(det, "score_threshold", cfg.detector.score_threshold);
+    readScalar(det, "nms_iou", cfg.detector.nms_iou);
+    readScalar(det, "input_size", cfg.detector.input_size);
+    readIntVector(det, "keep_classes", cfg.detector.keep_classes);
 
     const cv::FileNode tr = fs["tracking"];
     readScalar(tr, "dt", cfg.tracking.dt);

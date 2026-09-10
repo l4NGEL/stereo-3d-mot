@@ -9,6 +9,10 @@ jobs:
   linux-native:
     name: build + test (ubuntu-22.04)
     runs-on: ubuntu-22.04
+    env:
+      ORT_VERSION: 1.19.2
+      ONNXRUNTIME_ROOT: /opt/onnxruntime
+      LD_LIBRARY_PATH: /opt/onnxruntime/lib
     steps:
       - uses: actions/checkout@v4
 
@@ -19,8 +23,15 @@ jobs:
             build-essential cmake ninja-build pkg-config \
             libopencv-dev libeigen3-dev libgtest-dev
 
+      - name: Install ONNX Runtime
+        run: |
+          curl -fsSL -o ort.tgz \
+            "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz"
+          sudo mkdir -p /opt/onnxruntime
+          sudo tar -xzf ort.tgz -C /opt/onnxruntime --strip-components=1
+
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DS3M_WARNINGS_AS_ERRORS=ON
 
       - name: Build
         run: cmake --build build --parallel

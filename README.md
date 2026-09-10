@@ -7,12 +7,13 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phase 1 complete** — calibrated stereo geometry, disparity matching
-> (BM / SGBM), metric depth, dense 3D reprojection, PLY export, a synthetic scene
-> with exact ground truth, a Middlebury 2014 loader, and a depth-accuracy
-> benchmark. 44 unit tests pass; both apps run end to end. Detection + 3D Kalman
-> tracking interfaces are in place and tested; wiring them into the live pipeline
-> is Phase 2/3. See [docs/roadmap.md](docs/roadmap.md).
+> Status: **Phases 1–2 complete.** Calibrated stereo geometry, BM/SGBM disparity,
+> metric depth, dense 3D reprojection + PLY export, a synthetic scene with exact
+> ground truth, a Middlebury 2014 loader, a depth-accuracy benchmark — and an
+> ONNX Runtime detector (YOLOv8/v5) wired through `promoteTo3D` so detections
+> come out with a metric `Z` and a camera-frame position. 50+ unit tests pass;
+> all three apps run end to end. 3D Kalman tracking is interfaced and tested;
+> the tracker manager is Phase 3. See [docs/roadmap.md](docs/roadmap.md).
 
 ---
 
@@ -34,12 +35,14 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
    +------------------+------------------+
    v                                     v
  detector (2D)  ----> promote to 3D ---> 3D constant-velocity
- (HOG / ONNX*)        (depth in box)     Kalman tracks*  (track id, X,Y,Z, v)
+ HOG / ONNX           (median Z in box)  Kalman tracks*  (track id, X,Y,Z, v)
+ (YOLOv8 / v5)
 
- * Phase 2/3 — interfaces implemented and tested, not yet in the live loop.
+ * Phase 3 — the Kalman filter + Track are implemented and tested; the
+   multi-object tracker manager (gating + association) is next.
 ```
 
-Everything from the rectified pair onward is implemented and covered by tests.
+Everything except the tracker manager is implemented and covered by tests.
 
 ## Why this project
 
@@ -50,11 +53,12 @@ job specs in robotics and defense perception ask for:
 | ---------------------------------- | --------------------------------------------------------- |
 | Stereo / mono depth estimation     | `depth/`, `camera/`, `geometry/`                          |
 | Geometric computer vision          | `StereoRig` (Q matrix, triangulation), `CameraModel`      |
-| C++17, OpenCV, Eigen               | throughout                                                |
+| Deep model inference in C++        | `detection/` (ONNX Runtime, `OnnxDetector`)               |
+| C++17, OpenCV, Eigen, ONNX Runtime | throughout                                                |
 | Linux, CMake, Git, Docker          | `Dockerfile`, `docker-compose.yml`, `Makefile`, CMake     |
-| Unit testing & verification        | `tests/` (GoogleTest), `benchmark_depth`                  |
+| Unit testing & verification        | `tests/` (GoogleTest), `benchmark_depth`, `benchmark_detect` |
 | CI                                 | `.github/workflows/ci.yml`                                |
-| Real-time / performance mindset    | `ProfileRegistry`, `FpsMeter`, benchmark timing report    |
+| Real-time / performance mindset    | `ProfileRegistry`, `FpsMeter`, latency percentiles        |
 
 ## Quick start (Docker — recommended)
 
@@ -76,9 +80,15 @@ Docker Desktop must be running.
 sudo apt-get install -y build-essential cmake ninja-build pkg-config \
     libopencv-dev libeigen3-dev libgtest-dev
 
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+# optional: ONNX Runtime for the OnnxDetector (prebuilt CPU release)
+ORT=1.19.2
+curl -fsSL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT}/onnxruntime-linux-x64-${ORT}.tgz" \
+  | sudo tar -xz -C /opt --one-top-level=onnxruntime --strip-components=1
+
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DONNXRUNTIME_ROOT=/opt/onnxruntime           # omit to build without ONNX
 cmake --build build --parallel
-ctest --test-dir build --output-on-failure          # 44 tests
+LD_LIBRARY_PATH=/opt/onnxruntime/lib ctest --test-dir build --output-on-failure
 
 ./build/apps/stereo_depth_demo --source synthetic --out out --cloud
 ./build/apps/benchmark_depth   --source synthetic
@@ -86,7 +96,8 @@ ctest --test-dir build --output-on-failure          # 44 tests
 
 Only `core imgproc calib3d imgcodecs objdetect` are actually linked, so the
 individual `libopencv-<module>-dev` packages work too; CMake also accepts a
-pkg-config `opencv4` if the CMake package is absent.
+pkg-config `opencv4` if the CMake package is absent. `-DS3M_WITH_ONNX=OFF`
+builds the geometry pipeline with no ONNX dependency at all.
 
 Windows: use the Docker workflow, or WSL2 + the native steps above.
 
@@ -103,6 +114,31 @@ scripts/download_middlebury.sh Motorcycle        # -> data/middlebury/Motorcycle
 The loader parses `calib.txt` (per-view `cx`, `doffs`, `baseline` in mm), reads
 the `.pfm` ground-truth disparity, and converts it to a metric depth map so both
 disparity and depth accuracy are reported. See [data/README.md](data/README.md).
+
+## Detection → 3D
+
+`OnnxDetector` runs a YOLO-family ONNX model on the left image (ONNX Runtime,
+CPU). It auto-detects the output layout — YOLOv8 `[1, 4+nc, N]` or YOLOv5
+`[1, N, 5+nc]` — does letterbox pre-processing, class-aware NMS, and maps boxes
+back to original pixels. Each surviving box is promoted to 3D with the median
+depth inside it (`promoteTo3D`), giving a metric `Z` and an `(X, Y, Z)` position
+in the left-camera frame.
+
+```bash
+# training / export stays in Python, inference is C++
+pip install ultralytics
+python scripts/export_yolov8.py --weights yolov8n.pt          # -> models/yolov8n.onnx
+
+./build/apps/stereo_depth_demo --source synthetic --detector onnx \
+    --model models/yolov8n.onnx --out out
+./build/apps/benchmark_detect  --detector onnx --model models/yolov8n.onnx --frames 50
+```
+
+`--detector hog` uses OpenCV's built-in pedestrian HOG (no model file).
+ONNX Runtime is optional: without it (`-DS3M_WITH_ONNX=OFF`, or not installed)
+the project still builds and `--detector onnx` falls back to a warning + no-op.
+The `test_onnx_detector` suite runs against a 99 KB hand-built ONNX fixture
+(`scripts/make_test_model.py`) — no download, deterministic.
 
 ## Example benchmark output
 
@@ -137,13 +173,14 @@ include/s3m/            public headers                 src/            implement
   depth/   StereoMatcher (BM/SGBM wrapper), DepthMetrics (RMSE / bad-px / delta)
   geometry/ reprojection: disparity -> point cloud / depth map / 3D detections
   io/      FrameSource, SyntheticStereoSource, MiddleburySource, PFM, PLY export
-  detection/ Detector interface + HOG people detector + NullDetector
+  detection/ Detector interface, HOG, OnnxDetector (ORT), letterbox, NMS, COCO
   tracking/  KalmanFilter (generic linear), constant-velocity 3D, Track
-  viz/     depth / disparity colourisation, image tiling, overlays
+  viz/     depth / disparity colourisation, image tiling, detection overlays
 
-apps/    stereo_depth_demo, benchmark_depth   tests/  GoogleTest suites (9 files)
-cmake/   shared warning flags                 configs/ default.yaml
-docs/    architecture.md, roadmap.md          scripts/ dataset + demo helpers
+apps/    stereo_depth_demo, benchmark_depth, benchmark_detect
+tests/   GoogleTest suites (12 files) + tests/data/ ONNX fixture
+cmake/   warning flags, FindONNXRuntime        configs/ default.yaml
+docs/    architecture.md, roadmap.md           scripts/ datasets, model export
 ```
 
 ## The geometry, briefly
@@ -165,7 +202,8 @@ Z = fx * B / (d + doffs)
 
 1. **Stereo depth core — done.** geometry, BM/SGBM, depth, reprojection, PLY,
    synthetic + Middlebury sources, benchmark, tests, Docker, CI.
-2. Detection in the loop: ONNX Runtime detector, 2D → 3D promotion in the demo.
+2. **Detection in the loop — done.** ONNX Runtime detector (YOLOv8/v5), letterbox
+   + class-aware NMS, 2D → 3D promotion in the demo, `benchmark_detect`.
 3. 3D multi-object tracking: data association + track lifecycle, KITTI tracking
    metrics (MOTA / IDF1), trajectory export.
 4. Visual odometry: feature tracks, essential matrix, camera pose — touches the

@@ -16,6 +16,7 @@
 #include "s3m/core/timer.hpp"
 #include "s3m/depth/depth_metrics.hpp"
 #include "s3m/depth/stereo_matcher.hpp"
+#include "s3m/detection/coco.hpp"
 #include "s3m/geometry/reprojection.hpp"
 #include "s3m/io/point_cloud.hpp"
 #include "s3m/viz/depth_viz.hpp"
@@ -29,8 +30,10 @@ void printHelp() {
     std::cout <<
         "stereo_depth_demo - end-to-end stereo depth pipeline\n\n"
         "  --source synthetic|<middlebury-scene-dir>   (default: synthetic)\n"
-        "  --config <yaml>     matcher / evaluation parameters\n"
+        "  --config <yaml>     matcher / evaluation / detector parameters\n"
         "  --frames N          synthetic frame count (default 30)\n"
+        "  --detector none|hog|onnx     object detector (default: none)\n"
+        "  --model <path.onnx>          model for --detector onnx\n"
         "  --out <dir>         write the visualisation board (and clouds) here\n"
         "  --cloud             also export a PLY point cloud per frame\n"
         "  --max-depth M       depth colour-map clamp in metres (default 15)\n";
@@ -47,9 +50,11 @@ int main(int argc, char** argv) {
 
     Config cfg;
     std::unique_ptr<FrameSource> source;
+    std::unique_ptr<Detector> detector;
     try {
         cfg = app::loadConfig(args);
         source = app::makeSource(args);
+        detector = app::makeDetector(args, cfg);
     } catch (const std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
         return 1;
@@ -66,7 +71,8 @@ int main(int argc, char** argv) {
     const float max_disp = static_cast<float>(matcher.params().num_disparities);
 
     std::cout << "rig: fx=" << rig.left().fx() << "  baseline=" << rig.baseline()
-              << " m  doffs=" << rig.doffs() << "\n";
+              << " m  doffs=" << rig.doffs() << "\n"
+              << "detector: " << detector->name() << "\n";
 
     ProfileRegistry prof;
     FpsMeter fps;
@@ -92,11 +98,20 @@ int main(int argc, char** argv) {
             cloud = reproject(disparity, rig, &valid);
         }
 
+        std::vector<Detection2D> dets2d;
+        {
+            const auto s = prof.scope("detect");
+            dets2d = detector->detect(frame->left);
+        }
+        const std::vector<Detection3D> dets3d = promoteTo3D(dets2d, depth, rig);
+
         const double frame_ms = total.elapsedMs();
         const double now_fps = fps.tick();
         ++frame_count;
 
-        std::vector<cv::Mat> panels{frame->left, colorizeDisparity(disparity, max_disp),
+        cv::Mat left_panel =
+            dets3d.empty() ? frame->left : drawDetections3D(frame->left, dets3d);
+        std::vector<cv::Mat> panels{left_panel, colorizeDisparity(disparity, max_disp),
                                     colorizeDepth(depth, 0.0f, max_depth)};
         if (frame->hasGtDisparity()) {
             panels.push_back(colorizeDisparity(frame->gt_disparity, max_disp));
@@ -122,6 +137,19 @@ int main(int argc, char** argv) {
                       << evaluate(depth(roi), frame->gt_depth(roi), cfg.depth_eval.min_depth,
                                   cfg.depth_eval.max_depth, cfg.depth_eval.bad_thresholds)
                       << "\n";
+        }
+        for (const Detection3D& d : dets3d) {
+            std::cout << "  frame " << frame->index << " [det]   " << cocoClassName(d.class_id)
+                      << " (" << d.class_id << ")  score=" << cv::format("%.2f", d.score);
+            if (d.valid) {
+                std::cout << "  Z=" << cv::format("%.2f", d.depth) << " m  pos=("
+                          << cv::format("%.2f, %.2f, %.2f", d.position.x, d.position.y,
+                                        d.position.z)
+                          << ")";
+            } else {
+                std::cout << "  Z=n/a";
+            }
+            std::cout << "\n";
         }
 
         if (!out_dir.empty()) {

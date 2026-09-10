@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "s3m/core/config.hpp"
+#include "s3m/detection/detector.hpp"
 #include "s3m/io/frame_source.hpp"
 
 namespace s3m::app {
@@ -34,5 +35,10 @@ Config loadConfig(const Args& args);
 ///   "synthetic" (default)  -> SyntheticStereoSource (honours --frames, --seed)
 ///   any other value        -> MiddleburySource(<that path>)
 std::unique_ptr<FrameSource> makeSource(const Args& args);
+
+/// Build a detector from --detector (none | hog | onnx) and --model, falling
+/// back to cfg.detector. Requesting "onnx" in a build without ONNX Runtime
+/// prints a warning and returns a NullDetector.
+std::unique_ptr<Detector> makeDetector(const Args& args, const Config& cfg);
 
 }  // namespace s3m::app

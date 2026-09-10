@@ -11,6 +11,7 @@ project(stereo_3d_mot
 option(S3M_BUILD_TESTS        "Build unit tests"                     ON)
 option(S3M_BUILD_APPS         "Build demo / benchmark executables"   ON)
 option(S3M_WARNINGS_AS_ERRORS "Treat compiler warnings as errors"    OFF)
+option(S3M_WITH_ONNX          "Build the ONNX Runtime detector"      ON)
 
 # --------------------------------------------------------------------------
 # Global settings
@@ -50,6 +51,21 @@ endif()
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 message(STATUS "stereo_3d_mot: Eigen ${Eigen3_VERSION}")
 
+# ONNX Runtime is optional: if requested but not found, the project still builds
+# (without OnnxDetector) so the geometry-only path never depends on it.
+set(S3M_ONNX_ENABLED OFF)
+if(S3M_WITH_ONNX)
+    find_package(ONNXRuntime)
+    if(ONNXRuntime_FOUND)
+        set(S3M_ONNX_ENABLED ON)
+        message(STATUS "stereo_3d_mot: ONNX Runtime ${ONNXRuntime_LIBRARY}")
+    else()
+        message(WARNING
+            "S3M_WITH_ONNX=ON but ONNX Runtime was not found -- building without "
+            "the ONNX detector. Point -DONNXRUNTIME_ROOT=<dir> at a prebuilt release.")
+    endif()
+endif()
+
 # --------------------------------------------------------------------------
 # Core library:  s3m::s3m
 # --------------------------------------------------------------------------
@@ -66,6 +82,8 @@ add_library(s3m
     src/io/synthetic_source.cpp
     src/io/middlebury_source.cpp
     src/detection/detector.cpp
+    src/detection/letterbox.cpp
+    src/detection/nms.cpp
     src/tracking/kalman_filter.cpp
     src/tracking/track.cpp
     src/viz/depth_viz.cpp)
@@ -82,6 +100,13 @@ endif()
 target_link_libraries(s3m PUBLIC ${S3M_OPENCV_TARGETS} Eigen3::Eigen)
 target_compile_features(s3m PUBLIC cxx_std_17)
 s3m_set_target_warnings(s3m)
+
+if(S3M_ONNX_ENABLED)
+    target_sources(s3m PRIVATE src/detection/onnx_detector.cpp)
+    target_include_directories(s3m SYSTEM PRIVATE ${ONNXRuntime_INCLUDE_DIRS})
+    target_link_libraries(s3m PUBLIC onnxruntime::onnxruntime)
+    target_compile_definitions(s3m PUBLIC S3M_WITH_ONNX=1)
+endif()
 
 # --------------------------------------------------------------------------
 # Subdirectories
@@ -102,4 +127,5 @@ message(STATUS "stereo_3d_mot ${PROJECT_VERSION}")
 message(STATUS "  build type ......... ${CMAKE_BUILD_TYPE}")
 message(STATUS "  build apps ......... ${S3M_BUILD_APPS}")
 message(STATUS "  build tests ........ ${S3M_BUILD_TESTS}")
+message(STATUS "  onnx detector ..... ${S3M_ONNX_ENABLED}")
 message(STATUS "  warnings as errors . ${S3M_WARNINGS_AS_ERRORS}")
