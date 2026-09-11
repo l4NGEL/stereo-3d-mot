@@ -16,6 +16,7 @@
             ┌─────────────────────────────────────────────┐
   apps/     │  stereo_depth_demo   benchmark_depth         │
             │  benchmark_detect    benchmark_track         │
+            │  benchmark_kitti                             │
             └───────────────┬─────────────────────────────┘
                             │  uses
             ┌───────────────▼─────────────────────────────┐
@@ -81,6 +82,12 @@
   accumulate `Tracker::update()` output across a run and export it: one CSV row
   per (track, frame), or a PLY polyline per track (`element edge`, viewable
   next to the point-cloud exports).
+- `readKittiLabels` / `readKittiCalib` / `KittiTrackingSource` — the KITTI
+  tracking-benchmark loader: 17-field label rows (`DontCare` handling,
+  tolerant of malformed lines), `P2`/`P3` → `StereoRig` (including a non-zero
+  `doffs` when the two cameras' principal points differ, not assumed shared),
+  and `image_02`/`image_03` pairs as a `FrameSource`. `objectsAt(frame)`
+  exposes ground truth for `MotAccumulator`.
 
 ### `detection`
 - `Detector` interface; `NullDetector`; `HogPeopleDetector` (OpenCV HOG+SVM, no
@@ -118,6 +125,16 @@
   isolates the association *cue*, not what data is available. A hard class-id
   gate applies to both. `TrackerParams::fromConfig()` reads
   `configs/default.yaml`'s `tracking:` block.
+- `MotAccumulator` (`mot_metrics.hpp`) — CLEAR-MOT (Bernardin & Stiefelhagen,
+  2008) + IDF1 (Ristani et al., 2016): MOTA, MOTP, IDF1, ID switches,
+  fragmentation, precision/recall, fed one frame of `{MotObject}` ground truth
+  + hypotheses at a time. Reuses `solveAssignmentHungarian` twice: once per
+  frame for the CLEAR-MOT correspondence (persistent across gaps -- an
+  object's previous hypothesis id is preferred whenever it's still within
+  gate, not just re-derived fresh each frame), and once globally at
+  `summary()` time for IDF1's trajectory-level identity assignment. Ported
+  from a Python implementation cross-checked against **py-motmetrics** on
+  400+ cases before being trusted in C++ (see `tests/test_mot_metrics.cpp`).
 
 ### `viz`
 - `colorizeDisparity`, `colorizeDepth` (invalid → black), `tile` (grid montage),
@@ -167,6 +184,19 @@ FrameSource::next() ──► StereoFrame{ left, right, [gt_disparity, gt_depth]
   (`DepthSeparatesOccludingBoxesIou2DGetsItWrong`).
 - **Trajectory export** (`test_trajectory_io`) — CSV round-trip, PLY
   vertex/edge counts, single-point tracks correctly excluded from the polyline.
-- `benchmark_depth` / `benchmark_detect` / `benchmark_track` are the
-  quantitative harnesses; the last is a synthetic identity-preservation proxy,
-  not KITTI MOTA/IDF1 (see `docs/roadmap.md`).
+- **MOT metrics** (`test_mot_metrics`) — every case is a regression pin
+  against py-motmetrics' own output on the identical input (perfect tracking,
+  a miss that resumes under the same vs. a different id, a false positive, a
+  crossing where the continuity rule must override the nearest-hyp choice,
+  a gated-out match, reset semantics) -- not independently re-derived
+  expected values.
+- **KITTI loader** (`test_kitti_loader`) — a hermetic fixture (hand-built
+  calib/label text plus two tiny in-test-generated PNGs) exercises label
+  parsing (incl. `DontCare` and a malformed line), calibration → `StereoRig`
+  (baseline and a deliberately non-zero `doffs`), and the `FrameSource`
+  contract end to end.
+- `benchmark_depth` / `benchmark_detect` / `benchmark_track` /
+  `benchmark_kitti` are the quantitative harnesses. `benchmark_track` is a
+  synthetic proxy (now reporting MOTA/MOTP/IDF1 too, alongside its own
+  identity-preservation metrics); `benchmark_kitti` is the real-data
+  counterpart -- see `docs/roadmap.md` for its status.

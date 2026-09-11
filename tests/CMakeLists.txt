@@ -26,7 +26,9 @@ add_executable(s3m_tests
     test_nms.cpp
     test_assignment.cpp
     test_tracker.cpp
-    test_trajectory_io.cpp)
+    test_trajectory_io.cpp
+    test_mot_metrics.cpp
+    test_kitti_loader.cpp)
 
 if(S3M_ONNX_ENABLED)
     # Copy the ONNX fixture next to the test binary so the suite is relocatable

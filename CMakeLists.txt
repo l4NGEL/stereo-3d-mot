@@ -82,6 +82,7 @@ add_library(s3m
     src/io/synthetic_source.cpp
     src/io/middlebury_source.cpp
     src/io/trajectory_io.cpp
+    src/io/kitti_loader.cpp
     src/detection/detector.cpp
     src/detection/letterbox.cpp
     src/detection/nms.cpp
@@ -89,6 +90,7 @@ add_library(s3m
     src/tracking/kalman_filter.cpp
     src/tracking/track.cpp
     src/tracking/tracker.cpp
+    src/tracking/mot_metrics.cpp
     src/viz/depth_viz.cpp)
 
 add_library(s3m::s3m ALIAS s3m)

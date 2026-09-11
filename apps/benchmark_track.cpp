@@ -2,13 +2,16 @@
 // synthetic scene with exact ground-truth identity and geometry -- no dataset
 // download required.
 //
-// This is a controlled proxy for identity-preservation quality (ID switches,
-// ID consistency, fragmentation, false-track rate), NOT the KITTI-style
-// MOTA/MOTP/IDF1 evaluation against real detector output that docs/roadmap.md
-// lists as the next step. It exists to make one specific, checkable claim: does
-// gating association on metric depth reduce identity errors versus gating on
-// 2D box overlap alone, when detections are noisy and objects can overlap on
-// screen while sitting at different depths.
+// Reports both this project's own identity-preservation metrics (ID
+// switches, ID consistency, fragmentation, false-track rate) AND standard
+// MOTA/MOTP/IDF1 (via MotAccumulator, scored against the scene's exact,
+// noise-free ground truth). This is still a controlled synthetic proxy, NOT
+// the real-data evaluation -- see benchmark_kitti for that -- but the
+// MOTA/MOTP/IDF1 numbers here are the same accumulator, same formulas,
+// exercised end to end before trusting it on real data. It exists to make one
+// specific, checkable claim: does gating association on metric depth reduce
+// identity errors versus gating on 2D box overlap alone, when detections are
+// noisy and objects can overlap on screen while sitting at different depths.
 //
 // The scene is two cards on a collision course: one near (2 m) drifting right,
 // one far (9 m) drifting left, so their 2D boxes substantially overlap for many
@@ -30,6 +33,7 @@
 #include "s3m/camera/camera_model.hpp"
 #include "s3m/core/timer.hpp"
 #include "s3m/io/synthetic_source.hpp"
+#include "s3m/tracking/mot_metrics.hpp"
 #include "s3m/tracking/tracker.hpp"
 
 using namespace s3m;
@@ -46,6 +50,7 @@ void printHelp() {
         "  --miss-prob P        chance a real card goes undetected this frame (default 0.05)\n"
         "  --fp-rate P          chance of a spurious false-positive box this frame (default 0.03)\n"
         "  --meas-noise M       tracker's assumed position noise [m] (default 2x --depth-jitter)\n"
+        "  --eval-gate M        MOT evaluation match distance in metres (default 1.5)\n"
         "  --seed N             RNG seed (default 7)\n"
         "  --config <yaml>      base tracker parameters (dt, noise, gates, ...)\n";
 }
@@ -130,6 +135,29 @@ std::vector<SimDetection> simulateDetections(const SyntheticStereoSource& src, i
     return out;
 }
 
+/// The scene's *exact*, noise-free ground truth for one frame -- separate
+/// from simulateDetections()'s noisy/lossy view of it, exactly like a real
+/// dataset's annotations are independent of whatever a detector produces.
+std::vector<MotObject> cleanGtObjects(const SyntheticStereoSource& src, int frame_index) {
+    const std::vector<cv::Rect> boxes = src.cardBoxes(frame_index);
+    const std::vector<SyntheticStereoSource::Card>& cards = src.options().cards;
+    const CameraModel& cam = src.rig().left();
+
+    std::vector<MotObject> out;
+    out.reserve(boxes.size());
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        const cv::Rect& b = boxes[i];
+        const cv::Point2d center(b.x + b.width * 0.5, b.y + b.height * 0.5);
+        const cv::Point3d p = cam.backProject(center, cards[i].depth_m);
+        MotObject o;
+        o.id = static_cast<int>(i);
+        o.position =
+            cv::Point3f(static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z));
+        out.push_back(o);
+    }
+    return out;
+}
+
 struct MethodResult {
     std::string name;
     int id_switches = 0;
@@ -138,14 +166,16 @@ struct MethodResult {
     double false_track_rate_pct = 0.0;
     int tracks_born = 0;
     double mean_update_us = 0.0;
+    MotSummary mot;  ///< standard CLEAR-MOT + IDF1, scored against exact ground truth
 };
 
 MethodResult run(const SyntheticStereoSource::Options& scene_opts, const TrackerParams& params,
                  const std::string& name, double box_jitter_px, double depth_jitter_m,
-                 double miss_prob, double fp_rate, std::uint64_t seed) {
+                 double miss_prob, double fp_rate, std::uint64_t seed, double eval_gate) {
     SyntheticStereoSource src(scene_opts);
     cv::RNG rng(static_cast<std::uint64_t>(seed));
     Tracker tracker(params);
+    MotAccumulator mot_acc(eval_gate);
 
     std::vector<std::vector<std::pair<int, int>>> card_history(scene_opts.cards.size());
     std::map<int, bool> track_matched_real;
@@ -162,6 +192,16 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
         Stopwatch sw;
         const TrackerUpdateResult res = tracker.update(dets);
         update_us.push_back(sw.elapsedMs() * 1000.0);
+
+        std::vector<MotObject> hyp;
+        for (const TrackState& t : res.tracks) {
+            if (!t.confirmed) continue;
+            MotObject o;
+            o.id = t.id;
+            o.position = t.position;
+            hyp.push_back(o);
+        }
+        mot_acc.update(cleanGtObjects(src, f), hyp);
 
         for (std::size_t k = 0; k < sims.size(); ++k) {
             const int tid = res.detection_track_id[k];
@@ -203,6 +243,7 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
     r.mean_update_us =
         update_us.empty() ? 0.0 : std::accumulate(update_us.begin(), update_us.end(), 0.0) /
                                        static_cast<double>(update_us.size());
+    r.mot = mot_acc.summary();
     return r;
 }
 
@@ -239,6 +280,7 @@ int main(int argc, char** argv) {
     const double depth_jitter = args.getDouble("depth-jitter", 0.15);
     const double miss_prob = args.getDouble("miss-prob", 0.05);
     const double fp_rate = args.getDouble("fp-rate", 0.03);
+    const double eval_gate = args.getDouble("eval-gate", 1.5);
     const auto seed = static_cast<std::uint64_t>(args.getInt("seed", 7));
 
     // The Mahalanobis gate is only as good as the tracker's belief about its
@@ -280,25 +322,35 @@ int main(int argc, char** argv) {
 
     const std::vector<MethodResult> results = {
         run(scene, mahalanobis, "3D Mahalanobis + Hungarian", box_jitter, depth_jitter, miss_prob,
-            fp_rate, seed),
+            fp_rate, seed, eval_gate),
         run(scene, iou, "2D IoU        + Hungarian", box_jitter, depth_jitter, miss_prob, fp_rate,
-            seed),
+            seed, eval_gate),
         run(scene, mahalanobis_greedy, "3D Mahalanobis + Greedy   ", box_jitter, depth_jitter,
-            miss_prob, fp_rate, seed),
+            miss_prob, fp_rate, seed, eval_gate),
         run(scene, iou_greedy, "2D IoU        + Greedy   ", box_jitter, depth_jitter, miss_prob,
-            fp_rate, seed),
+            fp_rate, seed, eval_gate),
     };
 
-    std::cout << cv::format("%-28s %10s %14s %8s %10s %10s %14s\n", "method", "ID switch",
+    std::cout << "-- this project's identity-preservation metrics --\n"
+              << cv::format("%-28s %10s %14s %8s %10s %10s %14s\n", "method", "ID switch",
                             "ID consist.%", "fragm.", "false trk%", "tracks", "update (us)");
     for (const MethodResult& r : results) {
         std::cout << cv::format("%-28s %10d %13.1f%% %8d %9.1f%% %10d %14.2f\n", r.name.c_str(),
                                 r.id_switches, r.id_consistency_pct, r.fragmentation,
                                 r.false_track_rate_pct, r.tracks_born, r.mean_update_us);
     }
-    std::cout << "\nlower ID switches / fragmentation / false-track% and higher ID consistency% "
-                 "are better.\n"
-                 "not KITTI MOTA/IDF1 -- a hermetic proxy for identity preservation "
-                 "(see docs/roadmap.md).\n";
+    std::cout << "\n-- CLEAR-MOT + IDF1 (MotAccumulator, gate=" << eval_gate << " m) --\n"
+              << cv::format("%-28s %8s %8s %8s %8s %8s\n", "method", "MOTA", "MOTP", "IDF1", "IDSW",
+                            "Frag");
+    for (const MethodResult& r : results) {
+        std::cout << cv::format("%-28s %8.3f %8.3f %8.3f %8lld %8lld\n", r.name.c_str(), r.mot.mota,
+                                r.mot.motp, r.mot.idf1,
+                                static_cast<long long>(r.mot.num_switches),
+                                static_cast<long long>(r.mot.num_fragmentations));
+    }
+    std::cout << "\nlower ID switches / fragmentation / false-track% / MOTP and higher ID "
+                 "consistency% / MOTA / IDF1 are better.\n"
+                 "still a hermetic synthetic proxy -- benchmark_kitti runs the same "
+                 "MotAccumulator on real detections and real ground truth.\n";
     return 0;
 }

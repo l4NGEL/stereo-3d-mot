@@ -7,14 +7,19 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–3 complete.** Calibrated stereo geometry, BM/SGBM disparity,
+> Status: **Phases 1–4 built.** Calibrated stereo geometry, BM/SGBM disparity,
 > metric depth, dense 3D reprojection + PLY export, a synthetic scene with exact
 > ground truth, a Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX
-> Runtime detector (YOLOv8/v5) wired through `promoteTo3D`, and a 3D multi-object
+> Runtime detector (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object
 > tracker (Hungarian/greedy association, gated on either chi-square Mahalanobis
-> distance in 3D or 2D IoU — pick per run and compare) with trajectory export.
-> 70+ unit tests pass; all five apps run end to end. KITTI MOTA/IDF1 against a
-> real detector is next. See [docs/roadmap.md](docs/roadmap.md).
+> distance in 3D or 2D IoU — pick per run and compare) with trajectory export,
+> and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`, validated against
+> py-motmetrics) with a KITTI tracking-benchmark loader. 98 unit tests pass;
+> 4 of 5 apps run end to end on real or synthetic data today. **What's not
+> done:** the 5th, `benchmark_kitti`, compiles and its loader is unit-tested
+> against a hermetic fixture, but has never been run against a real
+> downloaded sequence — see [docs/roadmap.md](docs/roadmap.md) Phase 4's last
+> item before taking any KITTI number in this repo as measured on real data.
 
 ---
 
@@ -164,35 +169,87 @@ gate. Enable it in the demo and export the trajectories:
     --trajectories out/tracks.csv --trajectories-ply out/tracks.ply --out out
 ```
 
-**Why 3D association matters** — `benchmark_track` runs both methods on a
-hermetic synthetic scene: a near object (2 m) and a far object (9 m) cross
-paths on screen. The renderer already draws nearer cards over farther ones, so
-the simulated detector realistically stops firing on the far object while it's
-occluded — a real gap to re-acquire across, not just noisy boxes.
+**What `benchmark_track` measures, and what it doesn't.** It runs both methods
+on a hermetic synthetic scene — a near object (2 m) and a far object (9 m)
+cross paths on screen; the renderer already draws nearer cards over farther
+ones, so the simulated detector realistically stops firing on the far object
+while it's occluded, a real gap to re-acquire across, not just noisy boxes.
+This is a controlled, reproducible way to exercise one specific claim (does
+gating on depth reduce identity errors through an occlusion where 2D overlap
+alone can't tell the objects apart), **not** a general "3D beats 2D" result —
+it's one scene, two objects, synthetic noise. Raw ID-switch counts alone are
+also a misleading headline number here: a handful of switches that each
+resolve back to the right id within a couple of frames (typical of the
+Mahalanobis runs) hurts identity quality far less than the same count from
+switches that stick (typical of the IoU runs), which is why **ID consistency**
+— the fraction of a track's lifetime spent under its dominant id — is the
+number to read first:
 
 ```bash
 $ ./build/apps/benchmark_track --frames 120
 
+-- this project's identity-preservation metrics --
 method                        ID switch   ID consist.%   fragm. false trk%     tracks    update (us)
-3D Mahalanobis + Hungarian            2          99.5%        1      25.0%          4          12.02
-2D IoU        + Hungarian             2          58.3%        2      60.0%          5           5.47
+3D Mahalanobis + Hungarian            2          99.5%        1      25.0%          4          14.83
+2D IoU        + Hungarian             2          58.3%        2      60.0%          5           4.79
+
+-- CLEAR-MOT + IDF1 (MotAccumulator, gate=1.5 m) --
+method                           MOTA     MOTP     IDF1     IDSW     Frag
+3D Mahalanobis + Hungarian      0.979    0.074    0.989        0        0
+2D IoU        + Hungarian       0.929    0.204    0.543        2        2
 ```
 
-(Full output has greedy rows too.) Same detections, same noise, same gap —
-depth-aware association keeps its identity through the occlusion, image-overlap
-association mostly doesn't. Robust across seeds: sweeping `--seed 1..5` keeps
-Mahalanobis at 98–100% ID consistency and IoU2D at 58–61% (occasionally both
-hit 100% when the run's noise never seriously tests either). `--seed` and the
-noise flags change the exact counts.
+Same switch count, very different consistency — exactly the "raw count lies,
+consistency doesn't" case. The standard metrics agree, more starkly: MOTA
+barely moves (0.979 vs 0.929 — both methods detect the objects fine, MOTA is
+dominated by presence, not identity) but **IDF1**, the metric built
+specifically to measure identity correctness, is 0.989 vs 0.543 — the IoU
+tracker gets barely half credit for keeping the right label on the right
+object. Swept across `--seed 1..5`: Mahalanobis holds 98–100% ID consistency
+every time, IoU2D lands at 58–61% in 4 of 5 seeds and ties Mahalanobis at
+100% in the fifth, when that particular run's noise never seriously tests
+either method. The honest claim from this benchmark is scoped: *in this
+simulated occlusion scenario, depth-aware association substantially improved
+identity consistency over the 2D IoU baseline.* Whether that holds on real
+detections and real occlusions is exactly what the KITTI evaluation below is
+for.
 
 `TrackerTest.DepthSeparatesOccludingBoxesIou2DGetsItWrong` pins the mechanism
 down to a single frame with hand-verified numbers: one new detection sitting
 exactly on a far track's last box (IoU = 1) but carrying the near object's true
 depth — the IoU-only tracker takes the box overlap and assigns it to the far
 track; the Mahalanobis tracker takes the depth and assigns it to the near one.
-This is a hermetic proxy for identity-preservation quality, not KITTI
-MOTA/IDF1 against real detector output — that's the next step (see
-[docs/roadmap.md](docs/roadmap.md)).
+
+## KITTI evaluation
+
+`MotAccumulator` (`mot_metrics.hpp`) is a from-scratch CLEAR-MOT
+(Bernardin & Stiefelhagen, 2008) + IDF1 (Ristani et al., 2016) implementation
+— MOTA, MOTP, IDF1, ID switches, fragmentation, precision/recall — validated
+against **py-motmetrics**, the reference library, on 400+ randomised trials
+plus hand-built edge cases (gaps, switches, crossings, gating) before being
+ported to C++. `benchmark_track`'s table above now reports it too, scored
+against the synthetic scene's exact ground truth, alongside its own
+identity-preservation metrics — one more full exercise of the accumulator
+before trusting it on real data.
+
+`kitti_loader.hpp` parses the KITTI tracking-benchmark's label and calibration
+formats (`readKittiLabels`, `readKittiCalib`) and reads `image_02`/`image_03`
+pairs as a `FrameSource` (`KittiTrackingSource`), tested against a hermetic
+hand-built fixture. `benchmark_kitti` runs the *actual* pipeline — stereo
+depth, the ONNX detector, `promoteTo3D`, `Tracker` — once per association
+method on a real sequence, and scores each against its ground truth:
+
+```bash
+scripts/download_kitti.sh 0000 --with-images   # calib+labels are small; images are ~15 GB each archive
+./build/apps/benchmark_kitti --kitti-root data/kitti --sequence 0000 \
+    --detector onnx --model models/yolov8n.onnx
+```
+
+**This has not been run yet.** The loader and evaluator are built and unit
+tested; the download itself was impractical to run mid-session on this
+machine's connection (multi-GB, same issue Phase 1/2 ran into with Docker
+image pulls). Real MOTA/MOTP/IDF1 numbers from an actual sequence belong here
+once that download happens — not before.
 
 ## Example benchmark output
 
@@ -226,14 +283,15 @@ include/s3m/            public headers                 src/            implement
   camera/  CameraModel (pinhole), StereoRig (baseline, doffs, Q, triangulation)
   depth/   StereoMatcher (BM/SGBM wrapper), DepthMetrics (RMSE / bad-px / delta)
   geometry/ reprojection: disparity -> point cloud / depth map / 3D detections
-  io/      FrameSource, SyntheticStereoSource, MiddleburySource, PFM, PLY,
-           trajectory CSV/PLY export
+  io/      FrameSource, SyntheticStereoSource, MiddleburySource, KITTI loader,
+           PFM, PLY, trajectory CSV/PLY export
   detection/ Detector interface, HOG, OnnxDetector (ORT), letterbox, NMS, COCO
-  tracking/  KalmanFilter, Track, assignment (Hungarian/greedy), Tracker
+  tracking/  KalmanFilter, Track, assignment (Hungarian/greedy), Tracker,
+             MotAccumulator (CLEAR-MOT + IDF1)
   viz/     depth / disparity colourisation, image tiling, detection/track overlays
 
-apps/    stereo_depth_demo, benchmark_depth, benchmark_detect, benchmark_track
-tests/   GoogleTest suites (15 files) + tests/data/ ONNX fixture
+apps/    stereo_depth_demo, benchmark_{depth,detect,track,kitti}
+tests/   GoogleTest suites (17 files) + tests/data/ ONNX fixture
 cmake/   warning flags, FindONNXRuntime        configs/ default.yaml
 docs/    architecture.md, roadmap.md           scripts/ datasets, model export
 ```
@@ -261,11 +319,19 @@ Z = fx * B / (d + doffs)
    + class-aware NMS, 2D → 3D promotion in the demo, `benchmark_detect`.
 3. **3D multi-object tracking — done.** `Tracker` (Hungarian/greedy, chi-square
    Mahalanobis-3D or IoU-2D association, class gate, birth/death), trajectory
-   export, `benchmark_track` head-to-head comparison. KITTI MOTA/MOTP/IDF1
-   against a real detector is next.
-4. Visual odometry: feature tracks, essential matrix, camera pose — touches the
+   export, `benchmark_track` head-to-head comparison.
+4. **KITTI + MOTA/MOTP/IDF1 — built, not yet run for real.** `MotAccumulator`
+   (validated against py-motmetrics), the KITTI tracking loader, and
+   `benchmark_kitti` all exist and are unit-tested; running them against a
+   downloaded sequence for real numbers is the one thing left.
+5. Appearance-aware association (ReID): a third cost term fusable with the
+   existing geometric cues, once Phase 4 has a real baseline to improve on.
+6. Real-time optimisation: profiling, tiling/parallelism, single→multi-thread,
+   optional CUDA/TensorRT path.
+7. Visual odometry: feature tracks, essential matrix, camera pose — touches the
    VI-SLAM side.
-5. Optimisation: profiling, tiling/parallelism, optional CUDA/TensorRT path.
+8. ROS2 integration (optional / bonus), once Phases 4–7 give the stack
+   something worth wrapping in a node graph.
 
 Details and rationale in [docs/roadmap.md](docs/roadmap.md).
 

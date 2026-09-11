@@ -51,26 +51,87 @@ next one slots into an interface that already exists.
 - [x] `TrackState` trajectory export: CSV and a PLY polyline
       (`trajectory_io.hpp`), wired into `stereo_depth_demo --track
       --trajectories/--trajectories-ply`
-- [ ] KITTI tracking loader + MOTA / MOTP / IDF1 evaluation against real
-      detector output -- benchmark_track is a synthetic proxy for this, not a
-      replacement; this is the immediate next step
-- [ ] connects to prior MOT / ReID work: association features beyond
-      geometry (appearance embeddings) once a real detector/dataset is in the
-      loop
 
-## Phase 4 — Visual odometry
+## Phase 4 — KITTI + MOTA/MOTP/IDF1  ✅ built, awaiting a real download
+
+- [x] `MotAccumulator` (`mot_metrics.hpp`): CLEAR-MOT (Bernardin & Stiefelhagen,
+      2008) + IDF1 (Ristani et al., 2016) -- MOTA, MOTP, IDF1, ID switches,
+      fragmentation, precision/recall. Ported from a from-scratch Python
+      implementation validated against **py-motmetrics** (the reference
+      library) across 400+ randomised trials plus hand-built edge cases
+      (gaps, id switches, crossings, gating) *before* writing the C++; that
+      pass caught two real divergences from my first-draft algorithm (the
+      previous-correspondence map must persist across any gap, not just reset
+      each frame that an object is briefly absent; fragmentation is scoped to
+      each object's own `[first match, last match]` span, not its whole
+      presence window) -- see `tests/test_mot_metrics.cpp`.
+- [x] `readKittiLabels` / `readKittiCalib` / `KittiTrackingSource`
+      (`kitti_loader.hpp`): parses the tracking-benchmark label format (17
+      fields, DontCare handling, tolerant of malformed lines) and calibration
+      (`P2`/`P3` → `StereoRig`, including a non-zero `doffs` when the
+      rectified principal points differ -- not assumed away), and reads
+      `image_02`/`image_03` pairs as a `FrameSource`. Tested against a
+      hand-built hermetic fixture (self-consistent with the documented
+      rectified-`P` convention); **not yet cross-checked against a real KITTI
+      calib file**, flagged honestly rather than assumed correct.
+- [x] `benchmark_track` now also reports MOTA/MOTP/IDF1/IDSW/Frag (via the
+      same `MotAccumulator`, scored against the synthetic scene's *exact*
+      ground truth) alongside its own identity-preservation metrics -- one
+      more end-to-end exercise of the accumulator before trusting it on real
+      data.
+- [x] `benchmark_kitti` app: runs the actual pipeline (stereo depth →
+      detector → `promoteTo3D` → `Tracker`) on a KITTI sequence, once, per
+      association method, and scores each against the sequence's ground
+      truth -- the `2D IoU` vs `3D Mahalanobis` × `MOTA`/`IDF1`/`IDSW`/`Frag`
+      table this phase is for.
+- [x] `scripts/download_kitti.sh` (calib + labels always; images opt-in via
+      `--with-images`, since the official archives bundle all sequences at
+      ~15 GB each with no per-sequence download).
+- [ ] **Actually run it.** Nothing above has touched a real KITTI byte --
+      this machine's connection made a multi-GB download impractical
+      mid-session (see Phase 1/2's Docker download times). Run
+      `scripts/download_kitti.sh 0000 --with-images` and
+      `benchmark_kitti --kitti-root data/kitti --sequence 0000 --detector onnx
+      --model models/yolov8n.onnx`, then report the real numbers here and in
+      the README in place of this line.
+- [ ] connects to prior MOT / ReID work -- Phase 5.
+
+## Phase 5 — Appearance-aware association (ReID)
+
+- [ ] a third association cue: appearance embedding distance (cosine/L2 on a
+      ReID feature vector), fusable with the existing geometric cues as
+      `C = α·C_3D + β·C_IoU + γ·C_ReID`
+- [ ] draws on prior ReID / MOT17 / occlusion and ID-switch-forensics work --
+      the natural place that experience plugs into this pipeline
+- [ ] re-run the Phase 4 KITTI table with a third row; the interesting result
+      isn't "ReID wins" in isolation, it's *how much* it helps once depth is
+      already in the cost function
+- [ ] do this only after Phase 4 has real baseline numbers to improve on
+
+## Phase 6 — Real-time optimisation
+
+- [ ] profile hotspots (the existing `ProfileRegistry` sections plus detector
+      pre/post-processing); tile + parallelise the matcher
+- [ ] single-thread → multi-thread, then optionally CUDA / TensorRT behind
+      the same `Detector` interface
+- [ ] fixed frame-time budget with a report (target: end-to-end ≥ 20 FPS),
+      broken down per stage (capture → preprocess → inference → postprocess →
+      stereo → 3D → tracking → output), not just a single aggregate number
+- [ ] memory + allocation audit
+
+## Phase 7 — Visual odometry
 
 - [ ] feature extraction + matching (ORB), essential-matrix pose
 - [ ] frame-to-frame pose, scale from the stereo baseline
 - [ ] trajectory vs. dataset ground truth (ATE / RPE)
 - [ ] touches the VI-SLAM / camera-pose requirements
 
-## Phase 5 — Optimisation
+## Phase 8 — ROS2 integration (optional / bonus)
 
-- [ ] profile hotspots; tile + parallelise the matcher pre/post-processing
-- [ ] optional CUDA / TensorRT inference path behind the same interfaces
-- [ ] fixed frame-time budget with a report (target: end-to-end ≥ 20 FPS)
-- [ ] memory + allocation audit
+- [ ] `/stereo/left`, `/stereo/right` in; `/perception/detections`,
+      `/perception/tracks`, `/perception/pointcloud` out
+- [ ] only after Phases 4-7 give the perception stack itself something worth
+      wrapping in a node graph
 
 ## Non-goals (for now)
 
