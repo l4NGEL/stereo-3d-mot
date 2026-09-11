@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Download KITTI tracking-benchmark calibration + labels (small, always) and,
-# optionally, one sequence's stereo images (large) into data/kitti/.
+# optionally, one sequence's stereo images into data/kitti/.
 #
 # Usage: scripts/download_kitti.sh [sequence] [--with-images]
 #   sequence      zero-padded training-sequence id, e.g. 0000 (default: 0000)
-#   --with-images also fetch data_tracking_image_2/3.zip and extract just this
-#                  sequence. These zips bundle ALL 21 training + 29 test
-#                  sequences and are ~15 GB EACH (~30 GB total) -- there is no
-#                  official per-sequence download, so this step downloads the
-#                  full archives regardless of which one sequence you asked
-#                  for, then deletes them after extracting. Expect this to
-#                  take a long time on a slow connection; run it once.
+#   --with-images also fetch this sequence's stereo images. The official
+#                  archives bundle all 21 training + 29 test sequences at
+#                  ~15 GB each with no server-side per-sequence download --
+#                  but they're stored uncompressed on an S3 bucket that
+#                  supports HTTP range requests, so scripts/fetch_kitti_
+#                  sequence.py reads the zip's central directory and pulls
+#                  just this sequence's files (typically 100-400 MB for one
+#                  sequence, both cameras, not ~30 GB). Needs `pip install
+#                  requests`; falls back to a plain full-archive download if
+#                  python3/requests aren't available.
 #
 # Result layout (matches KittiTrackingSource's expected root):
 #   data/kitti/calib/<seq>.txt
@@ -61,28 +64,34 @@ echo "calib + labels for all training sequences are in place."
 
 if [ "${WITH_IMAGES}" -eq 1 ]; then
     echo
-    echo "Fetching stereo images for sequence ${SEQ} (downloads the full"
-    echo "~15 GB left + ~15 GB right archives; this will take a while)..."
-    mkdir -p "${DEST}/image_02" "${DEST}/image_03"
+    PY="$(command -v python3 || command -v python || true)"
+    if [ -n "${PY}" ] && "${PY}" -c "import requests" >/dev/null 2>&1; then
+        echo "Fetching stereo images for sequence ${SEQ} via HTTP range requests"
+        echo "(one sequence's files only, not the full ~15 GB/camera archive)..."
+        "${PY}" "${ROOT}/scripts/fetch_kitti_sequence.py" "${SEQ}" --out "${DEST}"
+    else
+        echo "python3 + 'requests' not found -- falling back to the full archives"
+        echo "(~15 GB left + ~15 GB right; this will take a while). Install"
+        echo "requests (pip install requests) and re-run for the fast path instead."
+        mkdir -p "${DEST}/image_02" "${DEST}/image_03"
 
-    fetch "${BASE}/data_tracking_image_2.zip" "${tmp}/image_2.zip"
-    unzip -o "${tmp}/image_2.zip" "training/image_02/${SEQ}/*" -d "${tmp}" >/dev/null
-    cp -r "${tmp}/training/image_02/${SEQ}" "${DEST}/image_02/"
-    rm -f "${tmp}/image_2.zip"
+        fetch "${BASE}/data_tracking_image_2.zip" "${tmp}/image_2.zip"
+        unzip -o "${tmp}/image_2.zip" "training/image_02/${SEQ}/*" -d "${tmp}" >/dev/null
+        cp -r "${tmp}/training/image_02/${SEQ}" "${DEST}/image_02/"
+        rm -f "${tmp}/image_2.zip"
 
-    fetch "${BASE}/data_tracking_image_3.zip" "${tmp}/image_3.zip"
-    unzip -o "${tmp}/image_3.zip" "training/image_03/${SEQ}/*" -d "${tmp}" >/dev/null
-    cp -r "${tmp}/training/image_03/${SEQ}" "${DEST}/image_03/"
-    rm -f "${tmp}/image_3.zip"
+        fetch "${BASE}/data_tracking_image_3.zip" "${tmp}/image_3.zip"
+        unzip -o "${tmp}/image_3.zip" "training/image_03/${SEQ}/*" -d "${tmp}" >/dev/null
+        cp -r "${tmp}/training/image_03/${SEQ}" "${DEST}/image_03/"
+        rm -f "${tmp}/image_3.zip"
+    fi
 
-    echo "done:"
-    ls "${DEST}/image_02/${SEQ}" | wc -l
-    echo "frames in ${DEST}/image_02/${SEQ}"
+    echo "done: $(ls "${DEST}/image_02/${SEQ}" | wc -l) frames in ${DEST}/image_02/${SEQ}"
 else
     cat <<EOF
 
-Images were NOT downloaded (pass --with-images to fetch them -- see the
-warning at the top of this script about size). Once you have them:
+Images were NOT downloaded (pass --with-images to fetch them). Once you have
+them:
 
   ./build/apps/benchmark_kitti --kitti-root data/kitti --sequence ${SEQ} \\
       --detector onnx --model models/yolov8n.onnx

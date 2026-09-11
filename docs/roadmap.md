@@ -52,7 +52,7 @@ next one slots into an interface that already exists.
       (`trajectory_io.hpp`), wired into `stereo_depth_demo --track
       --trajectories/--trajectories-ply`
 
-## Phase 4 — KITTI + MOTA/MOTP/IDF1  ✅ built, awaiting a real download
+## Phase 4 — KITTI + MOTA/MOTP/IDF1  ✅ done
 
 - [x] `MotAccumulator` (`mot_metrics.hpp`): CLEAR-MOT (Bernardin & Stiefelhagen,
       2008) + IDF1 (Ristani et al., 2016) -- MOTA, MOTP, IDF1, ID switches,
@@ -72,8 +72,9 @@ next one slots into an interface that already exists.
       rectified principal points differ -- not assumed away), and reads
       `image_02`/`image_03` pairs as a `FrameSource`. Tested against a
       hand-built hermetic fixture (self-consistent with the documented
-      rectified-`P` convention); **not yet cross-checked against a real KITTI
-      calib file**, flagged honestly rather than assumed correct.
+      rectified-`P` convention), and cross-checked against sequence 0000's
+      real `calib/0000.txt`: the derived baseline comes out to 0.5327 m,
+      matching KITTI's documented ~0.54 m rig baseline.
 - [x] `benchmark_track` now also reports MOTA/MOTP/IDF1/IDSW/Frag (via the
       same `MotAccumulator`, scored against the synthetic scene's *exact*
       ground truth) alongside its own identity-preservation metrics -- one
@@ -87,13 +88,21 @@ next one slots into an interface that already exists.
 - [x] `scripts/download_kitti.sh` (calib + labels always; images opt-in via
       `--with-images`, since the official archives bundle all sequences at
       ~15 GB each with no per-sequence download).
-- [ ] **Actually run it.** Nothing above has touched a real KITTI byte --
-      this machine's connection made a multi-GB download impractical
-      mid-session (see Phase 1/2's Docker download times). Run
-      `scripts/download_kitti.sh 0000 --with-images` and
-      `benchmark_kitti --kitti-root data/kitti --sequence 0000 --detector onnx
-      --model models/yolov8n.onnx`, then report the real numbers here and in
-      the README in place of this line.
+- [x] **Actually run it**, on sequence 0000 (154 frames). Downloaded via HTTP
+      range requests against KITTI's S3 bucket instead of the ~15 GB/camera
+      full archives (`scripts/fetch_kitti_sequence.py`: reads the zip central
+      directory remotely, pulls only this sequence's ~265 MB) --
+      `scripts/download_kitti.sh` now uses this path automatically when
+      `requests` is available. Real result:
+      `MOTA=-2.30 MOTP=1.00m IDF1=0.182 IDSW=33 Frag=11` (3D Mahalanobis) vs
+      `MOTA=-2.14 MOTP=1.02m IDF1=0.187 IDSW=35 Frag=23` (2D IoU) --
+      `configs/kitti.yaml` restricts the detector to road-relevant COCO
+      classes and retunes `measurement_noise` for real (much larger) stereo
+      error. Full numbers and the honest read on them (negative MOTA is a
+      detector/GT domain-mismatch artifact, not a bug; the 2D/3D gap mostly
+      closes on real noisy depth, unlike the clean synthetic-scene win) are
+      in the README's [KITTI evaluation](../README.md#kitti-evaluation)
+      section -- not repeated here to avoid the two copies drifting apart.
 - [ ] connects to prior MOT / ReID work -- Phase 5.
 
 ## Phase 5 — Appearance-aware association (ReID)

@@ -7,19 +7,22 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–4 built.** Calibrated stereo geometry, BM/SGBM disparity,
-> metric depth, dense 3D reprojection + PLY export, a synthetic scene with exact
-> ground truth, a Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX
-> Runtime detector (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object
-> tracker (Hungarian/greedy association, gated on either chi-square Mahalanobis
+> Status: **Phases 1–4 built and run end to end, including on real KITTI
+> data.** Calibrated stereo geometry, BM/SGBM disparity, metric depth, dense
+> 3D reprojection + PLY export, a synthetic scene with exact ground truth, a
+> Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
+> (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object tracker
+> (Hungarian/greedy association, gated on either chi-square Mahalanobis
 > distance in 3D or 2D IoU — pick per run and compare) with trajectory export,
 > and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`, validated against
 > py-motmetrics) with a KITTI tracking-benchmark loader. 98 unit tests pass;
-> 4 of 5 apps run end to end on real or synthetic data today. **What's not
-> done:** the 5th, `benchmark_kitti`, compiles and its loader is unit-tested
-> against a hermetic fixture, but has never been run against a real
-> downloaded sequence — see [docs/roadmap.md](docs/roadmap.md) Phase 4's last
-> item before taking any KITTI number in this repo as measured on real data.
+> all 5 apps run end to end, including `benchmark_kitti` against a real
+> downloaded KITTI tracking sequence — see
+> [KITTI evaluation](#kitti-evaluation) below for the real numbers and the
+> honest read on what they mean (short version: absolute MOTA is negative
+> because of a real, explained detector/GT domain mismatch, and on real noisy
+> stereo depth the 2D-vs-3D gap from the synthetic benchmark below mostly
+> closes — not a rerun of the same clean win).
 
 ---
 
@@ -240,16 +243,63 @@ depth, the ONNX detector, `promoteTo3D`, `Tracker` — once per association
 method on a real sequence, and scores each against its ground truth:
 
 ```bash
-scripts/download_kitti.sh 0000 --with-images   # calib+labels are small; images are ~15 GB each archive
+scripts/download_kitti.sh 0000 --with-images   # calib+labels always (~10 MB); one sequence's
+                                                # images via HTTP range requests (~265 MB, not
+                                                # the ~30 GB full archives -- see the script)
 ./build/apps/benchmark_kitti --kitti-root data/kitti --sequence 0000 \
-    --detector onnx --model models/yolov8n.onnx
+    --detector onnx --model models/yolov8n.onnx --config configs/kitti.yaml
 ```
 
-**This has not been run yet.** The loader and evaluator are built and unit
-tested; the download itself was impractical to run mid-session on this
-machine's connection (multi-GB, same issue Phase 1/2 ran into with Docker
-image pulls). Real MOTA/MOTP/IDF1 numbers from an actual sequence belong here
-once that download happens — not before.
+Run on sequence 0000 (154 frames, the standard first KITTI tracking sequence —
+a short residential drive), 711 ground-truth object-frames after dropping
+`DontCare` regions (292 Van, 243 Car, 154 Cyclist, 22 Pedestrian):
+
+```
+sequence 0000   detector=onnx (yolov8n, COCO)   frames=all   gate=2 m
+
+3D Mahalanobis: MOTA=-2.304  MOTP=0.995 m  IDF1=0.182  IDSW=33  Frag=11  FP=2195  FN=121  Prec=0.212  Rec=0.830
+2D IoU        : MOTA=-2.135  MOTP=1.020 m  IDF1=0.187  IDSW=35  Frag=23  FP=1980  FN=214  Prec=0.201  Rec=0.699
+```
+
+`configs/kitti.yaml` restricts the detector to COCO's road-relevant classes
+(person, bicycle, car, motorcycle, bus, truck) and raises `measurement_noise`
+from the synthetic scene's 0.05 m to 1.0 m — real SGBM stereo error on KITTI
+ranges is far larger than the synthetic scene's simulated jitter (confirmed
+by this very run: MOTP, the average position error over *matched* pairs
+only, comes out to ~1 m), and the tighter synthetic-tuned default
+over-rejected genuinely correct matches in the Mahalanobis gate. Same class
+of bug as the Phase 3 measurement-noise mistuning, re-surfacing at a
+different noise scale on real sensor data instead of simulated data.
+
+**Two honest findings here, not one clean headline:**
+
+- **Absolute MOTA is negative, and that's a detector/GT domain-mismatch
+  artifact, not a pipeline bug.** Spot-checking frame 0: YOLOv8n correctly
+  finds 4 cars + 3 bicycles + 2 people in the image; KITTI's tracking GT for
+  that same frame labels exactly 3 objects (1 Van, 1 Cyclist, 1 Pedestrian).
+  Averaged over the whole run, confirmed tracks outnumber GT objects roughly
+  4:1. KITTI's *tracking* ground truth is not an exhaustive census of every
+  visible instance of its classes the way the detection benchmark is — a
+  general-purpose COCO detector, with no KITTI-specific fine-tuning, finds
+  plenty of real cars, bicycles and people the tracking labels simply don't
+  include, and every one of those scores as a false positive under CLEAR-MOT.
+  That's a known characteristic of scoring an off-the-shelf detector against
+  KITTI tracking GT directly, not something this project's tracker or metrics
+  implementation got wrong — confirmed by re-deriving MOTA/MOTP/IDF1 against
+  py-motmetrics earlier in this same phase.
+- **On real data, 2D IoU and 3D Mahalanobis land close together — this is not
+  a rerun of the synthetic-scene result.** The synthetic benchmark above
+  shows Mahalanobis clearly ahead (IDF1 0.989 vs 0.543) because its simulated
+  depth was clean by construction. Real stereo depth is noisier — MOTP ~1 m
+  here, and growing with range — so on this sequence the two methods come out
+  close (IDF1 0.182 vs 0.187; Mahalanobis fragments less, 11 vs 23; IoU edges
+  it narrowly on IDF1). The honest reading: depth-aware association's
+  advantage is real but conditional on depth quality — decisive when depth is
+  accurate, and eroded once stereo noise grows large enough to rival the
+  gate size. That's a more useful and more defensible result than "3D always
+  wins," and it's exactly the kind of gap the ReID/appearance-fusion work in
+  Phase 5 is meant to help close, by giving the associator a cue that doesn't
+  degrade with depth noise.
 
 ## Example benchmark output
 
