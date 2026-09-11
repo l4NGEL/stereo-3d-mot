@@ -89,6 +89,10 @@ Config Config::load(const std::string& path) {
     readScalar(tr, "max_age", cfg.tracking.max_age);
     readScalar(tr, "min_hits", cfg.tracking.min_hits);
     readScalar(tr, "gating_distance", cfg.tracking.gating_distance);
+    readScalar(tr, "association", cfg.tracking.association);
+    readScalar(tr, "gating_chi2", cfg.tracking.gating_chi2);
+    readScalar(tr, "iou_gate", cfg.tracking.iou_gate);
+    readBool(tr, "use_hungarian", cfg.tracking.use_hungarian);
 
     return cfg;
 }

@@ -37,4 +37,9 @@ tracking:
   measurement_noise: 0.05     # position std [m]
   max_age: 30                 # frames kept without a match before deletion
   min_hits: 3                 # matches before a track is confirmed
-  gating_distance: 2.0        # max association distance [m]
+  gating_distance: 2.0        # informational; the active gate is gating_chi2 / iou_gate below
+  # mahalanobis3d (depth-aware, recommended) | iou2d (image-plane only, no depth)
+  association: "mahalanobis3d"
+  gating_chi2: 7.815           # mahalanobis3d: chi-square(3 dof, 95%) gate
+  iou_gate: 0.3                 # iou2d: minimum IoU to allow a match
+  use_hungarian: 1               # 0 -> greedy nearest-first (for comparison)

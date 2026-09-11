@@ -81,11 +81,14 @@ add_library(s3m
     src/io/point_cloud.cpp
     src/io/synthetic_source.cpp
     src/io/middlebury_source.cpp
+    src/io/trajectory_io.cpp
     src/detection/detector.cpp
     src/detection/letterbox.cpp
     src/detection/nms.cpp
+    src/tracking/assignment.cpp
     src/tracking/kalman_filter.cpp
     src/tracking/track.cpp
+    src/tracking/tracker.cpp
     src/viz/depth_viz.cpp)
 
 add_library(s3m::s3m ALIAS s3m)

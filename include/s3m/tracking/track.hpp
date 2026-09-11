@@ -12,15 +12,23 @@ namespace s3m {
 class Track {
  public:
     Track(int id, const cv::Point3f& initial_position, double dt, double accel_std,
-          double meas_std);
+          double meas_std, int class_id = -1, const cv::Rect2f& initial_box = cv::Rect2f());
 
     void predict();
+
+    /// Correct with a bare 3D position (class id / box left unchanged).
     void correct(const cv::Point3f& measured_position);
+    /// Correct with a full detection: updates the filter from `position` and
+    /// records `box` / `class_id` for display and 2D-IoU association.
+    void correct(const Detection3D& detection);
+
     void markMissed();
 
     int id() const { return id_; }
     cv::Point3f position() const;
     cv::Point3f velocity() const;
+    const cv::Rect2f& lastBox() const { return last_box_; }
+    int classId() const { return class_id_; }
 
     int age() const { return age_; }
     int hits() const { return hits_; }
@@ -37,6 +45,8 @@ class Track {
  private:
     int id_;
     KalmanFilter kf_;
+    cv::Rect2f last_box_{};
+    int class_id_;
     int age_ = 0;
     int hits_ = 1;
     int time_since_update_ = 0;

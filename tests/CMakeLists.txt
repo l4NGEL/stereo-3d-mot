@@ -23,7 +23,10 @@ add_executable(s3m_tests
     test_kalman_filter.cpp
     test_config.cpp
     test_letterbox.cpp
-    test_nms.cpp)
+    test_nms.cpp
+    test_assignment.cpp
+    test_tracker.cpp
+    test_trajectory_io.cpp)
 
 if(S3M_ONNX_ENABLED)
     # Copy the ONNX fixture next to the test binary so the suite is relocatable

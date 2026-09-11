@@ -49,6 +49,8 @@ struct TrackState {
     int id = -1;
     cv::Point3f position{};      ///< filtered position [m], left-camera frame
     cv::Point3f velocity{};      ///< filtered velocity [m/s]
+    cv::Rect2f box{};             ///< most recent matched 2D box (left image)
+    int class_id = -1;            ///< class of the detection the track was born from
     int age = 0;                 ///< frames since the track was created
     int hits = 0;                ///< total matched detections
     int time_since_update = 0;   ///< frames since the last matched detection

@@ -28,4 +28,12 @@ cv::Mat drawDetections(const cv::Mat& image_bgr, const std::vector<Detection2D>&
 /// Draw 3D detections (box + "id: Z.zz m") on a copy of `image_bgr`.
 cv::Mat drawDetections3D(const cv::Mat& image_bgr, const std::vector<Detection3D>& detections);
 
+/// Deterministic, visually distinct BGR colour for a track id (stable across
+/// frames and processes -- a pure function of `id`).
+cv::Scalar trackColor(int id);
+
+/// Draw tracked objects: box in trackColor(id), "id  Z=.. m  vx,vy,vz" label.
+/// Tentative (unconfirmed) tracks are drawn thinner / dimmer than confirmed ones.
+cv::Mat drawTracks(const cv::Mat& image_bgr, const std::vector<TrackState>& tracks);
+
 }  // namespace s3m

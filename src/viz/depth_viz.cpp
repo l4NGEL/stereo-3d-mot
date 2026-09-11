@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <string>
 
 #include <opencv2/imgproc.hpp>
@@ -105,6 +106,34 @@ cv::Mat drawDetections(const cv::Mat& image_bgr, const std::vector<Detection2D>&
         const cv::Point br(cvRound(d.box.x + d.box.width), cvRound(d.box.y + d.box.height));
         cv::rectangle(out, tl, br, cv::Scalar(0, 200, 0), 2);
         putLabel(out, cv::format("%.2f", d.score), tl + cv::Point(0, -4), cv::Scalar(0, 200, 0));
+    }
+    return out;
+}
+
+cv::Scalar trackColor(int id) {
+    // Multiplicative (Knuth) hash decorrelates consecutive ids' hues.
+    const auto h = static_cast<std::uint32_t>(id) * 2654435761u;
+    const int hue = static_cast<int>(h % 180u);  // OpenCV hue range [0, 180)
+    cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(hue, 200, 255));
+    cv::Mat bgr;
+    cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+    const cv::Vec3b c = bgr.at<cv::Vec3b>(0, 0);
+    return cv::Scalar(c[0], c[1], c[2]);
+}
+
+cv::Mat drawTracks(const cv::Mat& image_bgr, const std::vector<TrackState>& tracks) {
+    cv::Mat out = ensureBgr(image_bgr);
+    for (const TrackState& t : tracks) {
+        const cv::Scalar color = trackColor(t.id);
+        const cv::Point tl(cvRound(t.box.x), cvRound(t.box.y));
+        const cv::Point br(cvRound(t.box.x + t.box.width), cvRound(t.box.y + t.box.height));
+        cv::rectangle(out, tl, br, color, t.confirmed ? 2 : 1);
+
+        const double speed =
+            cv::norm(cv::Vec3f(t.velocity.x, t.velocity.y, t.velocity.z));
+        const std::string label =
+            cv::format("#%d  Z=%.2fm  v=%.1fm/s", t.id, t.position.z, speed);
+        putLabel(out, label, tl + cv::Point(0, -4), color);
     }
     return out;
 }

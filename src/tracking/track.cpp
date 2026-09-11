@@ -12,8 +12,9 @@ KalmanFilter::Vec toVec3(const cv::Point3f& p) {
 }  // namespace
 
 Track::Track(int id, const cv::Point3f& initial_position, double dt, double accel_std,
-             double meas_std)
-    : id_(id), kf_(makeConstantVelocity3D(dt, accel_std, meas_std)) {
+             double meas_std, int class_id, const cv::Rect2f& initial_box)
+    : id_(id), kf_(makeConstantVelocity3D(dt, accel_std, meas_std)), last_box_(initial_box),
+      class_id_(class_id) {
     KalmanFilter::Vec x0 = KalmanFilter::Vec::Zero(6);
     x0(0) = static_cast<double>(initial_position.x);
     x0(1) = static_cast<double>(initial_position.y);
@@ -31,6 +32,12 @@ void Track::correct(const cv::Point3f& measured_position) {
     ++hits_;
     time_since_update_ = 0;
     if (!confirmed_ && hits_ >= min_hits_) confirmed_ = true;
+}
+
+void Track::correct(const Detection3D& detection) {
+    correct(detection.position);
+    last_box_ = detection.box;
+    class_id_ = detection.class_id;
 }
 
 void Track::markMissed() { ++time_since_update_; }
@@ -54,6 +61,8 @@ TrackState Track::snapshot() const {
     state.id = id_;
     state.position = position();
     state.velocity = velocity();
+    state.box = last_box_;
+    state.class_id = class_id_;
     state.age = age_;
     state.hits = hits_;
     state.time_since_update = time_since_update_;

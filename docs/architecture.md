@@ -15,7 +15,7 @@
 ```
             ┌─────────────────────────────────────────────┐
   apps/     │  stereo_depth_demo   benchmark_depth         │
-            │  benchmark_detect                            │
+            │  benchmark_detect    benchmark_track         │
             └───────────────┬─────────────────────────────┘
                             │  uses
             ┌───────────────▼─────────────────────────────┐
@@ -77,6 +77,10 @@
 - `readPfm` / `writePfm` — the float image format Middlebury ships GT in
   (endianness + bottom-to-top rows handled).
 - `writePointCloudPly` — coloured ASCII PLY for MeshLab / CloudCompare.
+- `TrajectoryRecorder` / `writeTrajectoriesCsv` / `writeTrajectoriesPly` —
+  accumulate `Tracker::update()` output across a run and export it: one CSV row
+  per (track, frame), or a PLY polyline per track (`element edge`, viewable
+  next to the point-cloud exports).
 
 ### `detection`
 - `Detector` interface; `NullDetector`; `HogPeopleDetector` (OpenCV HOG+SVM, no
@@ -92,12 +96,28 @@
   class names. Each is a separately unit-tested unit (`test_letterbox`,
   `test_nms`, `test_onnx_detector`).
 
-### `tracking` (Phase 3 seam)
+### `tracking`
 - `KalmanFilter` — generic linear KF (dynamic Eigen matrices), plus
   `makeConstantVelocity3D(dt, accel_std, meas_std)` giving a 6-state
   `[x y z vx vy vz]` filter with a white-noise-acceleration `Q`.
-- `Track` — wraps a KF with age / hits / misses / confirmation and a
-  Mahalanobis `gatingDistanceSq()` for association.
+- `Track` — wraps a KF with age / hits / misses / confirmation, `lastBox()` /
+  `classId()` for 2D-cue association, and a Mahalanobis `gatingDistanceSq()`.
+- `solveAssignmentHungarian` / `solveAssignmentGreedy` (`assignment.hpp`) — a
+  generic, domain-free bipartite matcher over a gated cost matrix. The
+  Hungarian solver maximises matched *count* first, then minimises total cost
+  among matchings of that size (it never leaves a feasible pair unmatched to
+  save cost) — gating is applied to the cost matrix *before* the solve, not
+  filtered from the result after, which matters (see the comment in
+  `assignment.cpp` and `AssignmentTest.OverGateFiniteEntriesAreAsForbiddenAsInfinity`).
+- `Tracker` — predict → build a cost matrix → associate → update/coast →
+  birth/death. Two interchangeable `AssociationMethod`s read from the *same*
+  `Track` state: `kMahalanobis3D` (chi-square-gated squared Mahalanobis
+  distance — the depth-aware default) and `kIou2D` (1 − IoU on the last
+  matched 2D box — the classic baseline that never looks at depth). Both only
+  ever consider detections with `Detection3D::valid`, so the comparison
+  isolates the association *cue*, not what data is available. A hard class-id
+  gate applies to both. `TrackerParams::fromConfig()` reads
+  `configs/default.yaml`'s `tracking:` block.
 
 ### `viz`
 - `colorizeDisparity`, `colorizeDepth` (invalid → black), `tile` (grid montage),
@@ -115,7 +135,9 @@ FrameSource::next() ──► StereoFrame{ left, right, [gt_disparity, gt_depth]
       │
       ├─ detector.detect(left) ────────────────────────► {Detection2D}
       ├─ promoteTo3D(dets, depth, rig) ─────────────────► {Detection3D}
-      └─ [Phase 3] tracker.update({Detection3D}) ───────► {TrackState}
+      └─ tracker.update({Detection3D})  [--track] ──────► {TrackState}
+             │
+             └─ TrajectoryRecorder::record(frame, t, …) ─► CSV / PLY on exit
 
   if gt present: evaluate(estimate, gt, …) ─────────────► DepthMetrics
 ```
@@ -135,4 +157,16 @@ FrameSource::next() ──► StereoFrame{ left, right, [gt_disparity, gt_depth]
   fixture (`scripts/make_test_model.py`) with detections baked into the output
   tensor, so parse → NMS → letterbox inversion is verified end-to-end offline.
 - **Metrics**, **PFM**, **config**, **Kalman/Track** have focused unit tests.
-- `benchmark_depth` / `benchmark_detect` are the quantitative harnesses.
+- **Assignment** (`test_assignment`) — hand-built cost matrices with a
+  known-by-hand optimum, a regression for the gate-before-padding rule, and a
+  validity + "never beats Hungarian" check on the greedy baseline.
+- **Tracker** (`test_tracker`) — lifecycle (birth → tentative → confirmed →
+  coast → death), the class-id gate, Hungarian/greedy agreement, and the
+  centrepiece: one detection, two association methods, two different (and
+  independently hand-verified) outcomes
+  (`DepthSeparatesOccludingBoxesIou2DGetsItWrong`).
+- **Trajectory export** (`test_trajectory_io`) — CSV round-trip, PLY
+  vertex/edge counts, single-point tracks correctly excluded from the polyline.
+- `benchmark_depth` / `benchmark_detect` / `benchmark_track` are the
+  quantitative harnesses; the last is a synthetic identity-preservation proxy,
+  not KITTI MOTA/IDF1 (see `docs/roadmap.md`).

@@ -31,12 +31,32 @@ next one slots into an interface that already exists.
 
 ## Phase 3 — 3D multi-object tracking
 
-- [ ] `Tracker` manager: predict → gate (Mahalanobis) → associate
-      (greedy / Hungarian) → update → birth/death
-- [ ] `TrackState` trajectory export (CSV / PLY polyline)
-- [ ] KITTI tracking loader + MOTA / MOTP / IDF1 evaluation
-- [ ] occlusion handling / coasting on missed detections
-- [ ] connects to prior MOT / ReID work: association features beyond IoU
+- [x] `Tracker` manager: predict → gate → associate (greedy / Hungarian) →
+      update → birth/death/coasting, pluggable association strategy
+- [x] `solveAssignmentHungarian` / `solveAssignmentGreedy` (`assignment.hpp`) --
+      generic O(n^3) Kuhn-Munkres over a gated cost matrix, plus the greedy
+      baseline, both unit-tested (incl. a hand-verified regression: an
+      over-gate-but-finite cost must be exactly as forbidden as +inf)
+- [x] Two interchangeable association strategies on the *same* Tracker:
+      `kMahalanobis3D` (chi-square-gated squared Mahalanobis distance in the
+      track's 3D state) vs `kIou2D` (1 - IoU on the last matched 2D box,
+      the classic depth-blind baseline) -- `--track` / `configs/default.yaml`
+      `tracking.association`
+- [x] `benchmark_track`: the two strategies head-to-head (+ Hungarian vs
+      greedy) on a hermetic synthetic scene engineered so a near (2 m) and a
+      far (9 m) object's 2D boxes visibly cross -- ID switches, ID
+      consistency, fragmentation, false-track rate. `TrackerTest.
+      DepthSeparatesOccludingBoxesIou2DGetsItWrong` pins down the single-frame
+      mechanism with exact, hand-verified numbers.
+- [x] `TrackState` trajectory export: CSV and a PLY polyline
+      (`trajectory_io.hpp`), wired into `stereo_depth_demo --track
+      --trajectories/--trajectories-ply`
+- [ ] KITTI tracking loader + MOTA / MOTP / IDF1 evaluation against real
+      detector output -- benchmark_track is a synthetic proxy for this, not a
+      replacement; this is the immediate next step
+- [ ] connects to prior MOT / ReID work: association features beyond
+      geometry (appearance embeddings) once a real detector/dataset is in the
+      loop
 
 ## Phase 4 — Visual odometry
 
