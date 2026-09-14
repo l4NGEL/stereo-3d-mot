@@ -33,6 +33,7 @@
 #include "s3m/camera/camera_model.hpp"
 #include "s3m/core/timer.hpp"
 #include "s3m/io/synthetic_source.hpp"
+#include "s3m/tracking/appearance.hpp"
 #include "s3m/tracking/mot_metrics.hpp"
 #include "s3m/tracking/tracker.hpp"
 
@@ -183,11 +184,13 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
     update_us.reserve(static_cast<std::size_t>(scene_opts.num_frames));
 
     for (int f = 0; f < scene_opts.num_frames; ++f) {
+        const auto frame = src.next();  // same cursor order as cardBoxes(f) below -- see SyntheticStereoSource::next()
         const std::vector<SimDetection> sims =
             simulateDetections(src, f, rng, box_jitter_px, depth_jitter_m, miss_prob, fp_rate);
         std::vector<Detection3D> dets;
         dets.reserve(sims.size());
         for (const SimDetection& s : sims) dets.push_back(s.det);
+        if (frame) attachAppearance(dets, frame->left);
 
         Stopwatch sw;
         const TrackerUpdateResult res = tracker.update(dets);
@@ -315,6 +318,10 @@ int main(int argc, char** argv) {
     iou.association = AssociationMethod::kIou2D;
     iou.use_hungarian = true;
 
+    TrackerParams fused = base;
+    fused.association = AssociationMethod::kFusedAppearance;
+    fused.use_hungarian = true;
+
     TrackerParams mahalanobis_greedy = mahalanobis;
     mahalanobis_greedy.use_hungarian = false;
     TrackerParams iou_greedy = iou;
@@ -325,6 +332,8 @@ int main(int argc, char** argv) {
             fp_rate, seed, eval_gate),
         run(scene, iou, "2D IoU        + Hungarian", box_jitter, depth_jitter, miss_prob, fp_rate,
             seed, eval_gate),
+        run(scene, fused, "3D+IoU+ReID    + Hungarian", box_jitter, depth_jitter, miss_prob,
+            fp_rate, seed, eval_gate),
         run(scene, mahalanobis_greedy, "3D Mahalanobis + Greedy   ", box_jitter, depth_jitter,
             miss_prob, fp_rate, seed, eval_gate),
         run(scene, iou_greedy, "2D IoU        + Greedy   ", box_jitter, depth_jitter, miss_prob,

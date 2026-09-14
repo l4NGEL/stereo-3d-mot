@@ -117,14 +117,26 @@
   filtered from the result after, which matters (see the comment in
   `assignment.cpp` and `AssignmentTest.OverGateFiniteEntriesAreAsForbiddenAsInfinity`).
 - `Tracker` — predict → build a cost matrix → associate → update/coast →
-  birth/death. Two interchangeable `AssociationMethod`s read from the *same*
+  birth/death. Three interchangeable `AssociationMethod`s read from the *same*
   `Track` state: `kMahalanobis3D` (chi-square-gated squared Mahalanobis
-  distance — the depth-aware default) and `kIou2D` (1 − IoU on the last
-  matched 2D box — the classic baseline that never looks at depth). Both only
-  ever consider detections with `Detection3D::valid`, so the comparison
-  isolates the association *cue*, not what data is available. A hard class-id
-  gate applies to both. `TrackerParams::fromConfig()` reads
-  `configs/default.yaml`'s `tracking:` block.
+  distance — the depth-aware default), `kIou2D` (1 − IoU on the last matched
+  2D box — the classic baseline that never looks at depth), and
+  `kFusedAppearance` (Phase 5: a weighted blend of normalised Mahalanobis,
+  1 − IoU, and appearance distance, gated on the *union* of the Mahalanobis
+  and IoU gates rather than their intersection — see `tracker.hpp`'s comment
+  on `kFusedAppearance` for why). All three only ever consider detections
+  with `Detection3D::valid`, so the comparison isolates the association
+  *cue*, not what data is available. A hard class-id gate applies to all
+  three. `TrackerParams::fromConfig()` reads `configs/default.yaml`'s
+  `tracking:` block.
+- `appearance.hpp` (Phase 5) — `computeAppearanceDescriptor` builds an
+  HSV H/S color histogram over a detection's box (a classical descriptor, not
+  a learned ReID embedding — see the header comment for why that scope
+  choice); `appearanceDistance` is `cv::compareHist`'s Bhattacharyya distance
+  on it; `attachAppearance` fills in `Detection3D::appearance` for a frame's
+  detections from the source image. `Track` keeps a slow-EMA-blended running
+  descriptor (`kAppearanceEma = 0.9`, `track.cpp`), updated whenever it's
+  matched to a detection carrying one.
 - `MotAccumulator` (`mot_metrics.hpp`) — CLEAR-MOT (Bernardin & Stiefelhagen,
   2008) + IDF1 (Ristani et al., 2016): MOTA, MOTP, IDF1, ID switches,
   fragmentation, precision/recall, fed one frame of `{MotObject}` ground truth

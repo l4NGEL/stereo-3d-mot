@@ -39,7 +39,11 @@ tracking:
   min_hits: 3                 # matches before a track is confirmed
   gating_distance: 2.0        # informational; the active gate is gating_chi2 / iou_gate below
   # mahalanobis3d (depth-aware, recommended) | iou2d (image-plane only, no depth)
+  # | fused (mahalanobis3d + iou2d + appearance, weighted -- see fused_weight_*)
   association: "mahalanobis3d"
   gating_chi2: 7.815           # mahalanobis3d: chi-square(3 dof, 95%) gate
   iou_gate: 0.3                 # iou2d: minimum IoU to allow a match
   use_hungarian: 1               # 0 -> greedy nearest-first (for comparison)
+  fused_weight_3d: 0.5           # fused: weight on normalised squared Mahalanobis distance
+  fused_weight_iou: 0.2          # fused: weight on (1 - IoU)
+  fused_weight_appearance: 0.3   # fused: weight on Bhattacharyya appearance distance

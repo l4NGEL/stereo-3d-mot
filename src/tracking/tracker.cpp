@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "s3m/detection/nms.hpp"  // reuse the tested iou() for kIou2D cost
+#include "s3m/tracking/appearance.hpp"
 #include "s3m/tracking/assignment.hpp"
 
 namespace s3m {
@@ -21,11 +22,15 @@ TrackerParams TrackerParams::fromConfig(const TrackingParams& tp) {
     p.measurement_noise = tp.measurement_noise;
     p.max_age = tp.max_age;
     p.min_hits = tp.min_hits;
-    p.association =
-        (tp.association == "iou2d") ? AssociationMethod::kIou2D : AssociationMethod::kMahalanobis3D;
+    p.association = (tp.association == "iou2d")   ? AssociationMethod::kIou2D
+                    : (tp.association == "fused")  ? AssociationMethod::kFusedAppearance
+                                                    : AssociationMethod::kMahalanobis3D;
     p.gating_chi2 = tp.gating_chi2;
     p.iou_gate = tp.iou_gate;
     p.use_hungarian = tp.use_hungarian;
+    p.fused_weight_3d = tp.fused_weight_3d;
+    p.fused_weight_iou = tp.fused_weight_iou;
+    p.fused_weight_appearance = tp.fused_weight_appearance;
     return p;
 }
 
@@ -37,8 +42,13 @@ void Tracker::reset() {
 }
 
 double Tracker::gate() const {
-    return params_.association == AssociationMethod::kMahalanobis3D ? params_.gating_chi2
-                                                                     : (1.0 - params_.iou_gate);
+    if (params_.association == AssociationMethod::kMahalanobis3D) return params_.gating_chi2;
+    if (params_.association == AssociationMethod::kIou2D) return 1.0 - params_.iou_gate;
+    // kFusedAppearance: feasibility is decided per-pair in buildCostMatrix (the
+    // union of the two geometric gates), so every cost left in the matrix is
+    // already a feasible weighted blend in [0, 1] -- the solver's own gate
+    // just needs to not reject those.
+    return 1.0;
 }
 
 std::vector<std::vector<double>> Tracker::buildCostMatrix(
@@ -53,9 +63,24 @@ std::vector<std::vector<double>> Tracker::buildCostMatrix(
         for (std::size_t k = 0; k < cols; ++k) {
             const Detection3D& d = detections[static_cast<std::size_t>(usable_dets[k])];
             if (!classCompatible(t.classId(), d.class_id)) continue;
-            cost[i][k] = (params_.association == AssociationMethod::kMahalanobis3D)
-                             ? t.gatingDistanceSq(d.position)
-                             : (1.0 - iou(t.lastBox(), d.box));
+
+            if (params_.association == AssociationMethod::kMahalanobis3D) {
+                cost[i][k] = t.gatingDistanceSq(d.position);
+            } else if (params_.association == AssociationMethod::kIou2D) {
+                cost[i][k] = 1.0 - iou(t.lastBox(), d.box);
+            } else {
+                const double mahal_sq = t.gatingDistanceSq(d.position);
+                const double iou_val = iou(t.lastBox(), d.box);
+                if (mahal_sq > params_.gating_chi2 && iou_val < params_.iou_gate) continue;  // +inf
+
+                const double m_norm = std::min(mahal_sq / params_.gating_chi2, 1.0);
+                const double iou_cost = 1.0 - iou_val;
+                const double a_cost = (!t.appearance().empty() && !d.appearance.empty())
+                                           ? appearanceDistance(t.appearance(), d.appearance)
+                                           : 0.5;  // no descriptor on one side -- neutral, not a penalty
+                cost[i][k] = params_.fused_weight_3d * m_norm + params_.fused_weight_iou * iou_cost +
+                             params_.fused_weight_appearance * a_cost;
+            }
         }
     }
     return cost;
@@ -101,7 +126,7 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
         const int det_idx = usable[k];
         const Detection3D& d = detections[static_cast<std::size_t>(det_idx)];
         Track born(next_id_++, d.position, params_.dt, params_.process_noise,
-                   params_.measurement_noise, d.class_id, d.box);
+                   params_.measurement_noise, d.class_id, d.box, d.appearance);
         born.setMinHits(params_.min_hits);
         result.detection_track_id[static_cast<std::size_t>(det_idx)] = born.id();
         tracks_.push_back(std::move(born));

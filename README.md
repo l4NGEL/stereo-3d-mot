@@ -7,22 +7,27 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–4 built and run end to end, including on real KITTI
+> Status: **Phases 1–5 built and run end to end, including on real KITTI
 > data.** Calibrated stereo geometry, BM/SGBM disparity, metric depth, dense
 > 3D reprojection + PLY export, a synthetic scene with exact ground truth, a
 > Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
-> (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object tracker
-> (Hungarian/greedy association, gated on either chi-square Mahalanobis
-> distance in 3D or 2D IoU — pick per run and compare) with trajectory export,
-> and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`, validated against
-> py-motmetrics) with a KITTI tracking-benchmark loader. 98 unit tests pass;
-> all 5 apps run end to end, including `benchmark_kitti` against a real
-> downloaded KITTI tracking sequence — see
-> [KITTI evaluation](#kitti-evaluation) below for the real numbers and the
-> honest read on what they mean (short version: absolute MOTA is negative
-> because of a real, explained detector/GT domain mismatch, and on real noisy
-> stereo depth the 2D-vs-3D gap from the synthetic benchmark below mostly
-> closes — not a rerun of the same clean win).
+> (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object tracker with
+> three interchangeable association strategies — chi-square Mahalanobis
+> distance in 3D, 2D IoU, and a Phase 5 fusion of both plus an appearance
+> (color-histogram) cue — Hungarian or greedy, pick per run and compare, with
+> trajectory export, and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`,
+> validated against py-motmetrics) with a KITTI tracking-benchmark loader.
+> 106 unit tests pass (1 skipped outside its expected working-directory
+> context); all 5 apps run end to end, including `benchmark_kitti`
+> against a real downloaded KITTI tracking sequence — see
+> [KITTI evaluation](#kitti-evaluation) and
+> [Phase 5](#phase-5--appearance-aware-reid-association) below for the real
+> numbers and the honest read on what they mean (short version: absolute
+> MOTA is negative because of a real, explained detector/GT domain mismatch;
+> on real noisy stereo depth the 2D-vs-3D gap from the synthetic benchmark
+> mostly closes; and fusing in an appearance cue recovers a real, if partial,
+> identity-consistency win on that same real sequence — not a cherry-picked
+> "ReID wins" claim).
 
 ---
 
@@ -153,18 +158,19 @@ The `test_onnx_detector` suite runs against a 99 KB hand-built ONNX fixture
 ## Tracking → 3D MOT
 
 `Tracker` runs each frame's `Detection3D`s through predict → associate →
-update/coast → birth/death. Two association methods read from the exact same
-`Track` state, so they're a fair, swappable comparison — not two different
+update/coast → birth/death. Three association methods read from the exact
+same `Track` state, so they're a fair, swappable comparison — not different
 trackers:
 
 | `tracking.association` | cost function | uses depth for the *decision*? |
 |---|---|---|
 | `mahalanobis3d` (default) | chi-square-gated squared Mahalanobis distance in 3D | yes |
 | `iou2d` | 1 − IoU on the last matched 2D box | no (the classic baseline) |
+| `fused` | weighted blend of both plus an appearance cue — [Phase 5](#phase-5--appearance-aware-reid-association) | yes, plus appearance |
 
-Both respect `tracking.use_hungarian` (optimal Kuhn-Munkres, default) vs a
-greedy nearest-first baseline (`solveAssignmentGreedy`), and a hard class-id
-gate. Enable it in the demo and export the trajectories:
+All three respect `tracking.use_hungarian` (optimal Kuhn-Munkres, default) vs
+a greedy nearest-first baseline (`solveAssignmentGreedy`), and a hard
+class-id gate. Enable one in the demo and export the trajectories:
 
 ```bash
 ./build/apps/stereo_depth_demo --source synthetic --detector onnx \
@@ -301,6 +307,90 @@ different noise scale on real sensor data instead of simulated data.
   Phase 5 is meant to help close, by giving the associator a cue that doesn't
   degrade with depth noise.
 
+## Phase 5 — Appearance-aware (ReID) association
+
+A third association cue, fused with the existing two as
+`C = α·C_3D + β·C_IoU + γ·C_ReID` (`AssociationMethod::kFusedAppearance`,
+`tracker.hpp`), α/β/γ = 0.5/0.2/0.3 by default
+(`TrackerParams::fused_weight_*`, `configs/*.yaml`).
+
+**Scope, stated up front**: the "ReID" cue here is a classical HSV
+color histogram (`tracking/appearance.hpp`, Bhattacharyya distance via
+`cv::compareHist`), not a learned ReID embedding. That's deliberate, not a
+shortcut taken by accident — it needs no model file, export step, or new
+dependency, and histogram-based appearance matching is a real,
+long-established MOT technique for exactly the role it plays here: one
+fusable cue among several, not the sole association signal a real ReID
+network is designed to be. A learned embedding would likely separate
+appearance better, especially between similarly-colored objects — that's
+future work this project doesn't claim to have done.
+
+Gating uses the *union* of the Mahalanobis and IoU gates, not their
+intersection: deliberately looser than either alone, because the whole point
+of fusing in a second geometric cue plus appearance is staying robust when
+one cue is unreliable — and Phase 4 just showed real stereo depth is exactly
+that unreliable cue on noisy real data. Gating on the intersection would
+just inherit whichever cue is currently worse. A detection or track with no
+appearance descriptor yet falls back to a neutral 0.5 appearance cost rather
+than being excluded.
+
+`TrackerTest.FusedAppearanceRecoversIdentityMahalanobisAloneGetsWrong` pins
+the mechanism down with hand-verified numbers, mirroring Phase 3's
+`DepthSeparatesOccludingBoxesIou2DGetsItWrong`: two tracks settle at close
+depths (2.00 m red, 2.10 m blue); a red disambiguating detection sits
+geometrically *closer* to the wrong (blue) track (0.07 m from red vs 0.03 m
+from blue — plain Mahalanobis prefers blue by a clear margin). Fusing in
+appearance correctly recovers red. A paired test confirms the neutral 0.5
+fallback doesn't change anything when neither side has a descriptor yet —
+fused degrades gracefully to plain geometry, it doesn't add noise.
+
+The fusion weights were set by reasoning plus those unit tests, **not**
+tuned against either benchmark's numbers below — the same discipline this
+project has used since Phase 3 (validate against a trusted reference before
+trusting a result), applied here as validate-before-you-look-at-the-target
+instead of validate-against-a-reference-library.
+
+**Synthetic scene** (`benchmark_track` — cards have distinct colors by
+construction, tints already baked into `SyntheticStereoSource`):
+
+```
+method                        ID switch   ID consist.%   fragm. false trk%
+3D Mahalanobis + Hungarian            2          99.5%        1      25.0%
+2D IoU        + Hungarian             2          58.3%        2      60.0%
+3D+IoU+ReID    + Hungarian            0         100.0%        0      50.0%
+```
+
+Fused ties or beats plain 3D Mahalanobis on every identity metric (IDF1 tied
+at 0.989) — but at a higher false-track rate (50% vs 25%). That's the union
+gate's honest cost: it lets through a false-positive detection the tighter
+single gate would have rejected, in exchange for never losing a genuinely
+correct match to an unreliable single cue. A real, explainable trade, not
+hidden in the writeup.
+
+**Real KITTI sequence 0000** (`benchmark_kitti`, same run as the [KITTI
+evaluation](#kitti-evaluation) section above, third method added):
+
+```
+3D Mahalanobis: IDF1=0.182  IDSW=33  Frag=11  FP=2195  MOTA=-2.304
+2D IoU        : IDF1=0.187  IDSW=35  Frag=23  FP=1980  MOTA=-2.135
+3D+IoU+ReID   : IDF1=0.203  IDSW=27  Frag=13  FP=2145  MOTA=-2.270
+```
+
+On real, noisy data, fusion **wins outright on IDF1** (0.203 vs 0.182 vs
+0.187 — the identity-focused metric this whole project has centered on) and
+**wins outright on ID switches** (27 vs 33 vs 35, the fewest of all three).
+Not a clean sweep, and reported as such: plain 3D still fragments least (11
+vs fused's 13), and plain 2D still has the fewest raw false positives (1980
+vs fused's 2145) — both the same union-gate trade-off seen on the synthetic
+scene, just smaller in absolute effect here.
+
+This directly validates the motivation written into the Phase 4 section
+above *before* any of Phase 5 was built: real stereo depth noise erodes 3D
+Mahalanobis's clean synthetic-scene win, and appearance is a cue that
+doesn't degrade with depth noise the way Mahalanobis gating does — fusing it
+back in recovers real ground on the exact same real sequence, without
+tuning a single weight against this number.
+
 ## Example benchmark output
 
 Measured on the built-in synthetic scene (640×480, default config: SGBM,
@@ -341,7 +431,7 @@ include/s3m/            public headers                 src/            implement
   viz/     depth / disparity colourisation, image tiling, detection/track overlays
 
 apps/    stereo_depth_demo, benchmark_{depth,detect,track,kitti}
-tests/   GoogleTest suites (17 files) + tests/data/ ONNX fixture
+tests/   GoogleTest suites (18 files) + tests/data/ ONNX fixture
 cmake/   warning flags, FindONNXRuntime        configs/ default.yaml
 docs/    architecture.md, roadmap.md           scripts/ datasets, model export
 ```
@@ -370,17 +460,19 @@ Z = fx * B / (d + doffs)
 3. **3D multi-object tracking — done.** `Tracker` (Hungarian/greedy, chi-square
    Mahalanobis-3D or IoU-2D association, class gate, birth/death), trajectory
    export, `benchmark_track` head-to-head comparison.
-4. **KITTI + MOTA/MOTP/IDF1 — built, not yet run for real.** `MotAccumulator`
-   (validated against py-motmetrics), the KITTI tracking loader, and
-   `benchmark_kitti` all exist and are unit-tested; running them against a
-   downloaded sequence for real numbers is the one thing left.
-5. Appearance-aware association (ReID): a third cost term fusable with the
-   existing geometric cues, once Phase 4 has a real baseline to improve on.
+4. **KITTI + MOTA/MOTP/IDF1 — done.** `MotAccumulator` (validated against
+   py-motmetrics), the KITTI tracking loader, and `benchmark_kitti` all run
+   against a real downloaded sequence; see [KITTI evaluation](#kitti-evaluation).
+5. **Appearance-aware association (ReID) — done.** A third cost term
+   (classical color-histogram appearance, not a learned embedding — scoped
+   deliberately) fused with the existing geometric cues; real win on IDF1 and
+   ID switches on the same KITTI sequence. See
+   [Phase 5](#phase-5--appearance-aware-reid-association).
 6. Real-time optimisation: profiling, tiling/parallelism, single→multi-thread,
    optional CUDA/TensorRT path.
 7. Visual odometry: feature tracks, essential matrix, camera pose — touches the
    VI-SLAM side.
-8. ROS2 integration (optional / bonus), once Phases 4–7 give the stack
+8. ROS2 integration (optional / bonus), once Phases 6–7 give the stack
    something worth wrapping in a node graph.
 
 Details and rationale in [docs/roadmap.md](docs/roadmap.md).

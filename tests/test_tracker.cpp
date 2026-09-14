@@ -5,6 +5,7 @@
 #include <opencv2/core.hpp>
 
 #include "s3m/camera/stereo_rig.hpp"
+#include "s3m/tracking/appearance.hpp"
 #include "s3m/tracking/tracker.hpp"
 
 using namespace s3m;
@@ -27,6 +28,14 @@ Detection3D makeDetection(cv::Rect2f box, double depth, int class_id = 0, float 
     d.class_id = class_id;
     d.score = score;
     d.valid = true;
+    return d;
+}
+
+Detection3D makeDetectionWithAppearance(cv::Rect2f box, double depth, cv::Scalar bgr,
+                                        int class_id = 0, float score = 0.9f) {
+    Detection3D d = makeDetection(box, depth, class_id, score);
+    const cv::Mat solid_color_crop(40, 40, CV_8UC3, bgr);
+    d.appearance = computeAppearanceDescriptor(solid_color_crop, cv::Rect2f(0, 0, 40, 40));
     return d;
 }
 
@@ -168,6 +177,65 @@ TEST(Tracker, DepthSeparatesOccludingBoxesIou2DGetsItWrong) {
     }
 }
 
+// Phase 5: fusing in appearance recovers an identity that Mahalanobis alone
+// gets wrong. Two tracks settle at close depths with the SAME box throughout
+// (so IoU never discriminates between them) -- one red at 2.00 m, one blue at
+// 2.10 m. The disambiguating detection is red, but sits geometrically closer
+// to the *blue* track's settled depth (2.07 m: 0.07 m from red's 2.00 m vs
+// only 0.03 m from blue's 2.10 m -- ~5.4x cheaper in squared Mahalanobis
+// terms, so plain kMahalanobis3D confidently picks the wrong, blue track).
+// kFusedAppearance's default weights (0.5 geometry / 0.2 IoU / 0.3 appearance)
+// are enough for the appearance term (distance 0 to red, 1 to blue) to
+// overturn that and pick the right, red one.
+TEST(Tracker, FusedAppearanceRecoversIdentityMahalanobisAloneGetsWrong) {
+    const cv::Rect2f box(280, 200, 40, 40);
+    const cv::Scalar red(0, 0, 255), blue(255, 0, 0);
+
+    TrackerParams p = basicParams(AssociationMethod::kFusedAppearance);
+    p.min_hits = 1;
+    Tracker tracker(p);
+
+    int id_red = -1;
+    int id_blue = -1;
+    for (int f = 0; f < 3; ++f) {
+        const TrackerUpdateResult r = tracker.update({makeDetectionWithAppearance(box, 2.00, red),
+                                                       makeDetectionWithAppearance(box, 2.10, blue)});
+        id_red = r.detection_track_id[0];
+        id_blue = r.detection_track_id[1];
+    }
+    ASSERT_EQ(tracker.tracks().size(), 2u);
+    ASSERT_NE(id_red, id_blue);
+
+    const Detection3D ambiguous = makeDetectionWithAppearance(box, 2.07, red);
+    const TrackerUpdateResult r = tracker.update({ambiguous});
+    EXPECT_EQ(r.detection_track_id[0], id_red)
+        << "appearance should override a small Mahalanobis-distance disadvantage";
+}
+
+// Same setup with no appearance descriptors at all (Detection3D's default
+// empty Mat): the neutral 0.5 fallback contributes equally to every
+// candidate, so it must not change the ranking -- kFusedAppearance should
+// fall back to deciding on geometry alone, same outcome as kMahalanobis3D.
+TEST(Tracker, FusedAppearanceFallsBackToGeometryWithNoDescriptor) {
+    const cv::Rect2f box(280, 200, 40, 40);
+    TrackerParams p = basicParams(AssociationMethod::kFusedAppearance);
+    p.min_hits = 1;
+    Tracker tracker(p);
+
+    int id_near = -1;
+    int id_far = -1;
+    for (int f = 0; f < 3; ++f) {
+        const TrackerUpdateResult r =
+            tracker.update({makeDetection(box, 2.00), makeDetection(box, 2.10)});
+        id_near = r.detection_track_id[0];
+        id_far = r.detection_track_id[1];
+    }
+    ASSERT_NE(id_near, id_far);
+
+    const TrackerUpdateResult r = tracker.update({makeDetection(box, 2.02)});
+    EXPECT_EQ(r.detection_track_id[0], id_near);
+}
+
 TEST(Tracker, GreedyAndHungarianAgreeOnAnUnambiguousScene) {
     TrackerParams h = basicParams(AssociationMethod::kMahalanobis3D);
     TrackerParams g = h;
@@ -214,4 +282,14 @@ TEST(TrackerParams, FromConfigMapsAssociationString) {
 
     tp.association = "unrecognised-defaults-to-3d";
     EXPECT_EQ(TrackerParams::fromConfig(tp).association, AssociationMethod::kMahalanobis3D);
+
+    tp.association = "fused";
+    tp.fused_weight_3d = 0.4;
+    tp.fused_weight_iou = 0.1;
+    tp.fused_weight_appearance = 0.5;
+    const TrackerParams fused = TrackerParams::fromConfig(tp);
+    EXPECT_EQ(fused.association, AssociationMethod::kFusedAppearance);
+    EXPECT_DOUBLE_EQ(fused.fused_weight_3d, 0.4);
+    EXPECT_DOUBLE_EQ(fused.fused_weight_iou, 0.1);
+    EXPECT_DOUBLE_EQ(fused.fused_weight_appearance, 0.5);
 }

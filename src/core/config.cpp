@@ -93,6 +93,9 @@ Config Config::load(const std::string& path) {
     readScalar(tr, "gating_chi2", cfg.tracking.gating_chi2);
     readScalar(tr, "iou_gate", cfg.tracking.iou_gate);
     readBool(tr, "use_hungarian", cfg.tracking.use_hungarian);
+    readScalar(tr, "fused_weight_3d", cfg.tracking.fused_weight_3d);
+    readScalar(tr, "fused_weight_iou", cfg.tracking.fused_weight_iou);
+    readScalar(tr, "fused_weight_appearance", cfg.tracking.fused_weight_appearance);
 
     return cfg;
 }

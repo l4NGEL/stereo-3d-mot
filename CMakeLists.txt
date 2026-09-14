@@ -91,6 +91,7 @@ add_library(s3m
     src/tracking/track.cpp
     src/tracking/tracker.cpp
     src/tracking/mot_metrics.cpp
+    src/tracking/appearance.cpp
     src/viz/depth_viz.cpp)
 
 add_library(s3m::s3m ALIAS s3m)

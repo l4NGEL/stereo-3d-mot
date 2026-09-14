@@ -53,3 +53,11 @@ tracking:
   gating_chi2: 7.815
   iou_gate: 0.3
   use_hungarian: 1
+  # Phase 5 fused association (benchmark_kitti runs all three methods
+  # regardless of `association` above -- these weights only affect the fused
+  # one). Chosen by reasoning + the hand-verified unit tests in
+  # test_tracker.cpp, NOT tuned against this sequence's real numbers -- see
+  # docs/roadmap.md Phase 5.
+  fused_weight_3d: 0.5
+  fused_weight_iou: 0.2
+  fused_weight_appearance: 0.3

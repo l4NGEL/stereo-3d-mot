@@ -105,17 +105,62 @@ next one slots into an interface that already exists.
       section -- not repeated here to avoid the two copies drifting apart.
 - [ ] connects to prior MOT / ReID work -- Phase 5.
 
-## Phase 5 — Appearance-aware association (ReID)
+## Phase 5 — Appearance-aware association (ReID)  ✅ done
 
-- [ ] a third association cue: appearance embedding distance (cosine/L2 on a
-      ReID feature vector), fusable with the existing geometric cues as
-      `C = α·C_3D + β·C_IoU + γ·C_ReID`
-- [ ] draws on prior ReID / MOT17 / occlusion and ID-switch-forensics work --
-      the natural place that experience plugs into this pipeline
-- [ ] re-run the Phase 4 KITTI table with a third row; the interesting result
-      isn't "ReID wins" in isolation, it's *how much* it helps once depth is
-      already in the cost function
-- [ ] do this only after Phase 4 has real baseline numbers to improve on
+- [x] A third association cue, fused with the existing geometric ones as
+      `C = α·C_3D + β·C_IoU + γ·C_ReID` (`kFusedAppearance`, `tracker.hpp`),
+      α/β/γ = 0.5/0.2/0.3 by default (`TrackerParams::fused_weight_*`).
+      **Scope choice, stated up front**: the "ReID" cue is a classical HSV
+      color histogram (`appearance.hpp`, Bhattacharyya distance), not a
+      learned embedding -- no model file, export step, or new dependency,
+      and histogram-based appearance matching is a real, long-established MOT
+      technique for exactly this role (one fusable cue, not the sole
+      association signal a real ReID network is designed to be). A learned
+      embedding would very likely separate appearance better, especially
+      between same-colored objects; that's future work, not something this
+      phase claims to have done.
+- [x] Gating: the *union* of the Mahalanobis and IoU gates, not their
+      intersection -- deliberately looser than either alone, since the whole
+      point of fusing in a second geometric cue plus appearance is staying
+      robust when one cue (here: depth, per Phase 4's real-data finding) is
+      unreliable. Gating on the intersection would just inherit whichever
+      cue is currently worse.
+- [x] Hand-verified unit test (`TrackerTest.
+      FusedAppearanceRecoversIdentityMahalanobisAloneGetsWrong`): two tracks
+      at close depths (2.00 m red, 2.10 m blue), a red disambiguating
+      detection sitting geometrically *closer* to the wrong (blue) track --
+      plain `kMahalanobis3D` picks blue, `kFusedAppearance` correctly picks
+      red. Paired with a no-descriptor fallback test proving the neutral
+      0.5 appearance cost doesn't change the ranking when nothing has a
+      descriptor yet (i.e. fused degrades gracefully to plain geometry, it
+      doesn't just add noise).
+- [x] Weights set by reasoning + those unit tests, **not** tuned against
+      either benchmark's real numbers below -- same discipline as every
+      earlier phase's Python-first validation, applied here as
+      validate-before-you-look-at-the-target-number instead.
+- [x] Re-ran both Phase 3/4 benchmarks with the third row.
+      `benchmark_track` (synthetic scene, cards have distinct colors by
+      construction): fused **ties or beats** plain 3D Mahalanobis (0 ID
+      switches vs 2, 100% vs 99.5% ID consistency, IDF1 0.989 tied) at the
+      cost of a higher false-track rate (50% vs 25% -- the looser OR-gate
+      lets through a false positive the tighter single gate would have
+      rejected; an honest, explainable trade, not hidden).
+      `benchmark_kitti` (real sequence 0000): **IDF1 0.203 (fused) vs 0.182
+      (3D) vs 0.187 (2D)** -- a genuine win on the identity metric this whole
+      project has centered on, and **IDSW 27 (fused) vs 33 (3D) vs 35 (2D)**
+      -- also the fewest identity switches of the three. Not a clean sweep:
+      plain 3D still fragments least (11 vs fused's 13) and plain 2D still
+      has the fewest raw false positives (1980 vs fused's 2145), both for the
+      same reason (the union gate trades a little precision for identity
+      robustness). Full numbers and interpretation in the README's
+      [Phase 5](../README.md#phase-5--appearance-aware-reid-association)
+      section.
+- [x] This directly validates the motivation written into the Phase 4
+      write-up before any of Phase 5 was built: real stereo depth noise
+      erodes 3D Mahalanobis's synthetic-scene advantage, and appearance is a
+      cue that doesn't degrade with depth noise the way Mahalanobis gating
+      does -- fusing it back in recovers some of that lost ground on the
+      exact same real sequence.
 
 ## Phase 6 — Real-time optimisation
 

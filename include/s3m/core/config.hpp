@@ -47,13 +47,21 @@ struct TrackingParams {
     int min_hits = 3;                ///< matches required to confirm a track
     double gating_distance = 2.0;    ///< informational: a plain-metres reference gate
 
-    /// "mahalanobis3d" (depth-aware; recommended) or "iou2d" (image-plane only,
+    /// "mahalanobis3d" (depth-aware; recommended), "iou2d" (image-plane only,
     /// no stereo depth used at all -- kept as the classic baseline to compare
-    /// against). See docs/roadmap.md for why 3D disambiguates what 2D can't.
+    /// against), or "fused" (Mahalanobis + IoU + appearance, weighted --
+    /// see fused_weight_* below). See docs/roadmap.md for why 3D disambiguates
+    /// what 2D can't, and Phase 5 for why/when fusing in appearance helps.
     std::string association = "mahalanobis3d";
     double gating_chi2 = 7.815;      ///< mahalanobis3d: chi-square(3 dof, 95%) gate
     double iou_gate = 0.3;           ///< iou2d: minimum IoU to allow a match
     bool use_hungarian = true;       ///< false -> greedy nearest-first (for comparison)
+
+    /// fused: weights on (normalised squared Mahalanobis, 1 - IoU, appearance
+    /// Bhattacharyya distance) respectively; should sum to 1.
+    double fused_weight_3d = 0.5;
+    double fused_weight_iou = 0.2;
+    double fused_weight_appearance = 0.3;
 };
 
 /// Aggregated pipeline configuration.

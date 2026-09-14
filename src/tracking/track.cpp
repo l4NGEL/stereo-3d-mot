@@ -9,12 +9,20 @@ KalmanFilter::Vec toVec3(const cv::Point3f& p) {
     return v;
 }
 
+/// Weight kept on a track's existing appearance descriptor each time it's
+/// blended with a newly-matched detection's; the new descriptor contributes
+/// (1 - kAppearanceEma). Slow-adapting on purpose (DeepSORT-style gallery
+/// smoothing) so one noisy or partially-occluded frame can't overwrite a
+/// track's identity in a single update.
+constexpr double kAppearanceEma = 0.9;
+
 }  // namespace
 
 Track::Track(int id, const cv::Point3f& initial_position, double dt, double accel_std,
-             double meas_std, int class_id, const cv::Rect2f& initial_box)
+             double meas_std, int class_id, const cv::Rect2f& initial_box,
+             const cv::Mat& initial_appearance)
     : id_(id), kf_(makeConstantVelocity3D(dt, accel_std, meas_std)), last_box_(initial_box),
-      class_id_(class_id) {
+      class_id_(class_id), appearance_(initial_appearance) {
     KalmanFilter::Vec x0 = KalmanFilter::Vec::Zero(6);
     x0(0) = static_cast<double>(initial_position.x);
     x0(1) = static_cast<double>(initial_position.y);
@@ -38,6 +46,13 @@ void Track::correct(const Detection3D& detection) {
     correct(detection.position);
     last_box_ = detection.box;
     class_id_ = detection.class_id;
+    if (!detection.appearance.empty()) {
+        if (appearance_.empty()) {
+            appearance_ = detection.appearance.clone();
+        } else {
+            appearance_ = kAppearanceEma * appearance_ + (1.0 - kAppearanceEma) * detection.appearance;
+        }
+    }
 }
 
 void Track::markMissed() { ++time_since_update_; }

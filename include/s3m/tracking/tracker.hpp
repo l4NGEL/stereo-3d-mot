@@ -24,6 +24,17 @@ enum class AssociationMethod {
     /// swapped. Kept to make that failure mode demonstrable (see
     /// benchmark_track and TrackerTest.DepthSeparatesOccludingBoxes).
     kIou2D,
+    /// Weighted fusion of all three cues: normalised squared Mahalanobis
+    /// distance, 1 - IoU, and appearance (Bhattacharyya on an HSV histogram,
+    /// tracking/appearance.hpp) -- `TrackerParams::fused_weight_*`. Gated on
+    /// the *union* of the Mahalanobis and IoU gates (either geometric cue
+    /// admitting the pair is enough), not their intersection: the point of
+    /// fusing in a second, independent cue is to stay robust when one of them
+    /// is unreliable, and gating on the intersection would just inherit
+    /// whichever cue is currently worse. A detection with no appearance
+    /// descriptor (or a track that hasn't matched one yet) falls back to a
+    /// neutral 0.5 appearance cost rather than being excluded.
+    kFusedAppearance,
 };
 
 struct TrackerParams {
@@ -36,6 +47,14 @@ struct TrackerParams {
     double gating_chi2 = 7.815;   ///< kMahalanobis3D: chi-square(3 dof, 95%)
     double iou_gate = 0.3;        ///< kIou2D: minimum IoU to allow a match
     bool use_hungarian = true;    ///< false -> greedy nearest-first
+
+    /// kFusedAppearance cost weights; should sum to 1 (not enforced -- an
+    /// unnormalised sum just rescales the gate=1.0 comparison uniformly,
+    /// which is harmless, but the individual terms stop being readable as
+    /// "share of the cost").
+    double fused_weight_3d = 0.5;
+    double fused_weight_iou = 0.2;
+    double fused_weight_appearance = 0.3;
 
     static TrackerParams fromConfig(const TrackingParams& tp);
 };

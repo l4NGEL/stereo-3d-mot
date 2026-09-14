@@ -42,6 +42,7 @@ struct Detection3D {
     float score = 0.0f;
     int class_id = 0;
     bool valid = false;         ///< false when the box had too few valid depth pixels
+    cv::Mat appearance;         ///< optional; see tracking/appearance.hpp. Empty if unset.
 };
 
 /// Filtered state of one tracked object.

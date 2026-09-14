@@ -18,6 +18,7 @@
 #include "s3m/depth/stereo_matcher.hpp"
 #include "s3m/geometry/reprojection.hpp"
 #include "s3m/io/kitti_loader.hpp"
+#include "s3m/tracking/appearance.hpp"
 #include "s3m/tracking/mot_metrics.hpp"
 #include "s3m/tracking/tracker.hpp"
 
@@ -77,7 +78,8 @@ MotSummary run(KittiTrackingSource& source, Detector& detector, const StereoMatc
         const cv::Mat disparity = matcher.computeDisparity(frame->left, frame->right);
         const cv::Mat depth = disparityToDepthMap(disparity, source.rig());
         const std::vector<Detection2D> dets2d = detector.detect(frame->left);
-        const std::vector<Detection3D> dets3d = promoteTo3D(dets2d, depth, source.rig());
+        std::vector<Detection3D> dets3d = promoteTo3D(dets2d, depth, source.rig());
+        attachAppearance(dets3d, frame->left);
 
         // Only confirmed tracks are submitted as predictions -- tentative
         // (not yet past min_hits) tracks would inflate false positives with
@@ -140,6 +142,11 @@ int main(int argc, char** argv) {
               << "\n";
     std::cout << "2D IoU        : "
               << run(*source, *detector, cfg.stereo_matcher, AssociationMethod::kIou2D,
+                     base_params, gate, max_frames)
+                     .toString()
+              << "\n";
+    std::cout << "3D+IoU+ReID   : "
+              << run(*source, *detector, cfg.stereo_matcher, AssociationMethod::kFusedAppearance,
                      base_params, gate, max_frames)
                      .toString()
               << "\n";

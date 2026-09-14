@@ -26,6 +26,7 @@ add_executable(s3m_tests
     test_nms.cpp
     test_assignment.cpp
     test_tracker.cpp
+    test_appearance.cpp
     test_trajectory_io.cpp
     test_mot_metrics.cpp
     test_kitti_loader.cpp)
