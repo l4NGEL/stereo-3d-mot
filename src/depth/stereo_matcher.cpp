@@ -32,6 +32,35 @@ cv::Mat toGray(const cv::Mat& image) {
     return gray;
 }
 
+/// Builds one BM/SGBM instance from already-normalised params. Factored out
+/// of configure() so the tiled path can build several independent instances
+/// (one per tile) with exactly the same settings as the untiled one.
+cv::Ptr<cv::StereoMatcher> makeMatcher(const StereoMatcherParams& p, const std::string& type,
+                                       int pre_cap, int uniqueness, int speckle_win,
+                                       int speckle_range) {
+    if (type == "BM") {
+        const int block = makeOdd(p.block_size, 5, 51);
+        cv::Ptr<cv::StereoBM> bm = cv::StereoBM::create(p.num_disparities, block);
+        bm->setMinDisparity(p.min_disparity);
+        bm->setPreFilterCap(pre_cap);
+        bm->setUniquenessRatio(uniqueness);
+        bm->setSpeckleWindowSize(speckle_win);
+        bm->setSpeckleRange(speckle_range);
+        bm->setDisp12MaxDiff(p.disp12_max_diff);
+        return bm;
+    }
+    if (type == "SGBM") {
+        const int block = makeOdd(p.block_size, 1, 11);
+        const int p1 = p.p1_multiplier * block * block;
+        const int p2 = std::max(p1 + 1, p.p2_multiplier * block * block);
+        return cv::StereoSGBM::create(p.min_disparity, p.num_disparities, block, p1, p2,
+                                      p.disp12_max_diff, pre_cap, uniqueness, speckle_win,
+                                      speckle_range,
+                                      p.mode_hh ? cv::StereoSGBM::MODE_HH : cv::StereoSGBM::MODE_SGBM);
+    }
+    throw std::invalid_argument("StereoMatcher: unknown type '" + p.type + "'");
+}
+
 }  // namespace
 
 StereoMatcher::StereoMatcher(const StereoMatcherParams& params) { configure(params); }
@@ -45,40 +74,72 @@ void StereoMatcher::configure(const StereoMatcherParams& params) {
     const int uniqueness = std::max(0, params_.uniqueness_ratio);
     const int speckle_win = std::max(0, params_.speckle_window_size);
     const int speckle_range = std::max(0, params_.speckle_range);
+    const int block_for_overlap = (type == "BM") ? makeOdd(params_.block_size, 5, 51)
+                                                 : makeOdd(params_.block_size, 1, 11);
 
-    if (type == "BM") {
-        const int block = makeOdd(params_.block_size, 5, 51);
-        cv::Ptr<cv::StereoBM> bm = cv::StereoBM::create(params_.num_disparities, block);
-        bm->setMinDisparity(params_.min_disparity);
-        bm->setPreFilterCap(pre_cap);
-        bm->setUniquenessRatio(uniqueness);
-        bm->setSpeckleWindowSize(speckle_win);
-        bm->setSpeckleRange(speckle_range);
-        bm->setDisp12MaxDiff(params_.disp12_max_diff);
-        matcher_ = bm;
-    } else if (type == "SGBM") {
-        const int block = makeOdd(params_.block_size, 1, 11);
-        const int p1 = params_.p1_multiplier * block * block;
-        const int p2 = std::max(p1 + 1, params_.p2_multiplier * block * block);
-        matcher_ = cv::StereoSGBM::create(
-            params_.min_disparity, params_.num_disparities, block, p1, p2,
-            params_.disp12_max_diff, pre_cap, uniqueness, speckle_win, speckle_range,
-            params_.mode_hh ? cv::StereoSGBM::MODE_HH : cv::StereoSGBM::MODE_SGBM);
+    matcher_ = nullptr;
+    tile_matchers_.clear();
+    if (params_.num_tiles <= 1) {
+        matcher_ = makeMatcher(params_, type, pre_cap, uniqueness, speckle_win, speckle_range);
     } else {
-        throw std::invalid_argument("StereoMatcher: unknown type '" + params_.type + "'");
+        tile_matchers_.reserve(static_cast<std::size_t>(params_.num_tiles));
+        for (int i = 0; i < params_.num_tiles; ++i) {
+            tile_matchers_.push_back(
+                makeMatcher(params_, type, pre_cap, uniqueness, speckle_win, speckle_range));
+        }
+        // Margin so each tile's block-matching window and SGBM's aggregation
+        // near the seam see close to the same neighbourhood the untiled
+        // matcher would have. Deliberately tight, not the conservative
+        // max(32, 8*block) first guess: on KITTI-sized (short, ~375-row)
+        // images the overlap competes directly with tile height for a fixed
+        // tile count, and an overly generous margin makes more tiles a net
+        // *loss* (each tile redoes a larger fraction of its neighbours'
+        // work). See docs/roadmap.md Phase 6 for the measured accuracy this
+        // buys and the tile-count sweep that motivated tightening it.
+        overlap_rows_ = std::max(16, 3 * block_for_overlap);
     }
+}
+
+cv::Mat StereoMatcher::computeTiledRaw(const cv::Mat& left_gray, const cv::Mat& right_gray) const {
+    const int rows = left_gray.rows;
+    const int n = static_cast<int>(tile_matchers_.size());
+    cv::Mat raw(left_gray.size(), CV_16S);
+    const int base_h = rows / n;
+
+    cv::parallel_for_(cv::Range(0, n), [&](const cv::Range& r) {
+        for (int i = r.start; i < r.end; ++i) {
+            const int y0 = i * base_h;
+            const int y1 = (i == n - 1) ? rows : (i + 1) * base_h;
+            const int ov_top = std::min(overlap_rows_, y0);
+            const int ov_bottom = std::min(overlap_rows_, rows - y1);
+            const cv::Range padded(y0 - ov_top, y1 + ov_bottom);
+
+            cv::Mat tile_raw;
+            tile_matchers_[static_cast<std::size_t>(i)]->compute(left_gray.rowRange(padded),
+                                                                  right_gray.rowRange(padded),
+                                                                  tile_raw);
+            tile_raw.rowRange(ov_top, ov_top + (y1 - y0)).copyTo(raw.rowRange(y0, y1));
+        }
+    });
+    return raw;
 }
 
 cv::Mat StereoMatcher::computeDisparity(const cv::Mat& left, const cv::Mat& right) {
     if (left.empty() || right.empty() || left.size() != right.size()) {
         throw std::invalid_argument("StereoMatcher::computeDisparity: empty or mismatched inputs");
     }
-    if (!matcher_) {
+    if (!matcher_ && tile_matchers_.empty()) {
         throw std::runtime_error("StereoMatcher::computeDisparity: matcher not configured");
     }
 
+    const cv::Mat left_gray = toGray(left);
+    const cv::Mat right_gray = toGray(right);
     cv::Mat raw;
-    matcher_->compute(toGray(left), toGray(right), raw);
+    if (matcher_) {
+        matcher_->compute(left_gray, right_gray, raw);
+    } else {
+        raw = computeTiledRaw(left_gray, right_gray);
+    }
 
     // StereoBM / StereoSGBM emit CV_16S fixed point (true disparity = raw / 16).
     cv::Mat disparity;

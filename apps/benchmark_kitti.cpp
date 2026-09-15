@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include <opencv2/core/utility.hpp>
+
 #include "common.hpp"
 #include "s3m/core/timer.hpp"
 #include "s3m/depth/stereo_matcher.hpp"
@@ -46,7 +48,12 @@ void printHelp() {
         "  --config <yaml>      matcher / detector / tracker parameters\n"
         "  --w3d/--wiou/--wapp  override the fused row's weights (default from config)\n"
         "  --sweep              also run a weight-sensitivity sweep and a cue ablation\n"
-        "                       (3D-only / 3D+IoU / 3D+appearance / full fused)\n\n"
+        "                       (3D-only / 3D+IoU / 3D+appearance / full fused)\n"
+        "  --profile            print a per-stage timing breakdown (stereo/depth/detect/\n"
+        "                       promote3d+appearance/track) and an FPS estimate\n"
+        "  --threads N          cv::setNumThreads(N) before running (default: OpenCV's own\n"
+        "                       default, i.e. every core) -- for measuring how much of the\n"
+        "                       stereo/detect cost is already parallelised internally\n\n"
         "Needs the dataset downloaded first -- see scripts/download_kitti.sh.\n";
 }
 
@@ -78,20 +85,42 @@ struct FrameData {
 };
 
 std::vector<FrameData> collectFrames(KittiTrackingSource& source, Detector& detector,
-                                     const StereoMatcherParams& mp, int max_frames) {
+                                     const StereoMatcherParams& mp, int max_frames,
+                                     ProfileRegistry& prof) {
     source.reset();
     StereoMatcher matcher(mp);
     std::vector<FrameData> frames;
 
     int frame_index = 0;
-    while (const auto frame = source.next()) {
+    while (true) {
+        Stopwatch capture_sw;
+        const auto frame = source.next();
+        const double capture_ms = capture_sw.elapsedMs();
+        if (!frame) break;
         if (max_frames > 0 && frame_index >= max_frames) break;
+        prof.add("capture (imread)", capture_ms);
 
-        const cv::Mat disparity = matcher.computeDisparity(frame->left, frame->right);
-        const cv::Mat depth = disparityToDepthMap(disparity, source.rig());
-        const std::vector<Detection2D> dets2d = detector.detect(frame->left);
-        std::vector<Detection3D> dets3d = promoteTo3D(dets2d, depth, source.rig());
-        attachAppearance(dets3d, frame->left);
+        cv::Mat disparity;
+        {
+            const auto s = prof.scope("stereo");
+            disparity = matcher.computeDisparity(frame->left, frame->right);
+        }
+        cv::Mat depth;
+        {
+            const auto s = prof.scope("depth");
+            depth = disparityToDepthMap(disparity, source.rig());
+        }
+        std::vector<Detection2D> dets2d;
+        {
+            const auto s = prof.scope("detect");
+            dets2d = detector.detect(frame->left);
+        }
+        std::vector<Detection3D> dets3d;
+        {
+            const auto s = prof.scope("promote3d+appearance");
+            dets3d = promoteTo3D(dets2d, depth, source.rig());
+            attachAppearance(dets3d, frame->left);
+        }
 
         FrameData fd;
         fd.dets3d = std::move(dets3d);
@@ -104,11 +133,16 @@ std::vector<FrameData> collectFrames(KittiTrackingSource& source, Detector& dete
 
 /// Run one association method/weight setting over pre-computed frame data,
 /// returning its MOT summary.
-MotSummary run(const std::vector<FrameData>& frames, const TrackerParams& params, double gate) {
+MotSummary run(const std::vector<FrameData>& frames, const TrackerParams& params, double gate,
+              ProfileRegistry& prof) {
     Tracker tracker(params);
     MotAccumulator acc(gate);
     for (const FrameData& fd : frames) {
-        const std::vector<TrackState> tracks = tracker.update(fd.dets3d).tracks;
+        std::vector<TrackState> tracks;
+        {
+            const auto s = prof.scope("track");
+            tracks = tracker.update(fd.dets3d).tracks;
+        }
         std::vector<MotObject> hyp;
         hyp.reserve(tracks.size());
         for (const TrackState& t : tracks) {
@@ -131,6 +165,7 @@ int main(int argc, char** argv) {
         printHelp();
         return args.has("help") ? 0 : 1;
     }
+    if (args.has("threads")) cv::setNumThreads(args.getInt("threads", -1));
 
     Config cfg;
     std::unique_ptr<Detector> detector;
@@ -162,9 +197,13 @@ int main(int argc, char** argv) {
 
     std::cout << "sequence " << args.get("sequence", "0000") << "   detector=" << detector->name()
               << "   frames=" << (max_frames > 0 ? std::to_string(max_frames) : "all")
-              << "   gate=" << gate << " m\n\n";
+              << "   gate=" << gate << " m   cv::getNumThreads()=" << cv::getNumThreads() << "\n\n";
 
-    const std::vector<FrameData> frames = collectFrames(*source, *detector, cfg.stereo_matcher, max_frames);
+    ProfileRegistry prof;
+    Stopwatch collect_sw;
+    const std::vector<FrameData> frames =
+        collectFrames(*source, *detector, cfg.stereo_matcher, max_frames, prof);
+    const double collect_ms = collect_sw.elapsedMs();
     std::cout << frames.size() << " frames processed (stereo+detection run once, shared by every"
                                   " association variant below)\n\n";
 
@@ -175,11 +214,23 @@ int main(int argc, char** argv) {
     TrackerParams fused = base_params;
     fused.association = AssociationMethod::kFusedAppearance;
 
-    printRow("3D Mahalanobis", run(frames, mahalanobis, gate));
-    printRow("2D IoU", run(frames, iou, gate));
+    printRow("3D Mahalanobis", run(frames, mahalanobis, gate, prof));
+    printRow("2D IoU", run(frames, iou, gate, prof));
     printRow(cv::format("3D+IoU+ReID (%.1f/%.1f/%.1f)", fused.fused_weight_3d, fused.fused_weight_iou,
                         fused.fused_weight_appearance),
-            run(frames, fused, gate));
+            run(frames, fused, gate, prof));
+
+    if (args.has("profile") && !frames.empty()) {
+        const double per_frame_ms = collect_ms / static_cast<double>(frames.size());
+        std::cout << "\n-- per-stage profile (collectFrames + one \"track\" run per printed row"
+                     " above) --\n"
+                  << prof.summary()
+                  << "\ncapture+stereo+detect+promote total: " << collect_ms << " ms over "
+                  << frames.size() << " frames (" << per_frame_ms << " ms/frame, "
+                  << (1000.0 / per_frame_ms) << " FPS) -- tracking/association cost is separate,"
+                     " see the \"track\" row above (shared across every association variant since"
+                     " its cost barely depends on which one runs)\n";
+    }
 
     if (!args.has("sweep")) return 0;
 
@@ -193,7 +244,7 @@ int main(int argc, char** argv) {
         p.fused_weight_3d = w[0];
         p.fused_weight_iou = w[1];
         p.fused_weight_appearance = w[2];
-        printRow(cv::format("fused (%.1f/%.1f/%.1f)", w[0], w[1], w[2]), run(frames, p, gate));
+        printRow(cv::format("fused (%.1f/%.1f/%.1f)", w[0], w[1], w[2]), run(frames, p, gate, prof));
     }
 
     // Cue ablation via the fused code path's weights. Caveat, stated here
@@ -206,22 +257,22 @@ int main(int argc, char** argv) {
     // combination; this is the honest, cheaper version of that experiment.
     std::cout << "\n-- cue ablation (same union gate throughout -- see comment in source for the"
                  " caveat this implies) --\n";
-    printRow("3D only (plain kMahalanobis3D)", run(frames, mahalanobis, gate));
+    printRow("3D only (plain kMahalanobis3D)", run(frames, mahalanobis, gate, prof));
     TrackerParams iou_3d = base_params;
     iou_3d.association = AssociationMethod::kFusedAppearance;
     iou_3d.fused_weight_3d = 0.6;
     iou_3d.fused_weight_iou = 0.4;
     iou_3d.fused_weight_appearance = 0.0;
-    printRow("3D+IoU, no appearance", run(frames, iou_3d, gate));
+    printRow("3D+IoU, no appearance", run(frames, iou_3d, gate, prof));
     TrackerParams app_3d = base_params;
     app_3d.association = AssociationMethod::kFusedAppearance;
     app_3d.fused_weight_3d = 0.7;
     app_3d.fused_weight_iou = 0.0;
     app_3d.fused_weight_appearance = 0.3;
-    printRow("3D+appearance, no IoU", run(frames, app_3d, gate));
+    printRow("3D+appearance, no IoU", run(frames, app_3d, gate, prof));
     printRow(cv::format("3D+IoU+appearance (%.1f/%.1f/%.1f)", fused.fused_weight_3d,
                         fused.fused_weight_iou, fused.fused_weight_appearance),
-            run(frames, fused, gate));
+            run(frames, fused, gate, prof));
 
     return 0;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core.hpp>
 
@@ -29,8 +31,15 @@ class StereoMatcher {
     static cv::Mat validMask(const cv::Mat& disparity);
 
  private:
+    cv::Mat computeTiledRaw(const cv::Mat& left_gray, const cv::Mat& right_gray) const;
+
     StereoMatcherParams params_;
-    cv::Ptr<cv::StereoMatcher> matcher_;
+    cv::Ptr<cv::StereoMatcher> matcher_;  ///< num_tiles <= 1
+    /// num_tiles > 1: one independent matcher per tile -- OpenCV's
+    /// StereoBM/SGBM keep internal scratch buffers in the instance, so
+    /// concurrent compute() calls need separate instances, not a shared one.
+    std::vector<cv::Ptr<cv::StereoMatcher>> tile_matchers_;
+    int overlap_rows_ = 0;
 };
 
 }  // namespace s3m

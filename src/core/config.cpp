@@ -68,6 +68,7 @@ Config Config::load(const std::string& path) {
     readScalar(sm, "p1_multiplier", cfg.stereo_matcher.p1_multiplier);
     readScalar(sm, "p2_multiplier", cfg.stereo_matcher.p2_multiplier);
     readBool(sm, "mode_hh", cfg.stereo_matcher.mode_hh);
+    readScalar(sm, "num_tiles", cfg.stereo_matcher.num_tiles);
 
     const cv::FileNode de = fs["depth_eval"];
     readScalar(de, "min_depth", cfg.depth_eval.min_depth);

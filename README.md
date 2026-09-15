@@ -7,9 +7,10 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–5 built and run end to end, including on real KITTI
-> data.** Calibrated stereo geometry, BM/SGBM disparity, metric depth, dense
-> 3D reprojection + PLY export, a synthetic scene with exact ground truth, a
+> Status: **Phases 1–5 built and run end to end on real KITTI data; Phase 6
+> (real-time optimisation) in progress.** Calibrated stereo geometry, BM/SGBM
+> disparity (now optionally tiled + parallelised), metric depth, dense 3D
+> reprojection + PLY export, a synthetic scene with exact ground truth, a
 > Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
 > (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object tracker with
 > three interchangeable association strategies — chi-square Mahalanobis
@@ -17,18 +18,21 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 > (color-histogram) cue — Hungarian or greedy, pick per run and compare, with
 > trajectory export, and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`,
 > validated against py-motmetrics) with a KITTI tracking-benchmark loader.
-> 106 unit tests pass (1 skipped outside its expected working-directory
+> 109 unit tests pass (1 skipped outside its expected working-directory
 > context); all 5 apps run end to end, including `benchmark_kitti`
 > against a real downloaded KITTI tracking sequence — see
-> [KITTI evaluation](#kitti-evaluation) and
-> [Phase 5](#phase-5--appearance-aware-reid-association) below for the real
+> [KITTI evaluation](#kitti-evaluation),
+> [Phase 5](#phase-5--appearance-aware-reid-association) and
+> [Phase 6](#phase-6--real-time-optimisation-in-progress) below for the real
 > numbers and the honest read on what they mean (short version: absolute
 > MOTA is negative because of a real, explained detector/GT domain mismatch;
 > on real noisy stereo depth the 2D-vs-3D gap from the synthetic benchmark
-> mostly closes; and across three real sequences with different occlusion
-> levels, fusing in an appearance cue is never the worst of the three
-> methods and wins outright on one of them — a hedge against not knowing
-> which cue will fail on a given scene, not a "ReID always wins" claim).
+> mostly closes; fusing in an appearance cue is never the worst of the three
+> association methods across three real sequences and wins outright on one
+> of them; and a real, measured profiling pass found stereo matching — not
+> detection — is the dominant cost, tiling it for a real 1.95x speedup with
+> a bit-identical tracking result, still short of the 20 FPS target pending
+> GPU-accelerated detection).
 
 ---
 
@@ -447,6 +451,89 @@ doesn't always beat a single well-matched cue, but it reliably avoids the
 worst case, which is the property that actually matters when you can't
 choose your scene in advance.
 
+## Phase 6 — Real-time optimisation (in progress)
+
+Profiled the real pipeline on real KITTI data before optimising anything —
+`benchmark_kitti --profile` wires `ProfileRegistry` through every stage:
+
+```
+sequence 0000   154 frames   cv::getNumThreads()=16
+
+stereo                   152.8 ms/frame
+capture (imread)         137.9 ms/frame
+detect                    49.5 ms/frame
+depth + promote3d+appearance    <2 ms/frame combined
+track                      0.19 ms/frame
+```
+
+Stereo matching dominates — roughly 3x detection's cost, and everything
+else is noise by comparison. `capture (imread)` is almost as expensive as
+stereo matching itself; that's very likely a Docker-Desktop-on-Windows
+bind-mount filesystem artifact (WSL2 cross-boundary I/O for many small PNG
+reads), not real algorithmic cost or something a native-Linux deployment
+would pay — reported honestly rather than folded into or dropped from the
+headline number.
+
+**Threading isn't uniform, and that's the whole reason tiling needed new
+code.** `--threads 1` vs the default (16 cores): `detect` goes 121.9 → 47.0 ms
+(2.6x — ONNX Runtime's own intra-op parallelism already uses every core, no
+code required), but `stereo` barely moves (145.9 → 143.0 ms — OpenCV's
+StereoSGBM in this build doesn't meaningfully parallelise internally). So
+detection's "multi-thread" roadmap item was already done by the library;
+stereo's wasn't, and needed real tiling work.
+
+**Tiled the matcher** (`StereoMatcherParams::num_tiles`,
+`StereoMatcher::computeTiledRaw`): horizontal strips, one independent
+matcher per strip (OpenCV's BM/SGBM keep internal scratch state unsafe to
+share across concurrent `compute()` calls), `cv::parallel_for_` across
+strips, a small overlap margin cropped off before stitching so seams don't
+show. `num_tiles <= 1` — the default everywhere except the new
+`configs/kitti_tiled.yaml` — is byte-identical to the pre-Phase-6 code path;
+nothing published before this phase changed.
+
+The first overlap margin (a conservative `max(32, 8·block)` = 40 rows) was
+too generous for KITTI's short (~375-row) images: past `num_tiles=8` the
+margin competes directly with tile height, and at 16 tiles the *result was
+net slower than not tiling at all* (468 ms vs 163 ms) — more tiles just
+means redoing more of your neighbours' work. Tightened to `max(16, 3·block)`
+= 16 rows after confirming accuracy held
+(`StereoMatcherTest.TiledMatchesUntiledClosely`; `benchmark_depth` on the
+synthetic scene's exact ground truth: RMSE 1.192 vs 1.191, bad-2.0% 0.854%
+vs 0.853%). Re-measured the tile-count sweep with the tighter margin and the
+sweet spot moved to **`num_tiles=4`, a real 1.95x stereo speedup** (152.8 →
+78.5 ms/frame on the full 154-frame sequence); `num_tiles=8` is barely ahead
+of untiled and 16 is still a net loss. The finding that matters isn't the
+number 4, it's that **overlap-to-tile-height ratio, not core count, sets the
+practical tile-count ceiling** on a given image size — a wider image, or a
+tighter margin, would push the sweet spot higher.
+
+**MOT-metric impact: unmeasurable.** Re-ran the full Phase 4/5 KITTI table
+with tiling on (`configs/kitti_tiled.yaml`) against the published
+(`configs/kitti.yaml`) numbers — IDF1, IDSW, fragmentation, false
+positives/negatives, MOTA, precision and recall are **bit-identical** for
+all three association methods; only MOTP (mean position error over matched
+pairs) shifts in the 5th decimal place. Not one track identity or
+match/mismatch decision changed on this sequence. The Phase 4/5 numbers
+elsewhere in this README stay measured with `kitti.yaml`, untiled — this
+result confirms they'd have looked the same either way, it doesn't quietly
+change them.
+
+**End to end**: 342.2 → 238.4 ms/frame (2.92 → 4.19 FPS) including the
+imread artifact; 204.2 → 128.2 ms/frame (4.90 → **7.80 FPS**) excluding it
+(stereo + detect + depth + promote only). A real, measured ~1.6x — short of
+the 20 FPS target, reported as such rather than rounded up. GPU-accelerated
+detection (a real RTX 2080 is available and confirmed reachable from Docker)
+is the next lever; see [docs/roadmap.md](docs/roadmap.md) Phase 6 for
+current status.
+
+**Memory/allocation audit — answered by the profile above, not a separate
+pass.** `depth`, `promote3d+appearance` and `track` combined cost under 2 ms
+per frame, so there's no meaningful copy/allocation overhead hiding in this
+project's own glue code — the two real costs (`stereo`, `detect`) are
+library-internal compute (SGBM, ONNX Runtime), not inefficiencies in code
+written here. Chasing allocations in the 2 ms that's left wouldn't move the
+frame-time budget.
+
 ## Example benchmark output
 
 Measured on the built-in synthetic scene (640×480, default config: SGBM,
@@ -525,8 +612,13 @@ Z = fx * B / (d + doffs)
    real KITTI sequences at different occlusion levels — never the worst of
    the three methods, wins outright on one. See
    [Phase 5](#phase-5--appearance-aware-reid-association).
-6. Real-time optimisation: profiling, tiling/parallelism, single→multi-thread,
-   optional CUDA/TensorRT path.
+6. **Real-time optimisation — in progress.** Profiled the real pipeline on
+   real KITTI data first: stereo matching dominates (~3x detection's cost),
+   detection already scales across cores for free (ONNX Runtime's own
+   threading), stereo didn't and needed real tiling work — done, a measured
+   1.95x stereo speedup with a bit-identical tracking result. GPU-accelerated
+   detection next (a real RTX 2080 is available). See
+   [Phase 6](#phase-6--real-time-optimisation-in-progress).
 7. Visual odometry: feature tracks, essential matrix, camera pose — touches the
    VI-SLAM side.
 8. ROS2 integration (optional / bonus), once Phases 6–7 give the stack

@@ -189,14 +189,87 @@ next one slots into an interface that already exists.
 
 ## Phase 6 — Real-time optimisation
 
-- [ ] profile hotspots (the existing `ProfileRegistry` sections plus detector
-      pre/post-processing); tile + parallelise the matcher
-- [ ] single-thread → multi-thread, then optionally CUDA / TensorRT behind
-      the same `Detector` interface
-- [ ] fixed frame-time budget with a report (target: end-to-end ≥ 20 FPS),
-      broken down per stage (capture → preprocess → inference → postprocess →
-      stereo → 3D → tracking → output), not just a single aggregate number
-- [ ] memory + allocation audit
+- [x] **Profiled hotspots for real, on real KITTI data**
+      (`benchmark_kitti --profile`, `ProfileRegistry` wired through
+      `collectFrames`/`run`). Sequence 0000, 154 frames, baseline
+      (`configs/kitti.yaml`, `num_tiles` unset -> 1): `stereo` 152.8 ms/frame,
+      `capture (imread)` 137.9 ms/frame, `detect` 49.5 ms/frame, `depth` +
+      `promote3d+appearance` under 2 ms/frame combined, `track` 0.19 ms/frame
+      -- stereo matching dominates, roughly 3x the cost of detection, and the
+      `depth`/`promote3d`/`track` stages are negligible next to either.
+- [x] **`capture (imread)` measured, not guessed, and flagged honestly.**
+      137.9 ms/frame to read one stereo PNG pair is comparable to the stereo
+      match itself -- almost certainly a Docker-Desktop-on-Windows bind-mount
+      filesystem artifact (WSL2 cross-boundary I/O), not real algorithmic
+      cost or representative of a native-Linux/embedded deployment. Reported
+      both ways (with and without it) rather than silently included in or
+      excluded from the headline number.
+- [x] **Single-thread -> multi-thread: measured, and it's not uniform.**
+      `cv::setNumThreads(1)` vs the default (16 cores, `--threads`, new CLI
+      flag): `detect` 121.9 -> 47.0 ms (2.6x -- ONNX Runtime's own intra-op
+      parallelism already exploits every core, no code change needed);
+      `stereo` 145.9 -> 143.0 ms (no change at all -- OpenCV's StereoSGBM in
+      this build does not meaningfully parallelise internally, confirming
+      the roadmap's original suspicion instead of assuming it). This is *why*
+      tiling (next item) was the one piece that needed new code -- threading
+      alone was already fully exploited for detection and did nothing for
+      stereo.
+- [x] **Tiled + parallelised the matcher** (`StereoMatcherParams::num_tiles`,
+      `StereoMatcher::computeTiledRaw`, `stereo_matcher.cpp`): splits the
+      image into `num_tiles` horizontal strips with a small overlap margin
+      (absorbs SGBM's block/aggregation window at the seam), each strip
+      computed by its own matcher instance via `cv::parallel_for_` (separate
+      instances, not a shared one -- OpenCV's BM/SGBM keep internal scratch
+      state that isn't safe to share across concurrent `compute()` calls),
+      overlap cropped off before stitching. `num_tiles <= 1` (the default
+      everywhere except the new `configs/kitti_tiled.yaml`) is byte-identical
+      to the pre-Phase-6 code path -- nothing published before this phase
+      changed.
+    - First overlap heuristic (`max(32, 8*block)` = 40 rows) was too
+      conservative for KITTI's short (~375-row) images: at `num_tiles=8` the
+      overlap starts competing with tile height, and at 16 tiling was net
+      *slower* than untiled (468 ms vs 163 ms) -- more tiles redoing a larger
+      fraction of their neighbours' work, not free parallelism. Tightened to
+      `max(16, 3*block)` (16 rows) after confirming accuracy held
+      (`StereoMatcherTest.TiledMatchesUntiledClosely`, `benchmark_depth` on
+      the exact-ground-truth synthetic scene: RMSE 1.192 vs 1.191, bad-2.0%
+      0.854% vs 0.853%); re-measured the same tile-count sweep and the sweet
+      spot moved to `num_tiles=4` at a real 1.95x stereo speedup (152.8 ->
+      78.5 ms/frame, full 154-frame sequence), with `num_tiles=8` only barely
+      ahead of untiled and 16 still a net loss. The lesson kept, not just the
+      number: overlap-to-tile-height ratio, not core count, sets the
+      practical tile-count ceiling on a given image size.
+    - **MOT-metric impact: unmeasurable.** Re-ran the full Phase 4/5 KITTI
+      table (`configs/kitti_tiled.yaml`, `num_tiles: 4`) against
+      `configs/kitti.yaml`'s published numbers: IDF1, IDSW, Frag, FP, FN,
+      MOTA, precision and recall are **bit-identical** for all three
+      association methods; only MOTP (mean position error over matched
+      pairs) moves in the 5th decimal place. No track identity or
+      match/mismatch decision changed on this sequence. `kitti.yaml` (not
+      `kitti_tiled.yaml`) stays the config the Phase 4/5 numbers above were
+      measured with -- this doesn't retroactively change them, it confirms
+      they'd have looked the same either way.
+    - End-to-end: 342.2 -> 238.4 ms/frame (2.92 -> 4.19 FPS) including the
+      imread artifact; 204.2 -> 128.2 ms/frame (4.90 -> 7.80 FPS) excluding
+      it (stereo + detect + depth + promote only). Real, measured, roughly
+      1.6x end-to-end -- well short of the 20 FPS target below, honestly
+      reported as such, not rounded up.
+- [ ] optionally CUDA / TensorRT behind the same `Detector` interface -- a
+      real NVIDIA GPU (RTX 2080, 8 GB, confirmed reachable from Docker via
+      `--gpus all`) is available on this machine, so this is pursued for
+      real rather than left as an unverified "future work" line.
+- [x] **Memory/allocation audit -- conclusion, not a TODO.** The
+      profiling above already answers this: `depth`, `promote3d+appearance`
+      and `track` are a combined <2 ms/frame, so there's no meaningful
+      allocation/copy overhead hiding in this project's own glue code --
+      the cost is concentrated in SGBM's own internal compute (`stereo`) and
+      ONNX Runtime's own inference (`detect`), both library-internal, not
+      inefficiencies in code this project wrote. Chasing micro-allocations
+      in the 2 ms/frame that's left would not move the frame-time budget.
+- [ ] fixed frame-time budget with a report (target: end-to-end >= 20 FPS) --
+      partially done above (measured, broken down per stage, both with and
+      without the imread artifact); still short of 20 FPS pending the GPU
+      item.
 
 ## Phase 7 — Visual odometry
 

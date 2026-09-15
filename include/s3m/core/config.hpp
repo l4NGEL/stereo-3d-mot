@@ -19,6 +19,14 @@ struct StereoMatcherParams {
     int p1_multiplier = 8;   ///< SGBM P1 = p1_multiplier * channels * block_size^2
     int p2_multiplier = 32;  ///< SGBM P2 = p2_multiplier * channels * block_size^2
     bool mode_hh = false;    ///< SGBM: use the full-scale two-pass DP (MODE_HH)
+
+    /// Split the image into this many horizontal strips (with a small
+    /// vertical overlap to absorb SGBM's block/aggregation window at the
+    /// seams) and compute them in parallel, one independent matcher instance
+    /// per strip. 1 -> untiled, single-threaded (default; byte-identical to
+    /// every result measured before Phase 6). See docs/roadmap.md Phase 6
+    /// for the measured speed/accuracy trade-off.
+    int num_tiles = 1;
 };
 
 /// Parameters for depth/disparity evaluation against ground truth.

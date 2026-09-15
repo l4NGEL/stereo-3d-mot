@@ -82,3 +82,73 @@ TEST(StereoMatcher, UnknownTypeThrows) {
     params.type = "definitely-not-a-matcher";
     EXPECT_THROW(StereoMatcher{params}, std::invalid_argument);
 }
+
+// Phase 6: num_tiles > 1 splits the image into horizontal strips computed in
+// parallel (one independent matcher per strip, overlapping margin cropped
+// off before stitching -- see stereo_matcher.cpp). Still recovers the same
+// known shift as the untiled path.
+TEST(StereoMatcher, TiledStillRecoversKnownShift) {
+    cv::Mat left;
+    cv::Mat right;
+    makeShiftedPair(12, left, right);
+
+    StereoMatcherParams params;
+    params.type = "SGBM";
+    params.num_disparities = 32;
+    params.block_size = 5;
+    params.num_tiles = 4;
+    StereoMatcher matcher(params);
+
+    const cv::Mat disparity = matcher.computeDisparity(left, right);
+    const cv::Rect roi(60, 40, 200, 160);
+    const cv::Mat disp_roi = disparity(roi);
+    const cv::Mat mask = StereoMatcher::validMask(disp_roi);
+    ASSERT_GT(cv::countNonZero(mask), roi.area() / 2);
+    EXPECT_NEAR(cv::mean(disp_roi, mask)[0], 12.0, 1.5);
+}
+
+// The whole point of the overlap margin: tiling should be near-invisible to
+// the output, not just "still roughly right". Compares num_tiles=1 against
+// num_tiles=6 pixel-by-pixel on the same pair.
+TEST(StereoMatcher, TiledMatchesUntiledClosely) {
+    cv::Mat left;
+    cv::Mat right;
+    makeShiftedPair(12, left, right);
+
+    StereoMatcherParams params;
+    params.type = "SGBM";
+    params.num_disparities = 32;
+    params.block_size = 5;
+
+    params.num_tiles = 1;
+    const cv::Mat untiled = StereoMatcher(params).computeDisparity(left, right);
+    params.num_tiles = 6;
+    const cv::Mat tiled = StereoMatcher(params).computeDisparity(left, right);
+
+    const cv::Mat mask = StereoMatcher::validMask(untiled) & StereoMatcher::validMask(tiled);
+    const int valid = cv::countNonZero(mask);
+    ASSERT_GT(valid, untiled.total() / 2);
+
+    cv::Mat diff;
+    cv::absdiff(untiled, tiled, diff);
+    diff.setTo(0, ~mask);
+    const double mean_abs_diff = cv::sum(diff)[0] / static_cast<double>(valid);
+    EXPECT_LT(mean_abs_diff, 0.5) << "tiling should barely perturb the result at valid pixels";
+
+    double max_diff = 0.0;
+    cv::minMaxLoc(diff, nullptr, &max_diff, nullptr, nullptr, mask);
+    EXPECT_LT(max_diff, 8.0) << "no single pixel should be wildly off just for sitting near a seam";
+}
+
+TEST(StereoMatcher, NumTilesDoesNotCrashWithManyTilesOnASmallImage) {
+    cv::Mat left;
+    cv::Mat right;
+    makeShiftedPair(8, left, right);  // 240x320
+
+    StereoMatcherParams params;
+    params.type = "SGBM";
+    params.num_disparities = 32;
+    params.num_tiles = 40;  // deliberately many, several rows per tile
+    StereoMatcher matcher(params);
+    EXPECT_NO_THROW(matcher.computeDisparity(left, right));
+}
