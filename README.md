@@ -25,9 +25,10 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 > numbers and the honest read on what they mean (short version: absolute
 > MOTA is negative because of a real, explained detector/GT domain mismatch;
 > on real noisy stereo depth the 2D-vs-3D gap from the synthetic benchmark
-> mostly closes; and fusing in an appearance cue recovers a real, if partial,
-> identity-consistency win on that same real sequence — not a cherry-picked
-> "ReID wins" claim).
+> mostly closes; and across three real sequences with different occlusion
+> levels, fusing in an appearance cue is never the worst of the three
+> methods and wins outright on one of them — a hedge against not knowing
+> which cue will fail on a given scene, not a "ReID always wins" claim).
 
 ---
 
@@ -367,29 +368,84 @@ single gate would have rejected, in exchange for never losing a genuinely
 correct match to an unreliable single cue. A real, explainable trade, not
 hidden in the writeup.
 
-**Real KITTI sequence 0000** (`benchmark_kitti`, same run as the [KITTI
-evaluation](#kitti-evaluation) section above, third method added):
+**Real KITTI, three sequences, not one.** A single-sequence result invites
+exactly the kind of cherry-picking this project has tried to avoid
+throughout, so `benchmark_kitti --sweep` (see below) was re-run on two more
+sequences chosen for a genuinely different occlusion profile — 0003 (49% of
+object-frames have some occlusion, sparse: 2.7 objects/frame) and 0017 (62%
+occluded, dense: 6.1 objects/frame) — against 0000's own 30%/4.6:
 
 ```
-3D Mahalanobis: IDF1=0.182  IDSW=33  Frag=11  FP=2195  MOTA=-2.304
-2D IoU        : IDF1=0.187  IDSW=35  Frag=23  FP=1980  MOTA=-2.135
-3D+IoU+ReID   : IDF1=0.203  IDSW=27  Frag=13  FP=2145  MOTA=-2.270
+                    IDF1 (3D / 2D / Fused)      IDSW (3D / 2D / Fused)    Frag (3D / 2D / Fused)
+0000  30% occl.     0.182 / 0.187 / 0.203       33 / 35 / 27              11 / 23 / 13
+0003  49% occl.     0.223 / 0.301 / 0.283        0 /  2 /  0               2 /  3 /  2
+0017  62% occl.     0.486 / 0.386 / 0.462        5 / 13 /  8               1 /  6 /  2
 ```
 
-On real, noisy data, fusion **wins outright on IDF1** (0.203 vs 0.182 vs
-0.187 — the identity-focused metric this whole project has centered on) and
-**wins outright on ID switches** (27 vs 33 vs 35, the fewest of all three).
-Not a clean sweep, and reported as such: plain 3D still fragments least (11
-vs fused's 13), and plain 2D still has the fewest raw false positives (1980
-vs fused's 2145) — both the same union-gate trade-off seen on the synthetic
-scene, just smaller in absolute effect here.
+**This is not "fusion wins."** It wins outright on 0000, but on 0003 plain
+2D IoU has the best IDF1 (0.301, fusion 0.283 second), and on 0017 plain 3D
+Mahalanobis has the best IDF1 (0.486, fusion 0.462 second) — sparser or
+more-occluded scenes apparently suit one pure cue better than the blend.
+The honest, three-sequence-wide pattern is narrower than "always best" but
+still real: **across all three sequences, fused is never the worst of the
+three on IDF1, IDSW, or fragmentation.** It's a hedge, not a universal
+upgrade — it never loses outright to both alternatives, and on the one
+sequence where neither pure cue dominated (0000), fusing them won. That is
+a materially more defensible claim than the single-sequence version of this
+section used to make, and a more useful one: it tells you fusion is a safe
+default when you don't know in advance which failure mode (bad depth vs.
+box-overlap confusion) a given scene will hit, not that it beats a
+well-matched single cue on its own turf.
 
-This directly validates the motivation written into the Phase 4 section
-above *before* any of Phase 5 was built: real stereo depth noise erodes 3D
+**Weight sensitivity** (`--sweep`, five (α,β,γ) settings from 0.4/0.3/0.3 to
+0.6/0.1/0.3, plus two appearance-heavier settings): IDF1 moves by at most
+~0.04 across the whole grid on any one sequence, and the three-sequence
+ranking above (fused beats one pure cue, loses to the other, never worst)
+holds at every tested setting — the qualitative finding isn't an artifact of
+picking exactly 0.5/0.2/0.3.
+
+**Cue ablation** (3D-only / 3D+IoU / 3D+appearance / full fused, same
+`--sweep`): confirms appearance and IoU are each pulling real weight rather
+than one silently doing nothing — 3D+IoU and 3D+appearance land at
+different points on all three sequences, and neither alone matches the full
+fused row. Caveat stated in the code and repeated here: because
+`kFusedAppearance`'s *gate* is always the union of the Mahalanobis and IoU
+gates regardless of weight, "no IoU" still benefits from IoU admitting
+candidates Mahalanobis alone wouldn't — a fully independent ablation would
+need separate gating per combination, which this doesn't do.
+
+**A real bug, caught by a determinism check.** Building `--sweep` (many
+association variants run back-to-back over one cached frame set, instead of
+each method recomputing detections independently) surfaced a genuine bug:
+`Track`'s constructor stored its initial appearance descriptor via
+`cv::Mat`'s shallow, reference-counted copy, so a newly-born track's
+descriptor *aliased* the same buffer as the cached detection it was born
+from. `Track::correct()`'s EMA blend then reassigned that descriptor in
+place — silently mutating the cached, supposedly-read-only frame data a
+*later*, supposedly-independent `run()` call would read. Symptom: the exact
+same (association, weights) setting gave different IDF1/IDSW depending on
+how many other variants had already run first in the same process — caught
+by literally running the identical command three times and noticing the
+*single-method* runs agreed with each other but not with the *same* setting
+embedded inside `--sweep`. Fixed by `.clone()`-ing on ingestion
+(`track.cpp`), re-verified full test suite (106/106 non-skipped) plus a
+three-way cross-check that the same weight setting now gives byte-identical
+output whether read from the plain row, the weight-sweep, or the ablation
+table. This did **not** affect any previously-reported number — the code
+path used for the original single-sequence Phase 5 result (and everything
+in `benchmark_track`) recomputes detections fresh per run with no data
+shared across calls, so there was nothing to alias — but it would have
+silently corrupted every number in this section had `--sweep` shipped
+without the determinism check.
+
+This still connects back to the motivation written into the Phase 4 section
+*before* any of Phase 5 was built: real stereo depth noise erodes 3D
 Mahalanobis's clean synthetic-scene win, and appearance is a cue that
-doesn't degrade with depth noise the way Mahalanobis gating does — fusing it
-back in recovers real ground on the exact same real sequence, without
-tuning a single weight against this number.
+doesn't degrade with depth noise the way Mahalanobis gating does. The
+three-sequence result narrows that to its defensible form: fusing it in
+doesn't always beat a single well-matched cue, but it reliably avoids the
+worst case, which is the property that actually matters when you can't
+choose your scene in advance.
 
 ## Example benchmark output
 
@@ -465,8 +521,9 @@ Z = fx * B / (d + doffs)
    against a real downloaded sequence; see [KITTI evaluation](#kitti-evaluation).
 5. **Appearance-aware association (ReID) — done.** A third cost term
    (classical color-histogram appearance, not a learned embedding — scoped
-   deliberately) fused with the existing geometric cues; real win on IDF1 and
-   ID switches on the same KITTI sequence. See
+   deliberately) fused with the existing geometric cues; validated on three
+   real KITTI sequences at different occlusion levels — never the worst of
+   the three methods, wins outright on one. See
    [Phase 5](#phase-5--appearance-aware-reid-association).
 6. Real-time optimisation: profiling, tiling/parallelism, single→multi-thread,
    optional CUDA/TensorRT path.

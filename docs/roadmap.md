@@ -145,22 +145,47 @@ next one slots into an interface that already exists.
       cost of a higher false-track rate (50% vs 25% -- the looser OR-gate
       lets through a false positive the tighter single gate would have
       rejected; an honest, explainable trade, not hidden).
-      `benchmark_kitti` (real sequence 0000): **IDF1 0.203 (fused) vs 0.182
-      (3D) vs 0.187 (2D)** -- a genuine win on the identity metric this whole
-      project has centered on, and **IDSW 27 (fused) vs 33 (3D) vs 35 (2D)**
-      -- also the fewest identity switches of the three. Not a clean sweep:
-      plain 3D still fragments least (11 vs fused's 13) and plain 2D still
-      has the fewest raw false positives (1980 vs fused's 2145), both for the
-      same reason (the union gate trades a little precision for identity
-      robustness). Full numbers and interpretation in the README's
-      [Phase 5](../README.md#phase-5--appearance-aware-reid-association)
+- [x] **Not left at one KITTI sequence.** `benchmark_kitti --sweep` re-run on
+      two more real sequences chosen for a different occlusion profile than
+      0000 (30% occluded, dense) -- 0003 (49% occluded, sparse) and 0017
+      (62% occluded, dense). Result is *not* "fusion wins": 0003's best IDF1
+      is plain 2D IoU (0.301), 0017's is plain 3D Mahalanobis (0.486), and
+      fusion is second-best on both. What holds across all three: **fusion
+      is never the worst of the three methods on IDF1, IDSW, or
+      fragmentation on any tested sequence**, and it's the outright winner on
+      the one sequence (0000) where neither pure cue dominated. A hedge
+      against not knowing which cue fails on a given scene, not a universal
+      upgrade -- a materially more defensible claim than the single-sequence
+      version of this result. Weight-sensitivity (5 settings) and a cue
+      ablation (3D-only / 3D+IoU / 3D+appearance / full) both re-run per
+      sequence too: the ranking above holds across the whole weight grid, and
+      the ablation confirms both added cues pull real weight (with a stated
+      caveat -- the union gate means "no IoU" still benefits from IoU's
+      *gating*, just not its *cost*). Full numbers and interpretation in the
+      README's [Phase 5](../README.md#phase-5--appearance-aware-reid-association)
       section.
+- [x] **Found and fixed a real bug while building `--sweep`.** Running many
+      association variants over one cached, reused frame set (instead of
+      each method recomputing detections independently, as before) surfaced
+      a `cv::Mat` aliasing bug: `Track`'s constructor shallow-copied its
+      initial appearance descriptor, so a newly-born track's descriptor
+      *aliased* the cached detection's buffer, and `correct()`'s in-place EMA
+      blend silently corrupted that supposedly-read-only cached data for
+      every *later* run() call in the same process. Caught by a determinism
+      check (identical settings gave different results depending on what had
+      already run first); fixed by `.clone()`-ing on ingestion
+      (`track.cpp`); re-verified with a three-way cross-check that the same
+      weight setting now agrees everywhere it's computed. Confirmed this did
+      **not** affect any previously-reported number -- every earlier run
+      (including this phase's original single-sequence result) recomputed
+      detections fresh per call with nothing shared to alias.
 - [x] This directly validates the motivation written into the Phase 4
       write-up before any of Phase 5 was built: real stereo depth noise
       erodes 3D Mahalanobis's synthetic-scene advantage, and appearance is a
       cue that doesn't degrade with depth noise the way Mahalanobis gating
-      does -- fusing it back in recovers some of that lost ground on the
-      exact same real sequence.
+      does. The three-sequence result narrows that to its defensible form:
+      fusing it in doesn't always beat a single well-matched cue, but it
+      reliably avoids the worst case.
 
 ## Phase 6 — Real-time optimisation
 

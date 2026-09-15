@@ -1,13 +1,20 @@
-// 2D IoU vs 3D Mahalanobis association, on a real KITTI tracking sequence:
-// runs the *actual* pipeline (stereo depth -> detector -> promoteTo3D ->
-// Tracker) and scores each method against the sequence's ground truth with
-// CLEAR-MOT + IDF1 (MotAccumulator) -- the real-data counterpart to
-// benchmark_track's hermetic synthetic scene. See docs/roadmap.md and
-// scripts/download_kitti.sh: this needs the KITTI tracking benchmark's
-// images, labels and calibration downloaded locally; nothing here works
-// without that.
+// 2D IoU vs 3D Mahalanobis vs fused (3D+IoU+appearance) association, on a
+// real KITTI tracking sequence: runs the *actual* pipeline (stereo depth ->
+// detector -> promoteTo3D -> Tracker) and scores each method against the
+// sequence's ground truth with CLEAR-MOT + IDF1 (MotAccumulator) -- the
+// real-data counterpart to benchmark_track's hermetic synthetic scene. See
+// docs/roadmap.md and scripts/download_kitti.sh: this needs the KITTI
+// tracking benchmark's images, labels and calibration downloaded locally;
+// nothing here works without that.
+//
+// Stereo depth + detection are the expensive stages and are identical across
+// every association variant compared here, so they run exactly once per
+// frame (collectFrames()) regardless of how many methods/weight
+// combinations --sweep asks for; only the cheap track/associate/score loop
+// (run()) repeats per variant.
 
 #include <exception>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -28,14 +35,18 @@ namespace {
 
 void printHelp() {
     std::cout <<
-        "benchmark_kitti - 2D IoU vs 3D Mahalanobis on a real KITTI tracking sequence\n\n"
+        "benchmark_kitti - 2D IoU vs 3D Mahalanobis vs fused association on a real\n"
+        "                  KITTI tracking sequence\n\n"
         "  --kitti-root <dir>   directory holding calib/ image_02/ image_03/ label_02/\n"
         "  --sequence <NNNN>    zero-padded sequence id, e.g. 0000 (default 0000)\n"
         "  --detector hog|onnx  object detector (default onnx)\n"
         "  --model <path.onnx>  model for --detector onnx\n"
         "  --frames N           limit to the first N frames (default: whole sequence)\n"
         "  --gate M             MOT evaluation match distance in metres (default 2.0)\n"
-        "  --config <yaml>      matcher / detector / tracker parameters\n\n"
+        "  --config <yaml>      matcher / detector / tracker parameters\n"
+        "  --w3d/--wiou/--wapp  override the fused row's weights (default from config)\n"
+        "  --sweep              also run a weight-sensitivity sweep and a cue ablation\n"
+        "                       (3D-only / 3D+IoU / 3D+appearance / full fused)\n\n"
         "Needs the dataset downloaded first -- see scripts/download_kitti.sh.\n";
 }
 
@@ -58,18 +69,19 @@ std::vector<MotObject> groundTruthObjects(const std::vector<KittiObject>& kitti_
     return out;
 }
 
-/// Run one association method over the whole sequence, returning its MOT
-/// summary. Re-runs the depth + detection stages every time so the two
-/// methods see byte-identical input -- only the association differs.
-MotSummary run(KittiTrackingSource& source, Detector& detector, const StereoMatcherParams& mp,
-              AssociationMethod method, const TrackerParams& base_params, double gate,
-              int max_frames) {
+/// Everything the (cheap, repeated-per-variant) tracking stage needs from one
+/// frame -- computed once by collectFrames() regardless of how many
+/// association variants run() is later called with.
+struct FrameData {
+    std::vector<Detection3D> dets3d;
+    std::vector<MotObject> gt;
+};
+
+std::vector<FrameData> collectFrames(KittiTrackingSource& source, Detector& detector,
+                                     const StereoMatcherParams& mp, int max_frames) {
     source.reset();
     StereoMatcher matcher(mp);
-    TrackerParams params = base_params;
-    params.association = method;
-    Tracker tracker(params);
-    MotAccumulator acc(gate);
+    std::vector<FrameData> frames;
 
     int frame_index = 0;
     while (const auto frame = source.next()) {
@@ -81,20 +93,34 @@ MotSummary run(KittiTrackingSource& source, Detector& detector, const StereoMatc
         std::vector<Detection3D> dets3d = promoteTo3D(dets2d, depth, source.rig());
         attachAppearance(dets3d, frame->left);
 
-        // Only confirmed tracks are submitted as predictions -- tentative
-        // (not yet past min_hits) tracks would inflate false positives with
-        // one-frame noise, same as a real submission would exclude them.
-        const std::vector<TrackState> tracks = tracker.update(dets3d).tracks;
+        FrameData fd;
+        fd.dets3d = std::move(dets3d);
+        fd.gt = groundTruthObjects(source.objectsAt(frame_index));
+        frames.push_back(std::move(fd));
+        ++frame_index;
+    }
+    return frames;
+}
+
+/// Run one association method/weight setting over pre-computed frame data,
+/// returning its MOT summary.
+MotSummary run(const std::vector<FrameData>& frames, const TrackerParams& params, double gate) {
+    Tracker tracker(params);
+    MotAccumulator acc(gate);
+    for (const FrameData& fd : frames) {
+        const std::vector<TrackState> tracks = tracker.update(fd.dets3d).tracks;
         std::vector<MotObject> hyp;
         hyp.reserve(tracks.size());
         for (const TrackState& t : tracks) {
             if (t.confirmed) hyp.push_back(toMotObject(t.id, t.position));
         }
-
-        acc.update(groundTruthObjects(source.objectsAt(frame_index)), hyp);
-        ++frame_index;
+        acc.update(fd.gt, hyp);
     }
     return acc.summary();
+}
+
+void printRow(const std::string& name, const MotSummary& s) {
+    std::cout << std::left << std::setw(28) << name << ": " << s.toString() << "\n";
 }
 
 }  // namespace
@@ -129,26 +155,73 @@ int main(int argc, char** argv) {
 
     const int max_frames = args.getInt("frames", -1);
     const double gate = args.getDouble("gate", 2.0);
-    const TrackerParams base_params = TrackerParams::fromConfig(cfg.tracking);
+    TrackerParams base_params = TrackerParams::fromConfig(cfg.tracking);
+    base_params.fused_weight_3d = args.getDouble("w3d", base_params.fused_weight_3d);
+    base_params.fused_weight_iou = args.getDouble("wiou", base_params.fused_weight_iou);
+    base_params.fused_weight_appearance = args.getDouble("wapp", base_params.fused_weight_appearance);
 
     std::cout << "sequence " << args.get("sequence", "0000") << "   detector=" << detector->name()
               << "   frames=" << (max_frames > 0 ? std::to_string(max_frames) : "all")
               << "   gate=" << gate << " m\n\n";
 
-    std::cout << "3D Mahalanobis: "
-              << run(*source, *detector, cfg.stereo_matcher, AssociationMethod::kMahalanobis3D,
-                     base_params, gate, max_frames)
-                     .toString()
-              << "\n";
-    std::cout << "2D IoU        : "
-              << run(*source, *detector, cfg.stereo_matcher, AssociationMethod::kIou2D,
-                     base_params, gate, max_frames)
-                     .toString()
-              << "\n";
-    std::cout << "3D+IoU+ReID   : "
-              << run(*source, *detector, cfg.stereo_matcher, AssociationMethod::kFusedAppearance,
-                     base_params, gate, max_frames)
-                     .toString()
-              << "\n";
+    const std::vector<FrameData> frames = collectFrames(*source, *detector, cfg.stereo_matcher, max_frames);
+    std::cout << frames.size() << " frames processed (stereo+detection run once, shared by every"
+                                  " association variant below)\n\n";
+
+    TrackerParams mahalanobis = base_params;
+    mahalanobis.association = AssociationMethod::kMahalanobis3D;
+    TrackerParams iou = base_params;
+    iou.association = AssociationMethod::kIou2D;
+    TrackerParams fused = base_params;
+    fused.association = AssociationMethod::kFusedAppearance;
+
+    printRow("3D Mahalanobis", run(frames, mahalanobis, gate));
+    printRow("2D IoU", run(frames, iou, gate));
+    printRow(cv::format("3D+IoU+ReID (%.1f/%.1f/%.1f)", fused.fused_weight_3d, fused.fused_weight_iou,
+                        fused.fused_weight_appearance),
+            run(frames, fused, gate));
+
+    if (!args.has("sweep")) return 0;
+
+    std::cout << "\n-- weight sensitivity (fused_weight_3d / _iou / _appearance) --\n";
+    const double weight_sets[][3] = {
+        {0.4, 0.3, 0.3}, {0.5, 0.2, 0.3}, {0.6, 0.1, 0.3}, {0.4, 0.2, 0.4}, {0.6, 0.2, 0.2},
+    };
+    for (const auto& w : weight_sets) {
+        TrackerParams p = base_params;
+        p.association = AssociationMethod::kFusedAppearance;
+        p.fused_weight_3d = w[0];
+        p.fused_weight_iou = w[1];
+        p.fused_weight_appearance = w[2];
+        printRow(cv::format("fused (%.1f/%.1f/%.1f)", w[0], w[1], w[2]), run(frames, p, gate));
+    }
+
+    // Cue ablation via the fused code path's weights. Caveat, stated here
+    // rather than glossed over: kFusedAppearance's *gate* is always the union
+    // of the Mahalanobis and IoU gates regardless of weight (tracker.cpp), so
+    // zeroing a weight mutes that cue's contribution to the *cost* but not
+    // its contribution to *feasibility* -- "3D+appearance, no IoU" below
+    // still benefits from IoU admitting candidates Mahalanobis alone
+    // wouldn't. A fully independent ablation would need separate gating per
+    // combination; this is the honest, cheaper version of that experiment.
+    std::cout << "\n-- cue ablation (same union gate throughout -- see comment in source for the"
+                 " caveat this implies) --\n";
+    printRow("3D only (plain kMahalanobis3D)", run(frames, mahalanobis, gate));
+    TrackerParams iou_3d = base_params;
+    iou_3d.association = AssociationMethod::kFusedAppearance;
+    iou_3d.fused_weight_3d = 0.6;
+    iou_3d.fused_weight_iou = 0.4;
+    iou_3d.fused_weight_appearance = 0.0;
+    printRow("3D+IoU, no appearance", run(frames, iou_3d, gate));
+    TrackerParams app_3d = base_params;
+    app_3d.association = AssociationMethod::kFusedAppearance;
+    app_3d.fused_weight_3d = 0.7;
+    app_3d.fused_weight_iou = 0.0;
+    app_3d.fused_weight_appearance = 0.3;
+    printRow("3D+appearance, no IoU", run(frames, app_3d, gate));
+    printRow(cv::format("3D+IoU+appearance (%.1f/%.1f/%.1f)", fused.fused_weight_3d,
+                        fused.fused_weight_iou, fused.fused_weight_appearance),
+            run(frames, fused, gate));
+
     return 0;
 }
