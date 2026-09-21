@@ -26,7 +26,8 @@ cv::Mat reprojectWithQ(const cv::Mat& disparity, const cv::Matx44d& Q, cv::Mat* 
         cv::Vec3f* p_row = points.ptr<cv::Vec3f>(y);
         uchar* m_row = mask.ptr<uchar>(y);
         for (int x = 0; x < disparity.cols; ++x) {
-            if (!isValidDisparity(d_row[x])) continue;
+            if (!isValidDisparity(d_row[x]))
+                continue;
 
             const double u = static_cast<double>(x);
             const double v = static_cast<double>(y);
@@ -36,10 +37,12 @@ cv::Mat reprojectWithQ(const cv::Mat& disparity, const cv::Matx44d& Q, cv::Mat* 
             const double Y = Q(1, 0) * u + Q(1, 1) * v + Q(1, 2) * d + Q(1, 3);
             const double Z = Q(2, 0) * u + Q(2, 1) * v + Q(2, 2) * d + Q(2, 3);
             const double W = Q(3, 0) * u + Q(3, 1) * v + Q(3, 2) * d + Q(3, 3);
-            if (std::abs(W) < 1e-9) continue;
+            if (std::abs(W) < 1e-9)
+                continue;
 
             const double z = Z / W;
-            if (!std::isfinite(z) || z <= 0.0) continue;
+            if (!std::isfinite(z) || z <= 0.0)
+                continue;
 
             p_row[x] = cv::Vec3f(static_cast<float>(X / W), static_cast<float>(Y / W),
                                  static_cast<float>(z));
@@ -47,7 +50,8 @@ cv::Mat reprojectWithQ(const cv::Mat& disparity, const cv::Matx44d& Q, cv::Mat* 
         }
     }
 
-    if (valid_mask) *valid_mask = mask;
+    if (valid_mask)
+        *valid_mask = mask;
     return points;
 }
 
@@ -65,9 +69,11 @@ cv::Mat disparityToDepthMap(const cv::Mat& disparity, const StereoRig& rig) {
         const float* d_row = disparity.ptr<float>(y);
         float* z_row = depth.ptr<float>(y);
         for (int x = 0; x < disparity.cols; ++x) {
-            if (!isValidDisparity(d_row[x])) continue;
+            if (!isValidDisparity(d_row[x]))
+                continue;
             const double denominator = static_cast<double>(d_row[x]) + doffs;
-            if (denominator <= 0.0) continue;
+            if (denominator <= 0.0)
+                continue;
             z_row[x] = static_cast<float>(f_baseline / denominator);
         }
     }
@@ -85,20 +91,23 @@ float robustDepthInRoi(const cv::Mat& depth_map, const cv::Rect& roi, float shri
 
     cv::Rect region(roi.x + dx, roi.y + dy, roi.width - 2 * dx, roi.height - 2 * dy);
     region &= image_rect;
-    if (region.width <= 0 || region.height <= 0) return -1.0f;
+    if (region.width <= 0 || region.height <= 0)
+        return -1.0f;
 
     std::vector<float> values;
     values.reserve(static_cast<std::size_t>(region.area()));
     for (int y = region.y; y < region.y + region.height; ++y) {
         const float* row = depth_map.ptr<float>(y);
         for (int x = region.x; x < region.x + region.width; ++x) {
-            if (std::isfinite(row[x]) && row[x] > 0.0f) values.push_back(row[x]);
+            if (std::isfinite(row[x]) && row[x] > 0.0f)
+                values.push_back(row[x]);
         }
     }
 
     const float fraction =
         static_cast<float>(values.size()) / static_cast<float>(std::max(1, region.area()));
-    if (values.empty() || fraction < min_valid_fraction) return -1.0f;
+    if (values.empty() || fraction < min_valid_fraction)
+        return -1.0f;
 
     const std::size_t mid = values.size() / 2;
     std::nth_element(values.begin(), values.begin() + static_cast<std::ptrdiff_t>(mid),
@@ -121,7 +130,8 @@ std::vector<Detection3D> promoteTo3D(const std::vector<Detection2D>& detections,
         const cv::Rect roi = cv::Rect(cvRound(det.box.x), cvRound(det.box.y),
                                       cvRound(det.box.width), cvRound(det.box.height)) &
                              image_rect;
-        const float z = (roi.width > 0 && roi.height > 0) ? robustDepthInRoi(depth_map, roi) : -1.0f;
+        const float z =
+            (roi.width > 0 && roi.height > 0) ? robustDepthInRoi(depth_map, roi) : -1.0f;
 
         if (z > 0.0f) {
             const cv::Point2d center(static_cast<double>(det.box.x) + det.box.width / 2.0,

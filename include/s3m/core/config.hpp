@@ -38,12 +38,12 @@ struct DepthEvalParams {
 
 /// Parameters for the object detector (see apps: --detector / --model).
 struct DetectorParams {
-    std::string type = "none";        ///< "none" | "hog" | "onnx"
-    std::string model_path;           ///< ONNX model file (type == "onnx")
+    std::string type = "none";  ///< "none" | "hog" | "onnx"
+    std::string model_path;     ///< ONNX model file (type == "onnx")
     double score_threshold = 0.25;
     double nms_iou = 0.45;
-    int input_size = 640;             ///< square network input (type == "onnx")
-    std::vector<int> keep_classes;    ///< COCO ids to keep; empty -> all
+    int input_size = 640;           ///< square network input (type == "onnx")
+    std::vector<int> keep_classes;  ///< COCO ids to keep; empty -> all
 
     /// type == "onnx": run on ONNX Runtime's CUDA execution provider instead
     /// of CPU. Needs an ORT *GPU* build (Dockerfile.gpu, not the default
@@ -55,12 +55,12 @@ struct DetectorParams {
 
 /// Parameters for the 3D constant-velocity tracker.
 struct TrackingParams {
-    double dt = 0.1;                 ///< seconds between frames
-    double process_noise = 1.0;      ///< acceleration std [m/s^2]
-    double measurement_noise = 0.05; ///< position measurement std [m]
-    int max_age = 30;                ///< frames tolerated without a match
-    int min_hits = 3;                ///< matches required to confirm a track
-    double gating_distance = 2.0;    ///< informational: a plain-metres reference gate
+    double dt = 0.1;                  ///< seconds between frames
+    double process_noise = 1.0;       ///< acceleration std [m/s^2]
+    double measurement_noise = 0.05;  ///< position measurement std [m]
+    int max_age = 30;                 ///< frames tolerated without a match
+    int min_hits = 3;                 ///< matches required to confirm a track
+    double gating_distance = 2.0;     ///< informational: a plain-metres reference gate
 
     /// "mahalanobis3d" (depth-aware; recommended), "iou2d" (image-plane only,
     /// no stereo depth used at all -- kept as the classic baseline to compare
@@ -68,9 +68,9 @@ struct TrackingParams {
     /// see fused_weight_* below). See docs/roadmap.md for why 3D disambiguates
     /// what 2D can't, and Phase 5 for why/when fusing in appearance helps.
     std::string association = "mahalanobis3d";
-    double gating_chi2 = 7.815;      ///< mahalanobis3d: chi-square(3 dof, 95%) gate
-    double iou_gate = 0.3;           ///< iou2d: minimum IoU to allow a match
-    bool use_hungarian = true;       ///< false -> greedy nearest-first (for comparison)
+    double gating_chi2 = 7.815;  ///< mahalanobis3d: chi-square(3 dof, 95%) gate
+    double iou_gate = 0.3;       ///< iou2d: minimum IoU to allow a match
+    bool use_hungarian = true;   ///< false -> greedy nearest-first (for comparison)
 
     /// fused: weights on (normalised squared Mahalanobis, 1 - IoU, appearance
     /// Bhattacharyya distance) respectively; should sum to 1.

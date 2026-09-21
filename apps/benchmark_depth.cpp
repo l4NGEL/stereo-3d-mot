@@ -30,7 +30,8 @@ namespace {
 
 double badAt(const DepthMetrics& m, double threshold) {
     for (std::size_t i = 0; i < m.bad_thresholds.size() && i < m.bad_fraction.size(); ++i) {
-        if (std::abs(m.bad_thresholds[i] - threshold) < 1e-9) return m.bad_fraction[i];
+        if (std::abs(m.bad_thresholds[i] - threshold) < 1e-9)
+            return m.bad_fraction[i];
     }
     return 0.0;
 }
@@ -81,7 +82,8 @@ int main(int argc, char** argv) {
     }
 
     Config cfg = app::loadConfig(args);
-    if (args.has("matcher")) cfg.stereo_matcher.type = args.get("matcher");
+    if (args.has("matcher"))
+        cfg.stereo_matcher.type = args.get("matcher");
 
     std::unique_ptr<FrameSource> source;
     try {

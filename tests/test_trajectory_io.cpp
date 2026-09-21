@@ -27,7 +27,8 @@ TrackState makeState(int id, float x, float y, float z, int class_id, bool confi
 TEST(TrajectoryRecorder, GroupsPointsByTrackIdInFrameOrder) {
     TrajectoryRecorder rec;
     rec.record(0, 0.0, {makeState(1, 0.0f, 0.0f, 2.0f, 0, false)});
-    rec.record(1, 0.1, {makeState(1, 0.1f, 0.0f, 2.0f, 0, true), makeState(2, 5.0f, 0.0f, 9.0f, 2, false)});
+    rec.record(1, 0.1,
+               {makeState(1, 0.1f, 0.0f, 2.0f, 0, true), makeState(2, 5.0f, 0.0f, 9.0f, 2, false)});
 
     ASSERT_EQ(rec.trackCount(), 2u);
     const auto& traj = rec.trajectories();

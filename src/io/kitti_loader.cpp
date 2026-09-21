@@ -21,7 +21,8 @@ namespace fs = std::filesystem;
 
 std::string trim(const std::string& s) {
     const std::size_t begin = s.find_first_not_of(" \t\r\n");
-    if (begin == std::string::npos) return "";
+    if (begin == std::string::npos)
+        return "";
     const std::size_t end = s.find_last_not_of(" \t\r\n");
     return s.substr(begin, end - begin + 1);
 }
@@ -33,7 +34,8 @@ std::string zeroPad(int n, int width) {
 }
 
 std::string withTrailingSlash(std::string dir) {
-    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\') dir += '/';
+    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\')
+        dir += '/';
     return dir;
 }
 
@@ -42,18 +44,22 @@ std::pair<std::string, std::vector<double>> parseCalibLine(const std::string& li
     std::istringstream is(line);
     std::string key;
     is >> key;
-    if (!key.empty() && key.back() == ':') key.pop_back();
+    if (!key.empty() && key.back() == ':')
+        key.pop_back();
     std::vector<double> values;
     double v = 0.0;
-    while (is >> v) values.push_back(v);
+    while (is >> v)
+        values.push_back(v);
     return std::make_pair(key, values);
 }
 
 std::vector<int> listFrameIds(const std::string& image_dir) {
     std::vector<int> ids;
-    if (!fs::exists(image_dir)) return ids;
+    if (!fs::exists(image_dir))
+        return ids;
     for (const fs::directory_entry& entry : fs::directory_iterator(image_dir)) {
-        if (!entry.is_regular_file()) continue;
+        if (!entry.is_regular_file())
+            continue;
         try {
             ids.push_back(std::stoi(entry.path().stem().string()));
         } catch (const std::exception&) {
@@ -68,26 +74,30 @@ std::vector<int> listFrameIds(const std::string& image_dir) {
 
 std::vector<KittiObject> readKittiLabels(const std::string& path) {
     std::ifstream file(path);
-    if (!file) throw std::runtime_error("readKittiLabels: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("readKittiLabels: cannot open '" + path + "'");
 
     std::vector<KittiObject> objects;
     std::string line;
     while (std::getline(file, line)) {
-        if (trim(line).empty()) continue;
+        if (trim(line).empty())
+            continue;
         std::istringstream is(line);
         KittiObject o;
         double bbox_left = 0.0, bbox_top = 0.0, bbox_right = 0.0, bbox_bottom = 0.0;
         const bool ok = static_cast<bool>(
             is >> o.frame >> o.track_id >> o.type >> o.truncated >> o.occluded >> o.alpha >>
-            bbox_left >> bbox_top >> bbox_right >> bbox_bottom >> o.height >> o.width >>
-            o.length >> o.location.x >> o.location.y >> o.location.z >> o.rotation_y);
-        if (!ok) continue;  // malformed line -- skip it, keep parsing the rest
+            bbox_left >> bbox_top >> bbox_right >> bbox_bottom >> o.height >> o.width >> o.length >>
+            o.location.x >> o.location.y >> o.location.z >> o.rotation_y);
+        if (!ok)
+            continue;  // malformed line -- skip it, keep parsing the rest
 
         o.bbox = cv::Rect2f(static_cast<float>(bbox_left), static_cast<float>(bbox_top),
                             static_cast<float>(bbox_right - bbox_left),
                             static_cast<float>(bbox_bottom - bbox_top));
         double score = 0.0;
-        if (is >> score) o.score = score;  // present in result files, absent in GT
+        if (is >> score)
+            o.score = score;  // present in result files, absent in GT
 
         objects.push_back(o);
     }
@@ -96,14 +106,17 @@ std::vector<KittiObject> readKittiLabels(const std::string& path) {
 
 StereoRig readKittiCalib(const std::string& path, cv::Size image_size) {
     std::ifstream file(path);
-    if (!file) throw std::runtime_error("readKittiCalib: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("readKittiCalib: cannot open '" + path + "'");
 
     std::map<std::string, std::vector<double>> rows;
     std::string line;
     while (std::getline(file, line)) {
-        if (trim(line).empty()) continue;
+        if (trim(line).empty())
+            continue;
         const std::pair<std::string, std::vector<double>> parsed = parseCalibLine(line);
-        if (!parsed.first.empty()) rows[parsed.first] = parsed.second;
+        if (!parsed.first.empty())
+            rows[parsed.first] = parsed.second;
     }
 
     const auto p2 = rows.find("P2");
@@ -160,7 +173,8 @@ KittiTrackingSource::KittiTrackingSource(const std::string& root, const std::str
 
     try {
         for (const KittiObject& o : readKittiLabels(base + "label_02/" + sequence + ".txt")) {
-            if (o.isDontCare()) continue;
+            if (o.isDontCare())
+                continue;
             labels_by_frame_[o.frame].push_back(o);
         }
     } catch (const std::runtime_error&) {
@@ -169,7 +183,8 @@ KittiTrackingSource::KittiTrackingSource(const std::string& root, const std::str
 }
 
 std::optional<StereoFrame> KittiTrackingSource::next() {
-    if (cursor_ >= static_cast<int>(frame_ids_.size())) return std::nullopt;
+    if (cursor_ >= static_cast<int>(frame_ids_.size()))
+        return std::nullopt;
 
     const int kitti_frame = frame_ids_[static_cast<std::size_t>(cursor_)];
     const std::string name = zeroPad(kitti_frame, 6) + ".png";

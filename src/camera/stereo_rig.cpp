@@ -15,8 +15,8 @@ StereoRig::StereoRig(CameraModel left, CameraModel right, double baseline)
     doffs_ = right_.cx() - left_.cx();
 }
 
-StereoRig StereoRig::fromIntrinsics(double fx, double fy, double cx, double cy,
-                                    cv::Size image_size, double baseline) {
+StereoRig StereoRig::fromIntrinsics(double fx, double fy, double cx, double cy, cv::Size image_size,
+                                    double baseline) {
     const CameraModel camera(fx, fy, cx, cy, image_size);
     return StereoRig(camera, camera, baseline);
 }
@@ -50,10 +50,8 @@ cv::Matx44d StereoRig::reprojectionMatrix() const {
     const double cy = left_.cy();
     const double b = baseline_;
     // [X Y Z W]^T = Q * [u v d 1]^T,  with  W = (d + doffs) / b  and  Z/W = f*b/(d + doffs).
-    return cv::Matx44d(1.0, 0.0, 0.0,      -cx,
-                       0.0, 1.0, 0.0,      -cy,
-                       0.0, 0.0, 0.0,        f,
-                       0.0, 0.0, 1.0 / b, doffs_ / b);
+    return cv::Matx44d(1.0, 0.0, 0.0, -cx, 0.0, 1.0, 0.0, -cy, 0.0, 0.0, 0.0, f, 0.0, 0.0, 1.0 / b,
+                       doffs_ / b);
 }
 
 }  // namespace s3m

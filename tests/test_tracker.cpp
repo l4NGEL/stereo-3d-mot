@@ -23,7 +23,8 @@ Detection3D makeDetection(cv::Rect2f box, double depth, int class_id = 0, float 
     const cv::Point3d p = testRig().left().backProject(center, depth);
     Detection3D d;
     d.box = box;
-    d.position = cv::Point3f(static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z));
+    d.position =
+        cv::Point3f(static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z));
     d.depth = static_cast<float>(depth);
     d.class_id = class_id;
     d.score = score;
@@ -67,7 +68,7 @@ TEST(Tracker, BirthIsTentativeThenConfirmsAfterMinHits) {
     EXPECT_FALSE(tracker.tracks()[0].confirmed());  // hit 2
 
     const TrackerUpdateResult r2 = tracker.update({d});
-    EXPECT_TRUE(tracker.tracks()[0].confirmed());  // hit 3 -> confirmed
+    EXPECT_TRUE(tracker.tracks()[0].confirmed());                   // hit 3 -> confirmed
     EXPECT_EQ(r2.detection_track_id[0], r0.detection_track_id[0]);  // stable id throughout
 }
 
@@ -138,12 +139,12 @@ TEST(Tracker, DifferentClassNeverMatchesSpawnsSeparateTrack) {
 // worked arithmetic in the PR/commit description.
 TEST(Tracker, DepthSeparatesOccludingBoxesIou2DGetsItWrong) {
     const cv::Rect2f near_box(280, 200, 40, 40);  // settles near track "A"
-    const cv::Rect2f far_box(300, 205, 40, 40);    // settles far track "B" -- overlaps near_box
+    const cv::Rect2f far_box(300, 205, 40, 40);   // settles far track "B" -- overlaps near_box
     const double near_depth = 2.0;
     const double far_depth = 8.0;
 
     for (AssociationMethod method :
-        {AssociationMethod::kMahalanobis3D, AssociationMethod::kIou2D}) {
+         {AssociationMethod::kMahalanobis3D, AssociationMethod::kIou2D}) {
         TrackerParams p = basicParams(method);
         p.min_hits = 1;
         Tracker tracker(p);
@@ -198,8 +199,9 @@ TEST(Tracker, FusedAppearanceRecoversIdentityMahalanobisAloneGetsWrong) {
     int id_red = -1;
     int id_blue = -1;
     for (int f = 0; f < 3; ++f) {
-        const TrackerUpdateResult r = tracker.update({makeDetectionWithAppearance(box, 2.00, red),
-                                                       makeDetectionWithAppearance(box, 2.10, blue)});
+        const TrackerUpdateResult r =
+            tracker.update({makeDetectionWithAppearance(box, 2.00, red),
+                            makeDetectionWithAppearance(box, 2.10, blue)});
         id_red = r.detection_track_id[0];
         id_blue = r.detection_track_id[1];
     }
@@ -265,7 +267,8 @@ TEST(Tracker, ResetClearsTracksAndRestartsIds) {
     tracker.reset();
     EXPECT_TRUE(tracker.tracks().empty());
 
-    const TrackerUpdateResult r = tracker.update({makeDetection(cv::Rect2f(300, 200, 40, 40), 3.0)});
+    const TrackerUpdateResult r =
+        tracker.update({makeDetection(cv::Rect2f(300, 200, 40, 40), 3.0)});
     EXPECT_EQ(r.detection_track_id[0], 1);  // id sequence restarted
 }
 

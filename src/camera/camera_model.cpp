@@ -22,9 +22,7 @@ CameraModel CameraModel::fromMatrix(const cv::Matx33d& K, cv::Size image_size,
 }
 
 cv::Matx33d CameraModel::K() const {
-    return cv::Matx33d(fx_, 0.0, cx_,
-                       0.0, fy_, cy_,
-                       0.0, 0.0, 1.0);
+    return cv::Matx33d(fx_, 0.0, cx_, 0.0, fy_, cy_, 0.0, 0.0, 1.0);
 }
 
 bool CameraModel::hasDistortion() const {

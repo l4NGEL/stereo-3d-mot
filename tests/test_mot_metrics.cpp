@@ -44,7 +44,7 @@ TEST(MotMetrics, PerfectTrackingIsMotaOne) {
 TEST(MotMetrics, MissThenResumeSameIdIsOneFragmentationNoSwitch) {
     MotAccumulator acc(1.5);
     acc.update({obj(1, 0)}, {obj(101, 0)});
-    acc.update({obj(1, 1)}, {});  // detector missed this frame
+    acc.update({obj(1, 1)}, {});             // detector missed this frame
     acc.update({obj(1, 2)}, {obj(101, 2)});  // resumes under the SAME hyp id
 
     const MotSummary s = acc.summary();

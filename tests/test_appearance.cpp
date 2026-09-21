@@ -10,7 +10,9 @@ using namespace s3m;
 
 namespace {
 
-cv::Mat solidColor(int size, cv::Scalar bgr) { return cv::Mat(size, size, CV_8UC3, bgr); }
+cv::Mat solidColor(int size, cv::Scalar bgr) {
+    return cv::Mat(size, size, CV_8UC3, bgr);
+}
 
 }  // namespace
 

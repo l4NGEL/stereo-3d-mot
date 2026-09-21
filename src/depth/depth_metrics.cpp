@@ -22,7 +22,8 @@ std::ostream& operator<<(std::ostream& os, const DepthMetrics& m) {
 
     os << std::fixed << std::setprecision(4);
     os << "RMSE=" << m.rmse << "  MAE=" << m.mae << "  absRel=" << m.abs_rel
-       << "  density=" << m.density << " (" << m.evaluated_pixels << "/" << m.gt_valid_pixels << ")";
+       << "  density=" << m.density << " (" << m.evaluated_pixels << "/" << m.gt_valid_pixels
+       << ")";
     for (std::size_t i = 0; i < m.bad_thresholds.size() && i < m.bad_fraction.size(); ++i) {
         os << "  bad(" << m.bad_thresholds[i] << ")=" << std::setprecision(2)
            << (100.0 * m.bad_fraction[i]) << "%" << std::setprecision(4);
@@ -65,11 +66,13 @@ DepthMetrics evaluate(const cv::Mat& estimate, const cv::Mat& ground_truth, doub
         for (int x = 0; x < gt.cols; ++x) {
             const double g = pg[x];
             const bool gt_ok = std::isfinite(g) && g >= valid_min && g <= valid_max;
-            if (gt_ok) ++gt_valid;
+            if (gt_ok)
+                ++gt_valid;
 
             const double e = pe[x];
             const bool est_ok = std::isfinite(e) && e >= valid_min && e <= valid_max;
-            if (!gt_ok || !est_ok) continue;
+            if (!gt_ok || !est_ok)
+                continue;
 
             const double err = e - g;
             const double abs_err = std::abs(err);
@@ -79,13 +82,17 @@ DepthMetrics evaluate(const cv::Mat& estimate, const cv::Mat& ground_truth, doub
             sum_sq_rel += (err * err) / g;
 
             for (std::size_t k = 0; k < bad_thresholds.size(); ++k) {
-                if (abs_err > bad_thresholds[k]) ++bad_counts[k];
+                if (abs_err > bad_thresholds[k])
+                    ++bad_counts[k];
             }
 
             const double ratio = std::max(e / g, g / e);
-            if (ratio < 1.25) ++d1;
-            if (ratio < 1.25 * 1.25) ++d2;
-            if (ratio < 1.25 * 1.25 * 1.25) ++d3;
+            if (ratio < 1.25)
+                ++d1;
+            if (ratio < 1.25 * 1.25)
+                ++d2;
+            if (ratio < 1.25 * 1.25 * 1.25)
+                ++d3;
 
             ++evaluated;
         }

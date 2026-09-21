@@ -15,7 +15,8 @@ constexpr double kInf = std::numeric_limits<double>::infinity();
 double totalCost(const std::vector<std::vector<double>>& cost, const std::vector<int>& row_to_col) {
     double total = 0.0;
     for (std::size_t i = 0; i < row_to_col.size(); ++i) {
-        if (row_to_col[i] >= 0) total += cost[i][static_cast<std::size_t>(row_to_col[i])];
+        if (row_to_col[i] >= 0)
+            total += cost[i][static_cast<std::size_t>(row_to_col[i])];
     }
     return total;
 }
@@ -23,7 +24,8 @@ double totalCost(const std::vector<std::vector<double>>& cost, const std::vector
 int matchCount(const std::vector<int>& row_to_col) {
     int n = 0;
     for (const int c : row_to_col) {
-        if (c >= 0) ++n;
+        if (c >= 0)
+            ++n;
     }
     return n;
 }
@@ -119,7 +121,8 @@ TEST(Assignment, GreedyIsValidAndNeverBeatsHungarianOnCardinality) {
 
     for (std::size_t i = 0; i < g.row_to_col.size(); ++i) {
         const int j = g.row_to_col[i];
-        if (j < 0) continue;
+        if (j < 0)
+            continue;
         EXPECT_EQ(g.col_to_row[static_cast<std::size_t>(j)], static_cast<int>(i));
         EXPECT_LE(cost[i][static_cast<std::size_t>(j)], gate);
     }

@@ -21,7 +21,8 @@ void TrajectoryRecorder::record(std::int64_t frame, double timestamp,
 
 void writeTrajectoriesCsv(const std::string& path, const TrajectoryRecorder& recorder) {
     std::ofstream file(path);
-    if (!file) throw std::runtime_error("writeTrajectoriesCsv: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("writeTrajectoriesCsv: cannot open '" + path + "'");
 
     file << "track_id,frame,timestamp,x,y,z,vx,vy,vz,class_id,confirmed\n";
     char line[256];
@@ -46,7 +47,8 @@ void writeTrajectoriesPly(const std::string& path, const TrajectoryRecorder& rec
     std::vector<std::pair<int, int>> edges;  // vertex indices, both endpoints in `vertices`
 
     for (const auto& [id, points] : recorder.trajectories()) {
-        if (points.size() < 2) continue;  // a polyline needs >= 2 points
+        if (points.size() < 2)
+            continue;  // a polyline needs >= 2 points
         const cv::Scalar c = trackColor(id);
         const int base = static_cast<int>(vertices.size());
         for (const TrajectoryPoint& p : points) {
@@ -60,7 +62,8 @@ void writeTrajectoriesPly(const std::string& path, const TrajectoryRecorder& rec
     }
 
     std::ofstream file(path);
-    if (!file) throw std::runtime_error("writeTrajectoriesPly: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("writeTrajectoriesPly: cannot open '" + path + "'");
 
     file << "ply\n"
          << "format ascii 1.0\n"

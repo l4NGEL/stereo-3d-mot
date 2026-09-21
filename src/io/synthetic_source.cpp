@@ -32,7 +32,8 @@ cv::Mat makeTexture(cv::Size size, std::uint64_t seed, const cv::Scalar& tint) {
 }
 
 void addSensorNoise(cv::Mat& image_bgr, std::uint64_t seed, double std_dev) {
-    if (std_dev <= 0.0) return;
+    if (std_dev <= 0.0)
+        return;
     cv::RNG rng(seed);
     cv::Mat noise(image_bgr.size(), CV_32FC3);
     rng.fill(noise, cv::RNG::NORMAL, 0.0, std_dev);
@@ -57,22 +58,25 @@ std::vector<SyntheticStereoSource::Card> SyntheticStereoSource::Options::default
 }
 
 SyntheticStereoSource::SyntheticStereoSource(Options options) : options_(std::move(options)) {
-    if (options_.cards.empty()) options_.cards = Options::defaultCards();
-    if (options_.cx <= 0.0) options_.cx = options_.image_size.width / 2.0;
-    if (options_.cy <= 0.0) options_.cy = options_.image_size.height / 2.0;
-    if (options_.num_frames < 1) options_.num_frames = 1;
+    if (options_.cards.empty())
+        options_.cards = Options::defaultCards();
+    if (options_.cx <= 0.0)
+        options_.cx = options_.image_size.width / 2.0;
+    if (options_.cy <= 0.0)
+        options_.cy = options_.image_size.height / 2.0;
+    if (options_.num_frames < 1)
+        options_.num_frames = 1;
 
     rig_ = StereoRig::fromIntrinsics(options_.fx, options_.fy, options_.cx, options_.cy,
                                      options_.image_size, options_.baseline_m);
 
-    background_texture_ =
-        makeTexture(cv::Size(options_.image_size.width + 2 * kTextureMargin,
-                             options_.image_size.height),
-                    mix(options_.seed, 1), cv::Scalar::all(128));
+    background_texture_ = makeTexture(
+        cv::Size(options_.image_size.width + 2 * kTextureMargin, options_.image_size.height),
+        mix(options_.seed, 1), cv::Scalar::all(128));
 
-    static const cv::Scalar tints[] = {
-        cv::Scalar(170, 120, 90), cv::Scalar(90, 175, 120), cv::Scalar(95, 105, 205),
-        cv::Scalar(165, 165, 90), cv::Scalar(150, 90, 170)};
+    static const cv::Scalar tints[] = {cv::Scalar(170, 120, 90), cv::Scalar(90, 175, 120),
+                                       cv::Scalar(95, 105, 205), cv::Scalar(165, 165, 90),
+                                       cv::Scalar(150, 90, 170)};
     card_textures_.reserve(options_.cards.size());
     for (std::size_t i = 0; i < options_.cards.size(); ++i) {
         const cv::Size sz(std::max(24, options_.cards[i].region.width),
@@ -113,7 +117,8 @@ StereoFrame SyntheticStereoSource::render(int frame_index) const {
     cv::Mat right = background_texture_(cv::Rect(kTextureMargin + bg_shift, 0, w, h)).clone();
 
     cv::Mat gt_disparity(h, w, CV_32F, cv::Scalar::all(static_cast<float>(d_bg)));
-    cv::Mat gt_depth(h, w, CV_32F, cv::Scalar::all(static_cast<float>(options_.background_depth_m)));
+    cv::Mat gt_depth(h, w, CV_32F,
+                     cv::Scalar::all(static_cast<float>(options_.background_depth_m)));
 
     // ---- cards, painted far-to-near so nearer cards occlude -------------
     std::vector<int> order(options_.cards.size());
@@ -126,7 +131,8 @@ StereoFrame SyntheticStereoSource::render(int frame_index) const {
     for (int idx : order) {
         const Card& card = options_.cards[static_cast<std::size_t>(idx)];
         const cv::Rect region = cardRegionAt(idx, frame_index);
-        if (region.width <= 0 || region.height <= 0) continue;
+        if (region.width <= 0 || region.height <= 0)
+            continue;
 
         const double d_card = f_baseline / card.depth_m;
         const int shift = static_cast<int>(std::lround(d_card));
@@ -164,7 +170,8 @@ StereoFrame SyntheticStereoSource::render(int frame_index) const {
 }
 
 std::optional<StereoFrame> SyntheticStereoSource::next() {
-    if (cursor_ >= options_.num_frames) return std::nullopt;
+    if (cursor_ >= options_.num_frames)
+        return std::nullopt;
     return render(cursor_++);
 }
 

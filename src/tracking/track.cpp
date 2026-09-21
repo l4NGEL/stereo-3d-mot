@@ -21,7 +21,9 @@ constexpr double kAppearanceEma = 0.9;
 Track::Track(int id, const cv::Point3f& initial_position, double dt, double accel_std,
              double meas_std, int class_id, const cv::Rect2f& initial_box,
              const cv::Mat& initial_appearance)
-    : id_(id), kf_(makeConstantVelocity3D(dt, accel_std, meas_std)), last_box_(initial_box),
+    : id_(id),
+      kf_(makeConstantVelocity3D(dt, accel_std, meas_std)),
+      last_box_(initial_box),
       class_id_(class_id),
       // Deep-copy: cv::Mat's copy ctor is a shallow, refcounted alias. Without
       // .clone() here, appearance_ shares the caller's buffer (e.g. a
@@ -50,7 +52,8 @@ void Track::correct(const cv::Point3f& measured_position) {
     kf_.update(toVec3(measured_position));
     ++hits_;
     time_since_update_ = 0;
-    if (!confirmed_ && hits_ >= min_hits_) confirmed_ = true;
+    if (!confirmed_ && hits_ >= min_hits_)
+        confirmed_ = true;
 }
 
 void Track::correct(const Detection3D& detection) {
@@ -61,12 +64,15 @@ void Track::correct(const Detection3D& detection) {
         if (appearance_.empty()) {
             appearance_ = detection.appearance.clone();
         } else {
-            appearance_ = kAppearanceEma * appearance_ + (1.0 - kAppearanceEma) * detection.appearance;
+            appearance_ =
+                kAppearanceEma * appearance_ + (1.0 - kAppearanceEma) * detection.appearance;
         }
     }
 }
 
-void Track::markMissed() { ++time_since_update_; }
+void Track::markMissed() {
+    ++time_since_update_;
+}
 
 cv::Point3f Track::position() const {
     const KalmanFilter::Vec& x = kf_.state();

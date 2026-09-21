@@ -26,10 +26,10 @@ TEST(DepthMetrics, KnownError) {
     est.at<float>(0, 1) = 11.0f;  // error 1
 
     const DepthMetrics m = evaluate(est, gt, 0.1, 100.0, {2.0});
-    EXPECT_NEAR(m.mae, 1.0, 1e-6);                 // (3 + 1 + 0 + 0) / 4
-    EXPECT_NEAR(m.rmse, std::sqrt(2.5), 1e-6);     // sqrt((9 + 1) / 4)
+    EXPECT_NEAR(m.mae, 1.0, 1e-6);              // (3 + 1 + 0 + 0) / 4
+    EXPECT_NEAR(m.rmse, std::sqrt(2.5), 1e-6);  // sqrt((9 + 1) / 4)
     ASSERT_EQ(m.bad_fraction.size(), 1u);
-    EXPECT_NEAR(m.bad_fraction[0], 0.25, 1e-6);    // only the error-3 pixel exceeds 2.0
+    EXPECT_NEAR(m.bad_fraction[0], 0.25, 1e-6);  // only the error-3 pixel exceeds 2.0
 }
 
 TEST(DepthMetrics, IgnoresInvalidPixels) {

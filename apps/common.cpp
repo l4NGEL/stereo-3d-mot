@@ -15,7 +15,9 @@
 namespace s3m::app {
 
 namespace {
-bool looksLikeFlag(const char* s) { return s != nullptr && s[0] == '-' && s[1] == '-'; }
+bool looksLikeFlag(const char* s) {
+    return s != nullptr && s[0] == '-' && s[1] == '-';
+}
 }  // namespace
 
 Args::Args(int argc, char** argv) {
@@ -37,7 +39,9 @@ Args::Args(int argc, char** argv) {
     }
 }
 
-bool Args::has(const std::string& key) const { return values_.find(key) != values_.end(); }
+bool Args::has(const std::string& key) const {
+    return values_.find(key) != values_.end();
+}
 
 std::string Args::get(const std::string& key, const std::string& fallback) const {
     const auto it = values_.find(key);
@@ -46,7 +50,8 @@ std::string Args::get(const std::string& key, const std::string& fallback) const
 
 int Args::getInt(const std::string& key, int fallback) const {
     const auto it = values_.find(key);
-    if (it == values_.end()) return fallback;
+    if (it == values_.end())
+        return fallback;
     try {
         return std::stoi(it->second);
     } catch (const std::exception&) {
@@ -56,7 +61,8 @@ int Args::getInt(const std::string& key, int fallback) const {
 
 double Args::getDouble(const std::string& key, double fallback) const {
     const auto it = values_.find(key);
-    if (it == values_.end()) return fallback;
+    if (it == values_.end())
+        return fallback;
     try {
         return std::stod(it->second);
     } catch (const std::exception&) {

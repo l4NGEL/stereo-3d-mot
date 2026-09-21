@@ -42,18 +42,20 @@ using namespace s3m;
 namespace {
 
 void printHelp() {
-    std::cout <<
-        "benchmark_track - 2D IoU vs 3D Mahalanobis association, head to head\n\n"
-        "  --frames N           frames to simulate (default 120)\n"
-        "  --drift PX           per-frame horizontal drift of each card (default 3.0)\n"
-        "  --box-jitter PX      Gaussian std on simulated box position/size (default 3.0)\n"
-        "  --depth-jitter M     Gaussian std on simulated depth (default 0.15)\n"
-        "  --miss-prob P        chance a real card goes undetected this frame (default 0.05)\n"
-        "  --fp-rate P          chance of a spurious false-positive box this frame (default 0.03)\n"
-        "  --meas-noise M       tracker's assumed position noise [m] (default 2x --depth-jitter)\n"
-        "  --eval-gate M        MOT evaluation match distance in metres (default 1.5)\n"
-        "  --seed N             RNG seed (default 7)\n"
-        "  --config <yaml>      base tracker parameters (dt, noise, gates, ...)\n";
+    std::cout
+        << "benchmark_track - 2D IoU vs 3D Mahalanobis association, head to head\n\n"
+           "  --frames N           frames to simulate (default 120)\n"
+           "  --drift PX           per-frame horizontal drift of each card (default 3.0)\n"
+           "  --box-jitter PX      Gaussian std on simulated box position/size (default 3.0)\n"
+           "  --depth-jitter M     Gaussian std on simulated depth (default 0.15)\n"
+           "  --miss-prob P        chance a real card goes undetected this frame (default 0.05)\n"
+           "  --fp-rate P          chance of a spurious false-positive box this frame (default "
+           "0.03)\n"
+           "  --meas-noise M       tracker's assumed position noise [m] (default 2x "
+           "--depth-jitter)\n"
+           "  --eval-gate M        MOT evaluation match distance in metres (default 1.5)\n"
+           "  --seed N             RNG seed (default 7)\n"
+           "  --config <yaml>      base tracker parameters (dt, noise, gates, ...)\n";
 }
 
 /// One simulated detection plus which ground-truth card it came from (-1 for a
@@ -71,10 +73,12 @@ struct SimDetection {
 double occludedFraction(std::size_t i, const std::vector<cv::Rect>& boxes,
                         const std::vector<SyntheticStereoSource::Card>& cards) {
     const cv::Rect& bi = boxes[i];
-    if (bi.area() <= 0) return 0.0;
+    if (bi.area() <= 0)
+        return 0.0;
     double covered = 0.0;
     for (std::size_t j = 0; j < boxes.size(); ++j) {
-        if (j == i || cards[j].depth_m >= cards[i].depth_m) continue;
+        if (j == i || cards[j].depth_m >= cards[i].depth_m)
+            continue;
         covered = std::max(covered, static_cast<double>((bi & boxes[j]).area()));
     }
     return covered / static_cast<double>(bi.area());
@@ -90,8 +94,10 @@ std::vector<SimDetection> simulateDetections(const SyntheticStereoSource& src, i
     const CameraModel& cam = src.rig().left();
 
     for (std::size_t i = 0; i < boxes.size(); ++i) {
-        if (rng.uniform(0.0, 1.0) < miss_prob) continue;
-        if (occludedFraction(i, boxes, cards) > 0.6) continue;  // realistically invisible
+        if (rng.uniform(0.0, 1.0) < miss_prob)
+            continue;
+        if (occludedFraction(i, boxes, cards) > 0.6)
+            continue;  // realistically invisible
 
         const cv::Rect& b = boxes[i];
         const double w = std::max(4.0, b.width + rng.gaussian(box_jitter_px));
@@ -184,13 +190,16 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
     update_us.reserve(static_cast<std::size_t>(scene_opts.num_frames));
 
     for (int f = 0; f < scene_opts.num_frames; ++f) {
-        const auto frame = src.next();  // same cursor order as cardBoxes(f) below -- see SyntheticStereoSource::next()
+        const auto frame = src.next();  // same cursor order as cardBoxes(f) below -- see
+                                        // SyntheticStereoSource::next()
         const std::vector<SimDetection> sims =
             simulateDetections(src, f, rng, box_jitter_px, depth_jitter_m, miss_prob, fp_rate);
         std::vector<Detection3D> dets;
         dets.reserve(sims.size());
-        for (const SimDetection& s : sims) dets.push_back(s.det);
-        if (frame) attachAppearance(dets, frame->left);
+        for (const SimDetection& s : sims)
+            dets.push_back(s.det);
+        if (frame)
+            attachAppearance(dets, frame->left);
 
         Stopwatch sw;
         const TrackerUpdateResult res = tracker.update(dets);
@@ -198,7 +207,8 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
 
         std::vector<MotObject> hyp;
         for (const TrackState& t : res.tracks) {
-            if (!t.confirmed) continue;
+            if (!t.confirmed)
+                continue;
             MotObject o;
             o.id = t.id;
             o.position = t.position;
@@ -208,7 +218,8 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
 
         for (std::size_t k = 0; k < sims.size(); ++k) {
             const int tid = res.detection_track_id[k];
-            if (tid < 0) continue;
+            if (tid < 0)
+                continue;
             if (sims[k].gt_card >= 0) {
                 card_history[static_cast<std::size_t>(sims[k].gt_card)].emplace_back(f, tid);
                 track_matched_real[tid] = true;
@@ -223,14 +234,18 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
     double consistency_sum = 0.0;
     int consistency_n = 0;
     for (const auto& hist : card_history) {
-        if (hist.empty()) continue;
+        if (hist.empty())
+            continue;
         for (std::size_t i = 1; i < hist.size(); ++i) {
-            if (hist[i].second != hist[i - 1].second) ++r.id_switches;
+            if (hist[i].second != hist[i - 1].second)
+                ++r.id_switches;
         }
         std::map<int, int> counts;
-        for (const auto& frame_id : hist) ++counts[frame_id.second];
+        for (const auto& frame_id : hist)
+            ++counts[frame_id.second];
         int best = 0;
-        for (const auto& id_count : counts) best = std::max(best, id_count.second);
+        for (const auto& id_count : counts)
+            best = std::max(best, id_count.second);
         consistency_sum += 100.0 * static_cast<double>(best) / static_cast<double>(hist.size());
         ++consistency_n;
         r.fragmentation += static_cast<int>(counts.size()) - 1;
@@ -240,12 +255,14 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
     r.tracks_born = static_cast<int>(track_matched_real.size());
     int fake = 0;
     for (const auto& id_matched : track_matched_real) {
-        if (!id_matched.second) ++fake;
+        if (!id_matched.second)
+            ++fake;
     }
     r.false_track_rate_pct = r.tracks_born > 0 ? 100.0 * fake / r.tracks_born : 0.0;
-    r.mean_update_us =
-        update_us.empty() ? 0.0 : std::accumulate(update_us.begin(), update_us.end(), 0.0) /
-                                       static_cast<double>(update_us.size());
+    r.mean_update_us = update_us.empty()
+                           ? 0.0
+                           : std::accumulate(update_us.begin(), update_us.end(), 0.0) /
+                                 static_cast<double>(update_us.size());
     r.mot = mot_acc.summary();
     return r;
 }
@@ -353,8 +370,7 @@ int main(int argc, char** argv) {
                             "Frag");
     for (const MethodResult& r : results) {
         std::cout << cv::format("%-28s %8.3f %8.3f %8.3f %8lld %8lld\n", r.name.c_str(), r.mot.mota,
-                                r.mot.motp, r.mot.idf1,
-                                static_cast<long long>(r.mot.num_switches),
+                                r.mot.motp, r.mot.idf1, static_cast<long long>(r.mot.num_switches),
                                 static_cast<long long>(r.mot.num_fragmentations));
     }
     std::cout << "\nlower ID switches / fragmentation / false-track% / MOTP and higher ID "

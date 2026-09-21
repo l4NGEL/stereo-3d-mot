@@ -26,11 +26,11 @@ class OnnxDetector : public Detector {
  public:
     struct Options {
         std::string model_path;
-        int input_size = 640;             ///< square network input
+        int input_size = 640;  ///< square network input
         float score_threshold = 0.25f;
         float nms_iou = 0.45f;
-        int num_threads = 0;              ///< 0 -> ONNX Runtime default
-        std::vector<int> keep_classes;   ///< empty -> keep every class
+        int num_threads = 0;            ///< 0 -> ONNX Runtime default
+        std::vector<int> keep_classes;  ///< empty -> keep every class
         int max_detections = 300;
 
         /// Run on ONNX Runtime's CUDA execution provider instead of CPU.

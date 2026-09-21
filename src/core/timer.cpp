@@ -11,7 +11,8 @@ namespace s3m {
 double FpsMeter::tick() {
     const double dt = since_last_.elapsedSec();
     since_last_.reset();
-    if (dt <= 0.0) return fps_;
+    if (dt <= 0.0)
+        return fps_;
     const double instantaneous = 1.0 / dt;
     if (first_) {
         first_ = false;
@@ -40,7 +41,8 @@ std::int64_t ProfileRegistry::count(const std::string& name) const {
 
 double ProfileRegistry::meanMs(const std::string& name) const {
     const auto it = entries_.find(name);
-    if (it == entries_.end() || it->second.calls == 0) return 0.0;
+    if (it == entries_.end() || it->second.calls == 0)
+        return 0.0;
     return it->second.total_ms / static_cast<double>(it->second.calls);
 }
 

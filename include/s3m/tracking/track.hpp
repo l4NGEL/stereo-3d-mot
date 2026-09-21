@@ -11,8 +11,8 @@ namespace s3m {
 /// a tracker-manager needs (age, hit count, misses, confirmation).
 class Track {
  public:
-    Track(int id, const cv::Point3f& initial_position, double dt, double accel_std,
-          double meas_std, int class_id = -1, const cv::Rect2f& initial_box = cv::Rect2f(),
+    Track(int id, const cv::Point3f& initial_position, double dt, double accel_std, double meas_std,
+          int class_id = -1, const cv::Rect2f& initial_box = cv::Rect2f(),
           const cv::Mat& initial_appearance = cv::Mat());
 
     void predict();

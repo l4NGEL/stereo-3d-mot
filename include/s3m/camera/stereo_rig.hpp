@@ -22,13 +22,13 @@ class StereoRig {
     StereoRig(CameraModel left, CameraModel right, double baseline);
 
     /// Identical-intrinsics helper (doffs = 0).
-    static StereoRig fromIntrinsics(double fx, double fy, double cx, double cy,
-                                    cv::Size image_size, double baseline);
+    static StereoRig fromIntrinsics(double fx, double fy, double cx, double cy, cv::Size image_size,
+                                    double baseline);
 
     const CameraModel& left() const { return left_; }
     const CameraModel& right() const { return right_; }
     double baseline() const { return baseline_; }  ///< metres, > 0
-    double doffs() const { return doffs_; }         ///< cx_right - cx_left, pixels
+    double doffs() const { return doffs_; }        ///< cx_right - cx_left, pixels
     void setDoffs(double doffs) { doffs_ = doffs; }
 
     /// Z [m] for a disparity [px]. Returns +infinity when (d + doffs) <= 0.

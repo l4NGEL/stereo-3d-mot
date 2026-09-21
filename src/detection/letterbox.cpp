@@ -18,8 +18,7 @@ cv::Point2f Letterbox::toOriginal(const cv::Point2f& p) const {
     return {(p.x - static_cast<float>(pad_x)) * inv, (p.y - static_cast<float>(pad_y)) * inv};
 }
 
-Letterbox makeLetterbox(const cv::Mat& src, cv::Mat& dst, int target,
-                        const cv::Scalar& pad_value) {
+Letterbox makeLetterbox(const cv::Mat& src, cv::Mat& dst, int target, const cv::Scalar& pad_value) {
     CV_Assert(!src.empty() && target > 0);
 
     Letterbox lb;

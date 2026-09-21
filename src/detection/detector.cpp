@@ -28,9 +28,9 @@ std::vector<Detection2D> HogPeopleDetector::detect(const cv::Mat& image_bgr) {
     detections.reserve(boxes.size());
     for (std::size_t i = 0; i < boxes.size(); ++i) {
         Detection2D det;
-        det.box = cv::Rect2f(static_cast<float>(boxes[i].x), static_cast<float>(boxes[i].y),
-                             static_cast<float>(boxes[i].width),
-                             static_cast<float>(boxes[i].height));
+        det.box =
+            cv::Rect2f(static_cast<float>(boxes[i].x), static_cast<float>(boxes[i].y),
+                       static_cast<float>(boxes[i].width), static_cast<float>(boxes[i].height));
         det.score = static_cast<float>(i < weights.size() ? weights[i] : 0.0);
         det.class_id = 0;
         detections.push_back(det);

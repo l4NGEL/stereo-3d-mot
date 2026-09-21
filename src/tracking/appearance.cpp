@@ -11,9 +11,11 @@ constexpr int kSatBins = 16;
 }  // namespace
 
 cv::Mat computeAppearanceDescriptor(const cv::Mat& image_bgr, const cv::Rect2f& box) {
-    if (image_bgr.empty()) return cv::Mat();
+    if (image_bgr.empty())
+        return cv::Mat();
     const cv::Rect roi = cv::Rect(box) & cv::Rect(cv::Point(0, 0), image_bgr.size());
-    if (roi.width <= 0 || roi.height <= 0) return cv::Mat();
+    if (roi.width <= 0 || roi.height <= 0)
+        return cv::Mat();
 
     cv::Mat hsv;
     cv::cvtColor(image_bgr(roi), hsv, cv::COLOR_BGR2HSV);
@@ -35,7 +37,8 @@ double appearanceDistance(const cv::Mat& a, const cv::Mat& b) {
 }
 
 void attachAppearance(std::vector<Detection3D>& detections, const cv::Mat& image_bgr) {
-    for (Detection3D& d : detections) d.appearance = computeAppearanceDescriptor(image_bgr, d.box);
+    for (Detection3D& d : detections)
+        d.appearance = computeAppearanceDescriptor(image_bgr, d.box);
 }
 
 }  // namespace s3m

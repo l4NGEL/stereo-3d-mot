@@ -36,26 +36,26 @@ struct Detection2D {
 
 /// A 2D detection promoted to 3D using the depth map.
 struct Detection3D {
-    cv::Rect2f box;             ///< source 2D box (left image)
-    cv::Point3f position{};     ///< metres, left-camera frame
-    float depth = 0.0f;         ///< metres (== position.z); robust estimate over the box
+    cv::Rect2f box;          ///< source 2D box (left image)
+    cv::Point3f position{};  ///< metres, left-camera frame
+    float depth = 0.0f;      ///< metres (== position.z); robust estimate over the box
     float score = 0.0f;
     int class_id = 0;
-    bool valid = false;         ///< false when the box had too few valid depth pixels
-    cv::Mat appearance;         ///< optional; see tracking/appearance.hpp. Empty if unset.
+    bool valid = false;  ///< false when the box had too few valid depth pixels
+    cv::Mat appearance;  ///< optional; see tracking/appearance.hpp. Empty if unset.
 };
 
 /// Filtered state of one tracked object.
 struct TrackState {
     int id = -1;
-    cv::Point3f position{};      ///< filtered position [m], left-camera frame
-    cv::Point3f velocity{};      ///< filtered velocity [m/s]
-    cv::Rect2f box{};             ///< most recent matched 2D box (left image)
-    int class_id = -1;            ///< class of the detection the track was born from
-    int age = 0;                 ///< frames since the track was created
-    int hits = 0;                ///< total matched detections
-    int time_since_update = 0;   ///< frames since the last matched detection
-    bool confirmed = false;      ///< promoted past the min-hits threshold
+    cv::Point3f position{};     ///< filtered position [m], left-camera frame
+    cv::Point3f velocity{};     ///< filtered velocity [m/s]
+    cv::Rect2f box{};           ///< most recent matched 2D box (left image)
+    int class_id = -1;          ///< class of the detection the track was born from
+    int age = 0;                ///< frames since the track was created
+    int hits = 0;               ///< total matched detections
+    int time_since_update = 0;  ///< frames since the last matched detection
+    bool confirmed = false;     ///< promoted past the min-hits threshold
 };
 
 }  // namespace s3m

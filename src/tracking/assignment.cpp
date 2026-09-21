@@ -26,7 +26,7 @@ std::vector<int> hungarianSquarePerfectMatching(const std::vector<std::vector<do
     constexpr double kBig = std::numeric_limits<double>::max() / 4.0;
     std::vector<double> u(static_cast<std::size_t>(n) + 1, 0.0);
     std::vector<double> v(static_cast<std::size_t>(n) + 1, 0.0);
-    std::vector<int> p(static_cast<std::size_t>(n) + 1, 0);    // p[j] = row matched to column j
+    std::vector<int> p(static_cast<std::size_t>(n) + 1, 0);  // p[j] = row matched to column j
     std::vector<int> way(static_cast<std::size_t>(n) + 1, 0);
 
     for (int i = 1; i <= n; ++i) {
@@ -41,9 +41,11 @@ std::vector<int> hungarianSquarePerfectMatching(const std::vector<std::vector<do
             int j1 = -1;
             double delta = kBig;
             for (int j = 1; j <= n; ++j) {
-                if (used[static_cast<std::size_t>(j)]) continue;
-                const double cur = a[static_cast<std::size_t>(i0 - 1)][static_cast<std::size_t>(j - 1)] -
-                                   u[static_cast<std::size_t>(i0)] - v[static_cast<std::size_t>(j)];
+                if (used[static_cast<std::size_t>(j)])
+                    continue;
+                const double cur =
+                    a[static_cast<std::size_t>(i0 - 1)][static_cast<std::size_t>(j - 1)] -
+                    u[static_cast<std::size_t>(i0)] - v[static_cast<std::size_t>(j)];
                 if (cur < minv[static_cast<std::size_t>(j)]) {
                     minv[static_cast<std::size_t>(j)] = cur;
                     way[static_cast<std::size_t>(j)] = j0;
@@ -88,14 +90,16 @@ Assignment solveAssignmentHungarian(const std::vector<std::vector<double>>& cost
     Assignment result;
     result.row_to_col.assign(static_cast<std::size_t>(rows), -1);
     result.col_to_row.assign(static_cast<std::size_t>(cols), -1);
-    if (rows == 0 || cols == 0) return result;
+    if (rows == 0 || cols == 0)
+        return result;
 
     // A value strictly worse than any real (even ungated) cost, so the solver
     // only ever uses a padding/forbidden cell when no better option remains.
     double big = gate;
     for (const auto& row : cost) {
         for (const double c : row) {
-            if (std::isfinite(c)) big = std::max(big, c);
+            if (std::isfinite(c))
+                big = std::max(big, c);
         }
     }
     big = big * 4.0 + 1.0;
@@ -150,15 +154,18 @@ Assignment solveAssignmentGreedy(const std::vector<std::vector<double>>& cost, d
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             const double c = cost[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
-            if (std::isfinite(c) && c <= gate) edges.push_back({c, i, j});
+            if (std::isfinite(c) && c <= gate)
+                edges.push_back({c, i, j});
         }
     }
-    std::sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b) { return a.cost < b.cost; });
+    std::sort(edges.begin(), edges.end(),
+              [](const Edge& a, const Edge& b) { return a.cost < b.cost; });
 
     std::vector<char> row_used(static_cast<std::size_t>(rows), 0);
     std::vector<char> col_used(static_cast<std::size_t>(cols), 0);
     for (const Edge& e : edges) {
-        if (row_used[static_cast<std::size_t>(e.row)] || col_used[static_cast<std::size_t>(e.col)]) continue;
+        if (row_used[static_cast<std::size_t>(e.row)] || col_used[static_cast<std::size_t>(e.col)])
+            continue;
         row_used[static_cast<std::size_t>(e.row)] = 1;
         col_used[static_cast<std::size_t>(e.col)] = 1;
         result.row_to_col[static_cast<std::size_t>(e.row)] = e.col;

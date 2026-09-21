@@ -99,7 +99,8 @@ std::vector<Detection2D> OnnxDetector::detect(const cv::Mat& image_bgr) {
     CV_Assert(!image_bgr.empty());
 
     cv::Mat bgr = image_bgr;
-    if (image_bgr.channels() == 1) cv::cvtColor(image_bgr, bgr, cv::COLOR_GRAY2BGR);
+    if (image_bgr.channels() == 1)
+        cv::cvtColor(image_bgr, bgr, cv::COLOR_GRAY2BGR);
 
     const int size = options_.input_size;
     cv::Mat lb_img;
@@ -107,23 +108,21 @@ std::vector<Detection2D> OnnxDetector::detect(const cv::Mat& image_bgr) {
     std::vector<float> blob = toBlob(lb_img, size);
 
     const std::array<std::int64_t, 4> in_shape{1, 3, size, size};
-    const Ort::MemoryInfo mem =
-        Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
+    const Ort::MemoryInfo mem = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
     Ort::Value input = Ort::Value::CreateTensor<float>(mem, blob.data(), blob.size(),
                                                        in_shape.data(), in_shape.size());
 
     const char* input_names[] = {impl_->input_name.c_str()};
     std::vector<const char*> output_names;
     output_names.reserve(impl_->output_names.size());
-    for (const std::string& n : impl_->output_names) output_names.push_back(n.c_str());
+    for (const std::string& n : impl_->output_names)
+        output_names.push_back(n.c_str());
 
-    const std::vector<Ort::Value> outputs =
-        impl_->session->Run(Ort::RunOptions{nullptr}, input_names, &input, 1, output_names.data(),
-                            output_names.size());
+    const std::vector<Ort::Value> outputs = impl_->session->Run(
+        Ort::RunOptions{nullptr}, input_names, &input, 1, output_names.data(), output_names.size());
 
     const float* data = outputs[0].GetTensorData<float>();
-    const std::vector<std::int64_t> shape =
-        outputs[0].GetTensorTypeAndShapeInfo().GetShape();
+    const std::vector<std::int64_t> shape = outputs[0].GetTensorTypeAndShapeInfo().GetShape();
     if (shape.size() != 3 || shape[0] != 1) {
         throw std::runtime_error("OnnxDetector: expected a rank-3 [1, *, *] output");
     }
@@ -147,7 +146,8 @@ std::vector<Detection2D> OnnxDetector::detect(const cv::Mat& image_bgr) {
     std::vector<int> class_ids;
     for (std::int64_t a = 0; a < num_anchors; ++a) {
         const float obj = v8 ? 1.0f : at(a, 4);
-        if (obj <= 0.0f) continue;
+        if (obj <= 0.0f)
+            continue;
 
         int best_class = 0;
         float best_score = 0.0f;
@@ -158,7 +158,8 @@ std::vector<Detection2D> OnnxDetector::detect(const cv::Mat& image_bgr) {
                 best_class = static_cast<int>(c);
             }
         }
-        if (best_score < options_.score_threshold) continue;
+        if (best_score < options_.score_threshold)
+            continue;
         if (!options_.keep_classes.empty() &&
             std::find(options_.keep_classes.begin(), options_.keep_classes.end(), best_class) ==
                 options_.keep_classes.end()) {

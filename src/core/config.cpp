@@ -10,36 +10,45 @@ namespace {
 
 template <typename T>
 void readScalar(const cv::FileNode& parent, const char* key, T& out) {
-    if (parent.isNone() || parent.empty()) return;
+    if (parent.isNone() || parent.empty())
+        return;
     const cv::FileNode node = parent[key];
-    if (node.isNone() || node.empty()) return;
+    if (node.isNone() || node.empty())
+        return;
     T value{};
     node >> value;
     out = value;
 }
 
 void readBool(const cv::FileNode& parent, const char* key, bool& out) {
-    if (parent.isNone() || parent.empty()) return;
+    if (parent.isNone() || parent.empty())
+        return;
     const cv::FileNode node = parent[key];
-    if (node.isNone() || node.empty()) return;
+    if (node.isNone() || node.empty())
+        return;
     int value = out ? 1 : 0;
     node >> value;
     out = value != 0;
 }
 
 void readDoubleVector(const cv::FileNode& parent, const char* key, std::vector<double>& out) {
-    if (parent.isNone() || parent.empty()) return;
+    if (parent.isNone() || parent.empty())
+        return;
     const cv::FileNode node = parent[key];
-    if (node.isNone() || node.empty()) return;
+    if (node.isNone() || node.empty())
+        return;
     std::vector<double> values;
     node >> values;
-    if (!values.empty()) out = values;
+    if (!values.empty())
+        out = values;
 }
 
 void readIntVector(const cv::FileNode& parent, const char* key, std::vector<int>& out) {
-    if (parent.isNone() || parent.empty()) return;
+    if (parent.isNone() || parent.empty())
+        return;
     const cv::FileNode node = parent[key];
-    if (node.isNone() || node.empty() || !node.isSeq()) return;
+    if (node.isNone() || node.empty() || !node.isSeq())
+        return;
     std::vector<int> values;
     node >> values;
     out = values;  // an explicit list (even empty) is a valid override

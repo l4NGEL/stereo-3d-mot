@@ -41,15 +41,15 @@ TEST(OnnxDetector, ParsesBoxesInvertsLetterboxAndRunsNms) {
 
     EXPECT_EQ(dets[0].class_id, 0);
     EXPECT_NEAR(dets[0].score, 0.92f, 1e-4);
-    EXPECT_NEAR(dets[0].box.x, 160.0f, 1.0f);   // (200 - 40) - 0
-    EXPECT_NEAR(dets[0].box.y, 20.0f, 1.0f);    // (160 - 60) - 80
+    EXPECT_NEAR(dets[0].box.x, 160.0f, 1.0f);  // (200 - 40) - 0
+    EXPECT_NEAR(dets[0].box.y, 20.0f, 1.0f);   // (160 - 60) - 80
     EXPECT_NEAR(dets[0].box.width, 80.0f, 1.0f);
     EXPECT_NEAR(dets[0].box.height, 120.0f, 1.0f);
 
     EXPECT_EQ(dets[1].class_id, 2);
     EXPECT_NEAR(dets[1].score, 0.75f, 1e-4);
-    EXPECT_NEAR(dets[1].box.x, 400.0f, 1.0f);   // (450 - 50) - 0
-    EXPECT_NEAR(dets[1].box.y, 175.0f, 1.0f);   // (300 - 45) - 80
+    EXPECT_NEAR(dets[1].box.x, 400.0f, 1.0f);  // (450 - 50) - 0
+    EXPECT_NEAR(dets[1].box.y, 175.0f, 1.0f);  // (300 - 45) - 80
 }
 
 TEST(OnnxDetector, KeepClassesFiltersOutput) {

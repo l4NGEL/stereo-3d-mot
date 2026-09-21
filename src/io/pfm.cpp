@@ -38,7 +38,8 @@ std::string readToken(std::istream& is) {
     char c = 0;
     while (is.get(c)) {
         if (std::isspace(static_cast<unsigned char>(c))) {
-            if (!token.empty()) break;
+            if (!token.empty())
+                break;
         } else {
             token.push_back(c);
         }
@@ -50,7 +51,8 @@ std::string readToken(std::istream& is) {
 
 cv::Mat readPfm(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
-    if (!file) throw std::runtime_error("readPfm: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("readPfm: cannot open '" + path + "'");
 
     const std::string magic = readToken(file);
     int channels = 0;
@@ -59,7 +61,8 @@ cv::Mat readPfm(const std::string& path) {
     } else if (magic == "Pf") {
         channels = 1;
     } else {
-        throw std::runtime_error("readPfm: '" + path + "' is not a PFM file (magic='" + magic + "')");
+        throw std::runtime_error("readPfm: '" + path + "' is not a PFM file (magic='" + magic +
+                                 "')");
     }
 
     int width = 0;
@@ -97,22 +100,25 @@ cv::Mat readPfm(const std::string& path) {
         }
     }
 
-    if (channels == 3) cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
+    if (channels == 3)
+        cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
     return image;
 }
 
 void writePfm(const std::string& path, const cv::Mat& image) {
     CV_Assert(image.type() == CV_32FC1);
     std::ofstream file(path, std::ios::binary);
-    if (!file) throw std::runtime_error("writePfm: cannot open '" + path + "' for writing");
+    if (!file)
+        throw std::runtime_error("writePfm: cannot open '" + path + "' for writing");
 
     file << "Pf\n"
          << image.cols << " " << image.rows << "\n"
          << (hostIsLittleEndian() ? "-1.0" : "1.0") << "\n";
 
     for (int row = image.rows - 1; row >= 0; --row) {
-        file.write(reinterpret_cast<const char*>(image.ptr<float>(row)),
-                   static_cast<std::streamsize>(static_cast<std::size_t>(image.cols) * sizeof(float)));
+        file.write(
+            reinterpret_cast<const char*>(image.ptr<float>(row)),
+            static_cast<std::streamsize>(static_cast<std::size_t>(image.cols) * sizeof(float)));
     }
 }
 

@@ -63,7 +63,8 @@ class KittiFixture : public ::testing::Test {
 }  // namespace
 
 TEST_F(KittiFixture, ReadLabelsParsesAllValidLinesSkipsGarbage) {
-    const std::vector<KittiObject> objs = readKittiLabels((root_ / "label_02" / "0000.txt").string());
+    const std::vector<KittiObject> objs =
+        readKittiLabels((root_ / "label_02" / "0000.txt").string());
     ASSERT_EQ(objs.size(), 4u);  // 5 lines in the file, 1 garbage line skipped
 
     EXPECT_EQ(objs[0].frame, 0);
@@ -71,9 +72,9 @@ TEST_F(KittiFixture, ReadLabelsParsesAllValidLinesSkipsGarbage) {
     EXPECT_EQ(objs[0].type, "Car");
     EXPECT_FALSE(objs[0].isDontCare());
     EXPECT_FLOAT_EQ(objs[0].bbox.x, 100.0f);
-    EXPECT_FLOAT_EQ(objs[0].bbox.width, 100.0f);   // 200 - 100
+    EXPECT_FLOAT_EQ(objs[0].bbox.width, 100.0f);  // 200 - 100
     EXPECT_DOUBLE_EQ(objs[0].location.z, 20.0);
-    EXPECT_LT(objs[0].score, 0.0);                  // GT file: no trailing score
+    EXPECT_LT(objs[0].score, 0.0);  // GT file: no trailing score
 
     EXPECT_TRUE(objs[1].isDontCare());
     EXPECT_EQ(objs[1].track_id, -1);
@@ -100,8 +101,8 @@ TEST_F(KittiFixture, ReadCalibRecoversFocalLengthBaselineAndDoffs) {
     EXPECT_NEAR(rig.left().fy(), 700.0, 1e-6);
     EXPECT_NEAR(rig.left().cx(), 600.0, 1e-6);
     EXPECT_NEAR(rig.right().cx(), 590.0, 1e-6);
-    EXPECT_NEAR(rig.baseline(), 0.54, 1e-6);   // (0 - (-378)) / 700
-    EXPECT_NEAR(rig.doffs(), -10.0, 1e-6);     // cx_right - cx_left
+    EXPECT_NEAR(rig.baseline(), 0.54, 1e-6);  // (0 - (-378)) / 700
+    EXPECT_NEAR(rig.doffs(), -10.0, 1e-6);    // cx_right - cx_left
 }
 
 TEST_F(KittiFixture, ReadCalibThrowsWhenP2OrP3Missing) {

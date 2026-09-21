@@ -44,9 +44,9 @@ struct TrackerParams {
     int max_age = 30;
     int min_hits = 3;
     AssociationMethod association = AssociationMethod::kMahalanobis3D;
-    double gating_chi2 = 7.815;   ///< kMahalanobis3D: chi-square(3 dof, 95%)
-    double iou_gate = 0.3;        ///< kIou2D: minimum IoU to allow a match
-    bool use_hungarian = true;    ///< false -> greedy nearest-first
+    double gating_chi2 = 7.815;  ///< kMahalanobis3D: chi-square(3 dof, 95%)
+    double iou_gate = 0.3;       ///< kIou2D: minimum IoU to allow a match
+    bool use_hungarian = true;   ///< false -> greedy nearest-first
 
     /// kFusedAppearance cost weights; should sum to 1 (not enforced -- an
     /// unnormalised sum just rescales the gate=1.0 comparison uniformly,
@@ -61,7 +61,7 @@ struct TrackerParams {
 
 /// Result of one Tracker::update() call.
 struct TrackerUpdateResult {
-    std::vector<TrackState> tracks;      ///< every surviving track, confirmed and tentative
+    std::vector<TrackState> tracks;  ///< every surviving track, confirmed and tentative
     /// Parallel to the `detections` passed to update(): the id of the track
     /// each detection ended up part of (matched to an existing one, or the new
     /// track it birthed), or -1 for a detection that was unusable

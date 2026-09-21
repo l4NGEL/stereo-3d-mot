@@ -29,19 +29,18 @@ using namespace s3m;
 namespace {
 
 void printHelp() {
-    std::cout <<
-        "stereo_depth_demo - end-to-end stereo depth pipeline\n\n"
-        "  --source synthetic|<middlebury-scene-dir>   (default: synthetic)\n"
-        "  --config <yaml>     matcher / evaluation / detector parameters\n"
-        "  --frames N          synthetic frame count (default 30)\n"
-        "  --detector none|hog|onnx     object detector (default: none)\n"
-        "  --model <path.onnx>          model for --detector onnx\n"
-        "  --track                      run detections through the 3D tracker\n"
-        "  --trajectories <path.csv>    export tracked trajectories (needs --track)\n"
-        "  --trajectories-ply <path.ply> ... as a PLY polyline per track\n"
-        "  --out <dir>         write the visualisation board (and clouds) here\n"
-        "  --cloud             also export a PLY point cloud per frame\n"
-        "  --max-depth M       depth colour-map clamp in metres (default 15)\n";
+    std::cout << "stereo_depth_demo - end-to-end stereo depth pipeline\n\n"
+                 "  --source synthetic|<middlebury-scene-dir>   (default: synthetic)\n"
+                 "  --config <yaml>     matcher / evaluation / detector parameters\n"
+                 "  --frames N          synthetic frame count (default 30)\n"
+                 "  --detector none|hog|onnx     object detector (default: none)\n"
+                 "  --model <path.onnx>          model for --detector onnx\n"
+                 "  --track                      run detections through the 3D tracker\n"
+                 "  --trajectories <path.csv>    export tracked trajectories (needs --track)\n"
+                 "  --trajectories-ply <path.ply> ... as a PLY polyline per track\n"
+                 "  --out <dir>         write the visualisation board (and clouds) here\n"
+                 "  --cloud             also export a PLY point cloud per frame\n"
+                 "  --max-depth M       depth colour-map clamp in metres (default 15)\n";
 }
 
 }  // namespace
@@ -68,7 +67,8 @@ int main(int argc, char** argv) {
     const std::string out_dir = args.get("out", "");
     const bool want_cloud = args.has("cloud");
     const float max_depth = static_cast<float>(args.getDouble("max-depth", 15.0));
-    if (!out_dir.empty()) fs::create_directories(out_dir);
+    if (!out_dir.empty())
+        fs::create_directories(out_dir);
 
     const bool want_track = args.has("track");
     const std::string trajectories_csv = args.get("trajectories", "");
@@ -133,7 +133,8 @@ int main(int argc, char** argv) {
 
         cv::Mat left_panel = frame->left;
         if (want_track) {
-            if (!tracks.empty()) left_panel = drawTracks(frame->left, tracks);
+            if (!tracks.empty())
+                left_panel = drawTracks(frame->left, tracks);
         } else if (!dets3d.empty()) {
             left_panel = drawDetections3D(frame->left, dets3d);
         }
@@ -143,8 +144,9 @@ int main(int argc, char** argv) {
             panels.push_back(colorizeDisparity(frame->gt_disparity, max_disp));
         }
         cv::Mat board = tile(panels, static_cast<int>(panels.size()));
-        cv::putText(board, cv::format("frame %lld   %.1f ms   %.1f FPS",
-                                      static_cast<long long>(frame->index), frame_ms, now_fps),
+        cv::putText(board,
+                    cv::format("frame %lld   %.1f ms   %.1f FPS",
+                               static_cast<long long>(frame->index), frame_ms, now_fps),
                     cv::Point(12, 24), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 2,
                     cv::LINE_AA);
 
@@ -167,9 +169,11 @@ int main(int argc, char** argv) {
         if (want_track) {
             for (const TrackState& t : tracks) {
                 std::cout << "  frame " << frame->index << " [track] #" << t.id << "  "
-                          << cocoClassName(t.class_id) << "  " << (t.confirmed ? "confirmed" : "tentative")
+                          << cocoClassName(t.class_id) << "  "
+                          << (t.confirmed ? "confirmed" : "tentative")
                           << "  Z=" << cv::format("%.2f", t.position.z) << " m  pos=("
-                          << cv::format("%.2f, %.2f, %.2f", t.position.x, t.position.y, t.position.z)
+                          << cv::format("%.2f, %.2f, %.2f", t.position.x, t.position.y,
+                                        t.position.z)
                           << ")  age=" << t.age << " hits=" << t.hits
                           << " missed=" << t.time_since_update << "\n";
             }
@@ -202,7 +206,8 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "\nprocessed " << frame_count << " frame(s)\n" << prof.summary();
-    if (!out_dir.empty()) std::cout << "output written to " << out_dir << "/\n";
+    if (!out_dir.empty())
+        std::cout << "output written to " << out_dir << "/\n";
 
     if (want_track) {
         std::cout << recorder.trackCount() << " track(s) total\n";

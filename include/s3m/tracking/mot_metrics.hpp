@@ -23,18 +23,18 @@ struct MotObject {
 /// Aggregated CLEAR-MOT (Bernardin & Stiefelhagen, 2008) + IDF1
 /// (Ristani et al., 2016) metrics.
 struct MotSummary {
-    double mota = 0.0;    ///< 1 - (misses + switches + false_positives) / objects
-    double motp = 0.0;    ///< mean distance over matched pairs (lower is better)
-    double idf1 = 0.0;    ///< identity F1: 2*idtp / (2*idtp + idfp + idfn)
+    double mota = 0.0;  ///< 1 - (misses + switches + false_positives) / objects
+    double motp = 0.0;  ///< mean distance over matched pairs (lower is better)
+    double idf1 = 0.0;  ///< identity F1: 2*idtp / (2*idtp + idfp + idfn)
     std::int64_t idtp = 0;
     std::int64_t idfp = 0;
     std::int64_t idfn = 0;
-    std::int64_t num_matches = 0;          ///< matched, same id as last time it was seen
-    std::int64_t num_switches = 0;         ///< matched, but a DIFFERENT id than last time
-    std::int64_t num_fragmentations = 0;   ///< times a GT track went tracked -> not tracked
-    std::int64_t num_misses = 0;           ///< false negatives
+    std::int64_t num_matches = 0;         ///< matched, same id as last time it was seen
+    std::int64_t num_switches = 0;        ///< matched, but a DIFFERENT id than last time
+    std::int64_t num_fragmentations = 0;  ///< times a GT track went tracked -> not tracked
+    std::int64_t num_misses = 0;          ///< false negatives
     std::int64_t num_false_positives = 0;
-    std::int64_t num_objects = 0;          ///< total GT appearances across all frames
+    std::int64_t num_objects = 0;  ///< total GT appearances across all frames
     double precision = 0.0;
     double recall = 0.0;
 
@@ -73,8 +73,8 @@ class MotAccumulator {
     double max_dist_;
     int frame_index_ = 0;
 
-    std::map<int, int> prev_match_;                          ///< gt id -> hyp id, persistent
-    std::map<int, std::vector<ObjEvent>> events_by_gt_;       ///< for fragmentation
+    std::map<int, int> prev_match_;                              ///< gt id -> hyp id, persistent
+    std::map<int, std::vector<ObjEvent>> events_by_gt_;          ///< for fragmentation
     std::map<std::pair<int, int>, std::int64_t> co_occurrence_;  ///< (gt,hyp) -> gated co-frames
     std::map<int, std::int64_t> gt_frame_count_;
     std::map<int, std::int64_t> hyp_frame_count_;

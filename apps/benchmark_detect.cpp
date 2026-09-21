@@ -19,23 +19,24 @@ using namespace s3m;
 namespace {
 
 void printHelp() {
-    std::cout <<
-        "benchmark_detect - detector latency / throughput\n\n"
-        "  --detector hog|onnx        detector (default: onnx if a model is set)\n"
-        "  --model <path.onnx>        model for --detector onnx\n"
-        "  --source synthetic|<dir>   frame source (default: synthetic)\n"
-        "  --frames N                 timed frames (default 50)\n"
-        "  --warmup N                 untimed warmup frames (default 5)\n"
-        "  --threads N                ONNX Runtime intra-op threads\n"
-        "  --config <yaml>\n";
+    std::cout << "benchmark_detect - detector latency / throughput\n\n"
+                 "  --detector hog|onnx        detector (default: onnx if a model is set)\n"
+                 "  --model <path.onnx>        model for --detector onnx\n"
+                 "  --source synthetic|<dir>   frame source (default: synthetic)\n"
+                 "  --frames N                 timed frames (default 50)\n"
+                 "  --warmup N                 untimed warmup frames (default 5)\n"
+                 "  --threads N                ONNX Runtime intra-op threads\n"
+                 "  --config <yaml>\n";
 }
 
 double percentile(std::vector<double> v, double p) {
-    if (v.empty()) return 0.0;
+    if (v.empty())
+        return 0.0;
     std::sort(v.begin(), v.end());
     const double idx = p / 100.0 * static_cast<double>(v.size() - 1);
     const auto lo = static_cast<std::size_t>(idx);
-    if (lo + 1 >= v.size()) return v.back();
+    if (lo + 1 >= v.size())
+        return v.back();
     const double frac = idx - static_cast<double>(lo);
     return v[lo] * (1.0 - frac) + v[lo + 1] * frac;
 }
@@ -71,7 +72,8 @@ int main(int argc, char** argv) {
     std::vector<cv::Mat> frames;
     while (const auto f = source->next()) {
         frames.push_back(f->left);
-        if (static_cast<int>(frames.size()) >= timed + warmup) break;
+        if (static_cast<int>(frames.size()) >= timed + warmup)
+            break;
     }
     if (frames.empty()) {
         std::cerr << "error: source produced no frames\n";
@@ -81,10 +83,11 @@ int main(int argc, char** argv) {
         return frames[static_cast<std::size_t>(i) % frames.size()];
     };
 
-    std::cout << "detector = " << detector->name() << "   frames = " << timed
-              << " (+" << warmup << " warmup)\n";
+    std::cout << "detector = " << detector->name() << "   frames = " << timed << " (+" << warmup
+              << " warmup)\n";
 
-    for (int i = 0; i < warmup; ++i) (void)detector->detect(frame_at(i));
+    for (int i = 0; i < warmup; ++i)
+        (void)detector->detect(frame_at(i));
 
     std::vector<double> ms;
     ms.reserve(static_cast<std::size_t>(timed));

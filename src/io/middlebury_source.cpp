@@ -16,7 +16,8 @@ namespace {
 
 std::string trim(const std::string& s) {
     const std::size_t begin = s.find_first_not_of(" \t\r\n");
-    if (begin == std::string::npos) return "";
+    if (begin == std::string::npos)
+        return "";
     const std::size_t end = s.find_last_not_of(" \t\r\n");
     return s.substr(begin, end - begin + 1);
 }
@@ -25,17 +26,20 @@ std::string trim(const std::string& s) {
 std::vector<double> parseMatrix(const std::string& value) {
     std::string s = value;
     for (char& c : s) {
-        if (c == '[' || c == ']' || c == ';' || c == ',') c = ' ';
+        if (c == '[' || c == ']' || c == ';' || c == ',')
+            c = ' ';
     }
     std::istringstream is(s);
     std::vector<double> values;
     double v = 0.0;
-    while (is >> v) values.push_back(v);
+    while (is >> v)
+        values.push_back(v);
     return values;
 }
 
 std::string baseName(std::string path) {
-    while (!path.empty() && (path.back() == '/' || path.back() == '\\')) path.pop_back();
+    while (!path.empty() && (path.back() == '/' || path.back() == '\\'))
+        path.pop_back();
     const std::size_t pos = path.find_last_of("/\\");
     return pos == std::string::npos ? path : path.substr(pos + 1);
 }
@@ -50,13 +54,15 @@ struct Calib {
 
 Calib parseCalib(const std::string& path) {
     std::ifstream file(path);
-    if (!file) throw std::runtime_error("MiddleburySource: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("MiddleburySource: cannot open '" + path + "'");
 
     Calib calib;
     std::string line;
     while (std::getline(file, line)) {
         const std::size_t eq = line.find('=');
-        if (eq == std::string::npos) continue;
+        if (eq == std::string::npos)
+            continue;
         const std::string key = trim(line.substr(0, eq));
         const std::string val = trim(line.substr(eq + 1));
         try {
@@ -98,7 +104,8 @@ MiddleburySource::MiddleburySource(const std::string& scene_dir) {
     scene_name_ = baseName(scene_dir);
 
     std::string dir = scene_dir;
-    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\') dir += '/';
+    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\')
+        dir += '/';
 
     const Calib calib = parseCalib(dir + "calib.txt");
 
@@ -109,10 +116,9 @@ MiddleburySource::MiddleburySource(const std::string& scene_dir) {
     }
 
     const cv::Size size = left_.size();
-    const double scale =
-        (calib.width > 0 && calib.width != size.width)
-            ? static_cast<double>(size.width) / static_cast<double>(calib.width)
-            : 1.0;
+    const double scale = (calib.width > 0 && calib.width != size.width)
+                             ? static_cast<double>(size.width) / static_cast<double>(calib.width)
+                             : 1.0;
 
     const double fy0 = calib.fy0 > 0 ? calib.fy0 : calib.fx0;
     const double fx1 = calib.fx1 > 0 ? calib.fx1 : calib.fx0;
@@ -133,14 +139,16 @@ MiddleburySource::MiddleburySource(const std::string& scene_dir) {
 
     try {
         cv::Mat disparity = readPfm(dir + "disp0.pfm");
-        if (disparity.type() == CV_32FC1) gt_disparity_ = disparity;
+        if (disparity.type() == CV_32FC1)
+            gt_disparity_ = disparity;
     } catch (const std::exception&) {
         // ground truth is optional
     }
 }
 
 std::optional<StereoFrame> MiddleburySource::next() {
-    if (served_) return std::nullopt;
+    if (served_)
+        return std::nullopt;
     served_ = true;
 
     StereoFrame frame;

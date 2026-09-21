@@ -64,7 +64,8 @@ class ProfileRegistry {
         Scope(ProfileRegistry& registry, std::string name)
             : registry_(&registry), name_(std::move(name)) {}
         ~Scope() {
-            if (registry_) registry_->add(name_, sw_.elapsedMs());
+            if (registry_)
+                registry_->add(name_, sw_.elapsedMs());
         }
         Scope(const Scope&) = delete;
         Scope& operator=(const Scope&) = delete;

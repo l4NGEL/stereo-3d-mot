@@ -55,7 +55,7 @@ TEST(Letterbox, ContentGoesInsidePaddingBorder) {
     const Letterbox lb = makeLetterbox(src, dst, 64, cv::Scalar::all(0));
 
     EXPECT_EQ(lb.pad_x, 0);
-    EXPECT_EQ(lb.pad_y, 16);            // scaled 64x32, centred in 64
-    EXPECT_EQ(dst.at<uchar>(0, 0), 0);    // top padding
+    EXPECT_EQ(lb.pad_y, 16);                // scaled 64x32, centred in 64
+    EXPECT_EQ(dst.at<uchar>(0, 0), 0);      // top padding
     EXPECT_EQ(dst.at<uchar>(32, 32), 255);  // content
 }

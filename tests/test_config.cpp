@@ -26,16 +26,18 @@ TEST(Config, LoadsOverridesAndKeepsOtherDefaults) {
         // Author the file with FileStorage so the on-disk syntax is exactly
         // what the parser must accept; this exercises Config's field mapping.
         cv::FileStorage fs(path, cv::FileStorage::WRITE);
-        fs << "stereo_matcher" << "{"
-           << "type" << "BM"
-           << "num_disparities" << 64
-           << "mode_hh" << 1
-           << "}";
-        fs << "tracking" << "{"
-           << "max_age" << 12
-           << "}";
-        fs << "depth_eval" << "{"
-           << "bad_thresholds" << "[" << 0.5 << 1.0 << 3.0 << "]"
+        fs << "stereo_matcher"
+           << "{"
+           << "type"
+           << "BM"
+           << "num_disparities" << 64 << "mode_hh" << 1 << "}";
+        fs << "tracking"
+           << "{"
+           << "max_age" << 12 << "}";
+        fs << "depth_eval"
+           << "{"
+           << "bad_thresholds"
+           << "[" << 0.5 << 1.0 << 3.0 << "]"
            << "}";
     }
 
@@ -60,7 +62,8 @@ TEST(Config, ParsesShippedDefaultYaml) {
     // The repo's configs/default.yaml is hand-written; make sure it still parses
     // and matches the documented defaults. Skips cleanly if run from elsewhere.
     std::ifstream probe("configs/default.yaml");
-    if (!probe.good()) GTEST_SKIP() << "configs/default.yaml not reachable from CWD";
+    if (!probe.good())
+        GTEST_SKIP() << "configs/default.yaml not reachable from CWD";
 
     const Config cfg = Config::load("configs/default.yaml");
     EXPECT_EQ(cfg.stereo_matcher.type, "SGBM");

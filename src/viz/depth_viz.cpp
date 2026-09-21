@@ -21,7 +21,8 @@ cv::Mat normalizeToU8(const cv::Mat& src, float lo, float hi, cv::Mat& mask_out)
         uchar* m = mask_out.ptr<uchar>(y);
         for (int x = 0; x < src.cols; ++x) {
             const float v = s[x];
-            if (!std::isfinite(v) || v <= 0.0f) continue;
+            if (!std::isfinite(v) || v <= 0.0f)
+                continue;
             const float t = std::clamp((v - lo) / span, 0.0f, 1.0f);
             d[x] = static_cast<uchar>(std::lround(t * 255.0f));
             m[x] = 255;
@@ -37,7 +38,8 @@ void blackOutInvalid(cv::Mat& color_bgr, const cv::Mat& valid_mask) {
 }
 
 cv::Mat ensureBgr(const cv::Mat& image) {
-    if (image.channels() == 3) return image.clone();
+    if (image.channels() == 3)
+        return image.clone();
     cv::Mat bgr;
     cv::cvtColor(image, bgr, cv::COLOR_GRAY2BGR);
     return bgr;
@@ -72,7 +74,8 @@ cv::Mat colorizeDepth(const cv::Mat& depth, float min_m, float max_m, int colorm
 }
 
 cv::Mat tile(const std::vector<cv::Mat>& images, int cols, int pad, const cv::Scalar& pad_color) {
-    if (images.empty()) return {};
+    if (images.empty())
+        return {};
     cols = std::max(1, cols);
     const int rows = static_cast<int>((images.size() + static_cast<std::size_t>(cols) - 1) /
                                       static_cast<std::size_t>(cols));
@@ -82,7 +85,8 @@ cv::Mat tile(const std::vector<cv::Mat>& images, int cols, int pad, const cv::Sc
                    CV_8UC3, pad_color);
 
     for (std::size_t i = 0; i < images.size(); ++i) {
-        if (images[i].empty()) continue;
+        if (images[i].empty())
+            continue;
         cv::Mat cellImg = ensureBgr(images[i]);
         if (cellImg.size() != cell) {
             cv::Mat resized;
@@ -129,10 +133,8 @@ cv::Mat drawTracks(const cv::Mat& image_bgr, const std::vector<TrackState>& trac
         const cv::Point br(cvRound(t.box.x + t.box.width), cvRound(t.box.y + t.box.height));
         cv::rectangle(out, tl, br, color, t.confirmed ? 2 : 1);
 
-        const double speed =
-            cv::norm(cv::Vec3f(t.velocity.x, t.velocity.y, t.velocity.z));
-        const std::string label =
-            cv::format("#%d  Z=%.2fm  v=%.1fm/s", t.id, t.position.z, speed);
+        const double speed = cv::norm(cv::Vec3f(t.velocity.x, t.velocity.y, t.velocity.z));
+        const std::string label = cv::format("#%d  Z=%.2fm  v=%.1fm/s", t.id, t.position.z, speed);
         putLabel(out, label, tl + cv::Point(0, -4), color);
     }
     return out;

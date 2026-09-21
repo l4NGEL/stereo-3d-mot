@@ -31,7 +31,8 @@ void writePointCloudPly(const std::string& path, const cv::Mat& points, const cv
         for (int x = 0; x < points.cols; x += stride) {
             const cv::Vec3f& p = p_row[x];
             if (m_row) {
-                if (m_row[x] == 0) continue;
+                if (m_row[x] == 0)
+                    continue;
             } else if (!(std::isfinite(p[0]) && std::isfinite(p[1]) && std::isfinite(p[2])) ||
                        p[2] <= 0.0f) {
                 continue;
@@ -49,7 +50,8 @@ void writePointCloudPly(const std::string& path, const cv::Mat& points, const cv
     }
 
     std::ofstream file(path);
-    if (!file) throw std::runtime_error("writePointCloudPly: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("writePointCloudPly: cannot open '" + path + "'");
 
     file << "ply\n"
          << "format ascii 1.0\n"

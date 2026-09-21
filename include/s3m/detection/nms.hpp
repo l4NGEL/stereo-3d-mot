@@ -23,8 +23,7 @@ std::vector<int> nms(const std::vector<cv::Rect2f>& boxes, const std::vector<flo
 /// NMS run independently per class id: boxes with different class ids never
 /// suppress one another. Same return contract as nms().
 std::vector<int> nmsClassAware(const std::vector<cv::Rect2f>& boxes,
-                               const std::vector<float>& scores,
-                               const std::vector<int>& class_ids, float iou_threshold,
-                               float score_threshold = 0.0f, int top_k = 300);
+                               const std::vector<float>& scores, const std::vector<int>& class_ids,
+                               float iou_threshold, float score_threshold = 0.0f, int top_k = 300);
 
 }  // namespace s3m
