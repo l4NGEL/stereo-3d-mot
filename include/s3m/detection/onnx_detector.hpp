@@ -10,7 +10,9 @@
 
 namespace s3m {
 
-/// Object detector backed by ONNX Runtime (CPU execution provider).
+/// Object detector backed by ONNX Runtime. CPU execution provider by
+/// default; `Options::use_cuda` switches to the CUDA execution provider
+/// (Phase 6) given an ORT GPU build and a reachable NVIDIA GPU.
 ///
 /// Consumes a single-input YOLO-style ONNX model and auto-detects the output
 /// layout:
@@ -30,6 +32,13 @@ class OnnxDetector : public Detector {
         int num_threads = 0;              ///< 0 -> ONNX Runtime default
         std::vector<int> keep_classes;   ///< empty -> keep every class
         int max_detections = 300;
+
+        /// Run on ONNX Runtime's CUDA execution provider instead of CPU.
+        /// Needs an ORT *GPU* build (the CPU tarball doesn't include CUDA EP
+        /// at all) and a reachable NVIDIA GPU -- the constructor throws
+        /// Ort::Exception otherwise, it does not silently fall back to CPU.
+        bool use_cuda = false;
+        int cuda_device_id = 0;
     };
 
     explicit OnnxDetector(Options options);

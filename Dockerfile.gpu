@@ -1,0 +1,52 @@
+# GPU build/runtime environment for stereo_3d_mot -- Phase 6: CUDA-accelerated
+# OnnxDetector via ONNX Runtime's CUDA execution provider.
+#
+# Separate from the main Dockerfile on purpose: that one stays CPU-only and
+# buildable/runnable anywhere (CI included -- GitHub Actions' free runners
+# have no GPU), which is itself a property worth keeping, not an oversight.
+# This image needs a real NVIDIA GPU + `docker run --gpus all` (or
+# `--gpus=all` in compose) to do anything useful; it still *builds* without
+# one, it just can't *run* the CUDA EP path without one.
+#
+# ONNX Runtime 1.19.x's CUDA EP requires CUDA 12.x + cuDNN 9.x (see
+# https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html
+# -- the compatibility table, not a guess), hence this specific base image
+# rather than the plain ubuntu:22.04 the CPU Dockerfile uses.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS deps-gpu
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    CMAKE_GENERATOR=Ninja
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        ninja-build \
+        curl \
+        git \
+        ca-certificates \
+        pkg-config \
+        libopencv-dev \
+        libeigen3-dev \
+        libgtest-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ONNX Runtime GPU build -- bundles the CUDA execution provider (the CPU
+# Dockerfile's tarball doesn't have it at all, not just disabled).
+ARG ORT_VERSION=1.19.2
+RUN curl -fsSL -o /tmp/ort.tgz \
+        "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-gpu-${ORT_VERSION}.tgz" \
+    && mkdir -p /opt/onnxruntime \
+    && tar -xzf /tmp/ort.tgz -C /opt/onnxruntime --strip-components=1 \
+    && rm /tmp/ort.tgz
+ENV ONNXRUNTIME_ROOT=/opt/onnxruntime \
+    LD_LIBRARY_PATH=/opt/onnxruntime/lib
+
+WORKDIR /workspace
+
+# ---- build: compile the project -------------------------------------------
+FROM deps-gpu AS build
+COPY . .
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DS3M_WITH_ONNX=ON \
+    && cmake --build build --parallel
+
+CMD ["/bin/bash"]

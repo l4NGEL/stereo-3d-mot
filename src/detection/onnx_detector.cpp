@@ -62,6 +62,16 @@ OnnxDetector::OnnxDetector(Options options) : options_(std::move(options)) {
         impl_->session_options.SetIntraOpNumThreads(options_.num_threads);
     }
     impl_->session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+    if (options_.use_cuda) {
+        // Throws Ort::Exception (not caught here -- propagates to the
+        // caller) if this ORT build has no CUDA EP compiled in, or if CUDA
+        // itself isn't reachable. Deliberately no silent CPU fallback: a
+        // caller that asked for CUDA and got CPU without noticing would
+        // draw the wrong conclusion from a timing comparison.
+        OrtCUDAProviderOptions cuda_options{};
+        cuda_options.device_id = options_.cuda_device_id;
+        impl_->session_options.AppendExecutionProvider_CUDA(cuda_options);
+    }
 
     impl_->session = std::make_unique<Ort::Session>(impl_->env, options_.model_path.c_str(),
                                                     impl_->session_options);

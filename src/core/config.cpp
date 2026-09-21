@@ -82,6 +82,8 @@ Config Config::load(const std::string& path) {
     readScalar(det, "nms_iou", cfg.detector.nms_iou);
     readScalar(det, "input_size", cfg.detector.input_size);
     readIntVector(det, "keep_classes", cfg.detector.keep_classes);
+    readBool(det, "use_cuda", cfg.detector.use_cuda);
+    readScalar(det, "cuda_device_id", cfg.detector.cuda_device_id);
 
     const cv::FileNode tr = fs["tracking"];
     readScalar(tr, "dt", cfg.tracking.dt);

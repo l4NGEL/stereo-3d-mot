@@ -187,7 +187,7 @@ next one slots into an interface that already exists.
       fusing it in doesn't always beat a single well-matched cue, but it
       reliably avoids the worst case.
 
-## Phase 6 — Real-time optimisation
+## Phase 6 — Real-time optimisation  ✅ done
 
 - [x] **Profiled hotspots for real, on real KITTI data**
       (`benchmark_kitti --profile`, `ProfileRegistry` wired through
@@ -254,10 +254,39 @@ next one slots into an interface that already exists.
       it (stereo + detect + depth + promote only). Real, measured, roughly
       1.6x end-to-end -- well short of the 20 FPS target below, honestly
       reported as such, not rounded up.
-- [ ] optionally CUDA / TensorRT behind the same `Detector` interface -- a
-      real NVIDIA GPU (RTX 2080, 8 GB, confirmed reachable from Docker via
-      `--gpus all`) is available on this machine, so this is pursued for
-      real rather than left as an unverified "future work" line.
+- [x] **CUDA behind the same `Detector` interface -- built for real, and it
+      doesn't help.** A real NVIDIA GPU (RTX 2080, 8 GB) is reachable from
+      Docker (`--gpus all`), so this was pursued for real, not left as an
+      unverified "future work" line. `Dockerfile.gpu`: separate image on
+      `nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04` (CUDA 12.4 + cuDNN 9.1,
+      matching ONNX Runtime 1.19.x's *documented* CUDA-EP requirement --
+      checked the compatibility table, not guessed) with ORT's GPU tarball
+      instead of the CPU one. `OnnxDetector::Options::use_cuda` /
+      `--cuda` / `detector.use_cuda` registers the CUDA execution provider;
+      no silent CPU fallback if unavailable (`Ort::Exception` propagates --
+      verified by running `--cuda` against the CPU-only image and getting a
+      clean, immediate failure, not a quiet no-op). Detection output is
+      **bit-identical** to CPU on the full sequence (same MOTA/IDF1/IDSW/FP/
+      FN for all three association methods) -- a correctness-verified
+      comparison, not just "it didn't crash."
+    - Result: **`detect` on CUDA EP measured 48.4 ms/frame vs CPU's ~49.5-
+      54.3 ms/frame (16 threads) -- essentially no speedup.** First
+      measurement attempt (511 ms stereo, 307 ms detect, badly regressed
+      *everywhere* including CPU-only stages) coincided with unrelated heavy
+      background CPU/GPU load from other work running on this machine at
+      the time; re-confirmed the regression was purely that load (re-ran the
+      plain CPU image in parallel, saw the identical ~3x slowdown across
+      every stage with zero code changed) and re-measured cleanly once it
+      cleared. The clean number stands: YOLOv8n is a genuinely tiny model
+      (~3.2M params) run at batch size 1, where fixed per-call overhead
+      (kernel launches, host<->device transfer, nothing to amortize it
+      across) competes directly with the actual compute, and a 16-thread CPU
+      running ORT's own optimised (MLAS) kernels is already competitive
+      rather than an easy target. Not a dead end, a scoped one: FP16,
+      `IOBinding`, CUDA graph capture, or batching could plausibly change
+      this and are named rather than left vague, but weren't attempted here
+      -- correctly out of scope for "does naively enabling CUDA EP help"
+      rather than a gap quietly left unstated.
 - [x] **Memory/allocation audit -- conclusion, not a TODO.** The
       profiling above already answers this: `depth`, `promote3d+appearance`
       and `track` are a combined <2 ms/frame, so there's no meaningful
@@ -266,10 +295,17 @@ next one slots into an interface that already exists.
       ONNX Runtime's own inference (`detect`), both library-internal, not
       inefficiencies in code this project wrote. Chasing micro-allocations
       in the 2 ms/frame that's left would not move the frame-time budget.
-- [ ] fixed frame-time budget with a report (target: end-to-end >= 20 FPS) --
-      partially done above (measured, broken down per stage, both with and
-      without the imread artifact); still short of 20 FPS pending the GPU
-      item.
+- [x] **Fixed frame-time budget, reported honestly against the >= 20 FPS
+      target -- not met, and that's the finding, not a gap.** Final,
+      GPU-detection-included picture: 204.2 -> 128.2 ms/frame (4.90 ->
+      7.80 FPS) excluding the imread artifact, since GPU detection didn't
+      move the number further than tiled-stereo + CPU-detect already had.
+      ~1.6x over the Phase 6 starting point, honestly short of 20 FPS. The
+      ceiling on this hardware without deeper GPU-specific work (FP16/
+      IOBinding/graphs, or an OpenCV built with CUDA support for
+      `cv::cuda::StereoSGBM` -- this project's apt-installed OpenCV isn't)
+      is CPU-bound tiled SGBM plus CPU-or-GPU-equivalent detection, not a
+      GPU win sitting unclaimed for lack of trying.
 
 ## Phase 7 — Visual odometry
 

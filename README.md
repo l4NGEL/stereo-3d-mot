@@ -7,8 +7,8 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–5 built and run end to end on real KITTI data; Phase 6
-> (real-time optimisation) in progress.** Calibrated stereo geometry, BM/SGBM
+> Status: **Phases 1–6 built and run end to end on real KITTI data,
+> including on a real GPU.** Calibrated stereo geometry, BM/SGBM
 > disparity (now optionally tiled + parallelised), metric depth, dense 3D
 > reprojection + PLY export, a synthetic scene with exact ground truth, a
 > Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
@@ -23,16 +23,20 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 > against a real downloaded KITTI tracking sequence — see
 > [KITTI evaluation](#kitti-evaluation),
 > [Phase 5](#phase-5--appearance-aware-reid-association) and
-> [Phase 6](#phase-6--real-time-optimisation-in-progress) below for the real
+> [Phase 6](#phase-6--real-time-optimisation) below for the real
 > numbers and the honest read on what they mean (short version: absolute
 > MOTA is negative because of a real, explained detector/GT domain mismatch;
 > on real noisy stereo depth the 2D-vs-3D gap from the synthetic benchmark
 > mostly closes; fusing in an appearance cue is never the worst of the three
 > association methods across three real sequences and wins outright on one
-> of them; and a real, measured profiling pass found stereo matching — not
-> detection — is the dominant cost, tiling it for a real 1.95x speedup with
-> a bit-identical tracking result, still short of the 20 FPS target pending
-> GPU-accelerated detection).
+> of them; a real, measured profiling pass found stereo matching — not
+> detection — was the dominant cost, tiling it for a real 1.95x speedup with
+> a bit-identical tracking result; and enabling a real GPU via ONNX Runtime's
+> CUDA execution provider, measured on an actual RTX 2080, turned out **not**
+> to speed up detection at all — a small model at batch size 1 already runs
+> about as fast on a 16-thread CPU, a genuine and somewhat counter-intuitive
+> finding, not the "GPU is obviously faster" story this section expected
+> going in).
 
 ---
 
@@ -451,7 +455,7 @@ doesn't always beat a single well-matched cue, but it reliably avoids the
 worst case, which is the property that actually matters when you can't
 choose your scene in advance.
 
-## Phase 6 — Real-time optimisation (in progress)
+## Phase 6 — Real-time optimisation
 
 Profiled the real pipeline on real KITTI data before optimising anything —
 `benchmark_kitti --profile` wires `ProfileRegistry` through every stage:
@@ -518,13 +522,51 @@ elsewhere in this README stay measured with `kitti.yaml`, untiled — this
 result confirms they'd have looked the same either way, it doesn't quietly
 change them.
 
+**GPU-accelerated detection: built for real, and it doesn't help — reported
+as such.** A real NVIDIA GPU (RTX 2080, 8 GB) is available on this machine
+and confirmed reachable from Docker (`--gpus all`), so this wasn't left as
+an "optional, untested" line. `Dockerfile.gpu` builds a separate image on a
+CUDA 12.4 + cuDNN 9 base (matching ONNX Runtime 1.19.x's own documented
+requirement, not guessed) with ORT's GPU tarball instead of the CPU one;
+`OnnxDetector::Options::use_cuda` (`--cuda` / `configs/*.yaml`
+`detector.use_cuda`) registers the CUDA execution provider on the ORT
+session — no silent CPU fallback, it throws if the EP genuinely isn't
+available, so a timing comparison can't accidentally compare CPU against
+CPU. Detection results are **bit-identical** to CPU (same MOTA/IDF1/IDSW/
+FP/FN for all three association methods on the full sequence), so this is
+a fair, correctness-verified comparison, not just "it ran without crashing."
+
+Measured on the real sequence: **`detect` on CUDA EP is 48.4 ms/frame vs
+CPU's ~49.5–54.3 ms/frame (16 threads) — essentially no speedup.** Not a
+bug, not a measurement error (re-confirmed after ruling out a system-load
+confound — the first measurement attempt coincided with unrelated heavy
+background CPU/GPU use from other work on this machine, which slowed
+*every* stage including the CPU-only ones, and was re-measured once that
+cleared). YOLOv8n is a genuinely tiny model (~3.2 M parameters) run one
+image at a time (batch size 1): at that scale, fixed per-call overhead
+(kernel launches, host↔device transfer, no batching to amortize it across)
+competes directly with the actual compute, and a 16-thread CPU already
+running well-optimized kernels (ORT's own MLAS backend) turns out to be
+genuinely competitive rather than an easy target. Concrete, named
+next steps that could still move this (not attempted here, correctly out of
+scope for "does naive CUDA EP help" rather than silently left vague):
+FP16 inference, `IOBinding` to cut host↔device copies, CUDA graph capture
+to amortize launch overhead, or batching multiple frames — any of which
+could change this result and are worth trying if GPU throughput becomes
+the actual bottleneck later (right now stereo isn't on the GPU at all, so
+it wouldn't be, yet).
+
 **End to end**: 342.2 → 238.4 ms/frame (2.92 → 4.19 FPS) including the
 imread artifact; 204.2 → 128.2 ms/frame (4.90 → **7.80 FPS**) excluding it
-(stereo + detect + depth + promote only). A real, measured ~1.6x — short of
-the 20 FPS target, reported as such rather than rounded up. GPU-accelerated
-detection (a real RTX 2080 is available and confirmed reachable from Docker)
-is the next lever; see [docs/roadmap.md](docs/roadmap.md) Phase 6 for
-current status.
+(stereo + detect + depth + promote, tiled stereo, CPU detect) — GPU
+detection doesn't move this further, per the finding above. A real, measured
+~1.6x over the Phase-6-start baseline, short of the 20 FPS target, reported
+as such rather than rounded up. The honest ceiling on this pipeline, on this
+hardware, without deeper GPU-specific work (FP16/IOBinding/graphs, or
+porting stereo matching itself to `cv::cuda::StereoSGBM`, which would need
+an OpenCV built with CUDA support — this project's apt-installed OpenCV
+isn't) is CPU-bound tiled-SGBM plus CPU-or-GPU-equivalent detection, not a
+GPU win waiting to be unlocked by more casual effort.
 
 **Memory/allocation audit — answered by the profile above, not a separate
 pass.** `depth`, `promote3d+appearance` and `track` combined cost under 2 ms
@@ -612,13 +654,16 @@ Z = fx * B / (d + doffs)
    real KITTI sequences at different occlusion levels — never the worst of
    the three methods, wins outright on one. See
    [Phase 5](#phase-5--appearance-aware-reid-association).
-6. **Real-time optimisation — in progress.** Profiled the real pipeline on
-   real KITTI data first: stereo matching dominates (~3x detection's cost),
+6. **Real-time optimisation — done.** Profiled the real pipeline on real
+   KITTI data first: stereo matching dominates (~3x detection's cost),
    detection already scales across cores for free (ONNX Runtime's own
-   threading), stereo didn't and needed real tiling work — done, a measured
-   1.95x stereo speedup with a bit-identical tracking result. GPU-accelerated
-   detection next (a real RTX 2080 is available). See
-   [Phase 6](#phase-6--real-time-optimisation-in-progress).
+   threading), stereo didn't and needed real tiling work — a measured 1.95x
+   stereo speedup with a bit-identical tracking result. GPU detection built
+   and measured for real on an actual RTX 2080 — and turned out not to help
+   at batch size 1 for a model this small, a genuine, counter-intuitive
+   finding reported honestly rather than assumed away. ~1.6x end to end,
+   short of the 20 FPS target. See
+   [Phase 6](#phase-6--real-time-optimisation).
 7. Visual odometry: feature tracks, essential matrix, camera pose — touches the
    VI-SLAM side.
 8. ROS2 integration (optional / bonus), once Phases 6–7 give the stack

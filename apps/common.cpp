@@ -112,6 +112,8 @@ std::unique_ptr<Detector> makeDetector(const Args& args, const Config& cfg) {
         o.nms_iou = static_cast<float>(args.getDouble("nms-iou", cfg.detector.nms_iou));
         o.num_threads = args.getInt("threads", 0);
         o.keep_classes = cfg.detector.keep_classes;
+        o.use_cuda = args.has("cuda") || cfg.detector.use_cuda;
+        o.cuda_device_id = args.getInt("cuda-device", cfg.detector.cuda_device_id);
         return std::make_unique<OnnxDetector>(std::move(o));
 #else
         std::cerr << "warning: this build has no ONNX Runtime (S3M_WITH_ONNX=OFF); "

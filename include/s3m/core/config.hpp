@@ -44,6 +44,13 @@ struct DetectorParams {
     double nms_iou = 0.45;
     int input_size = 640;             ///< square network input (type == "onnx")
     std::vector<int> keep_classes;    ///< COCO ids to keep; empty -> all
+
+    /// type == "onnx": run on ONNX Runtime's CUDA execution provider instead
+    /// of CPU. Needs an ORT *GPU* build (Dockerfile.gpu, not the default
+    /// Dockerfile) and a reachable NVIDIA GPU -- throws at construction
+    /// otherwise. See docs/roadmap.md Phase 6.
+    bool use_cuda = false;
+    int cuda_device_id = 0;
 };
 
 /// Parameters for the 3D constant-velocity tracker.

@@ -51,9 +51,13 @@ void printHelp() {
         "                       (3D-only / 3D+IoU / 3D+appearance / full fused)\n"
         "  --profile            print a per-stage timing breakdown (stereo/depth/detect/\n"
         "                       promote3d+appearance/track) and an FPS estimate\n"
-        "  --threads N          cv::setNumThreads(N) before running (default: OpenCV's own\n"
-        "                       default, i.e. every core) -- for measuring how much of the\n"
-        "                       stereo/detect cost is already parallelised internally\n\n"
+        "  --threads N          cv::setNumThreads(N) (stereo) and OnnxDetector's intra-op\n"
+        "                       threads (detect) -- default: every core -- for measuring\n"
+        "                       how much of the cost is already parallelised internally\n"
+        "  --cuda               run detection on ONNX Runtime's CUDA execution provider\n"
+        "                       instead of CPU (needs Dockerfile.gpu's image + a GPU;\n"
+        "                       throws, doesn't silently fall back, if unavailable)\n"
+        "  --cuda-device N      GPU device id for --cuda (default 0)\n\n"
         "Needs the dataset downloaded first -- see scripts/download_kitti.sh.\n";
 }
 
