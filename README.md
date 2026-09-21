@@ -6,67 +6,68 @@ Built as a from-scratch C++17 systems project on top of OpenCV and Eigen, develo
 Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> Status: **Phases 1–6 built and run end to end on real KITTI data,
-> including on a real GPU.** Calibrated stereo geometry, BM/SGBM
-> disparity (now optionally tiled + parallelised), metric depth, dense 3D
-> reprojection + PLY export, a synthetic scene with exact ground truth, a
-> Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
-> (YOLOv8/v5) wired through `promoteTo3D`, a 3D multi-object tracker with
-> three interchangeable association strategies — chi-square Mahalanobis
-> distance in 3D, 2D IoU, and a Phase 5 fusion of both plus an appearance
-> (color-histogram) cue — Hungarian or greedy, pick per run and compare, with
-> trajectory export, and a CLEAR-MOT + IDF1 evaluator (`MotAccumulator`,
-> validated against py-motmetrics) with a KITTI tracking-benchmark loader.
-> 109 unit tests pass (1 skipped outside its expected working-directory
-> context); all 5 apps run end to end, including `benchmark_kitti`
-> against a real downloaded KITTI tracking sequence — see
-> [KITTI evaluation](#kitti-evaluation),
-> [Phase 5](#phase-5--appearance-aware-reid-association) and
-> [Phase 6](#phase-6--real-time-optimisation) below for the real
-> numbers and the honest read on what they mean (short version: absolute
-> MOTA is negative because of a real, explained detector/GT domain mismatch;
-> on real noisy stereo depth the 2D-vs-3D gap from the synthetic benchmark
-> mostly closes; fusing in an appearance cue is never the worst of the three
-> association methods across three real sequences and wins outright on one
-> of them; a real, measured profiling pass found stereo matching — not
-> detection — was the dominant cost, tiling it for a real 1.95x speedup with
-> a bit-identical tracking result; and enabling a real GPU via ONNX Runtime's
-> CUDA execution provider, measured on an actual RTX 2080, turned out **not**
-> to speed up detection at all — a small model at batch size 1 already runs
-> about as fast on a 16-thread CPU, a genuine and somewhat counter-intuitive
-> finding, not the "GPU is obviously faster" story this section expected
-> going in).
+## What this project actually does
+
+Feed it a pair of stereo camera images (or a recorded stereo sequence) and it will:
+
+1. Turn the left/right pair into a metric **depth map** — how far away every pixel is, in meters, not just a disparity image.
+2. **Detect objects** in the left image (cars, pedestrians, cyclists, …) with a YOLO model, running in C++ through ONNX Runtime.
+3. Lift every 2D detection into **3D** using the depth at its location.
+4. **Track every object through time in 3D**, giving each one a stable ID that survives brief occlusion, using a Kalman filter and a choice of three interchangeable matching strategies (3D distance, 2D box overlap, or a fusion of both plus appearance).
+5. Export the tracked trajectories (CSV / PLY) and score them against ground truth with the same metrics (MOTA / MOTP / IDF1) the multi-object-tracking research literature uses.
+
+This is the same class of problem an autonomous vehicle or ground robot's perception stack has to solve: turn two camera feeds into *"here is everything around me, in 3D, and here is where it's going."* Everything is written from scratch in C++17 — no ROS, no off-the-shelf SLAM/tracking framework — on OpenCV, Eigen, and ONNX Runtime, and it's validated on the real KITTI self-driving dataset, not just synthetic data.
+
+## Results at a glance
+
+| | |
+| --- | --- |
+| **Unit tests** | 109/109 passing (GoogleTest, enforced in CI) |
+| **Real-time throughput** (Phase 6, tiled stereo + CPU detection) | 4.9 → **7.8 FPS**, a real 1.6x over the pre-optimisation baseline |
+| **Stereo matching speedup** from tiling | **1.95x** (152.8 → 78.5 ms/frame), tracking output bit-identical before/after |
+| **Identity tracking quality**, synthetic occlusion test (IDF1) | depth-aware 3D association **0.989** vs 2D-only baseline **0.543** |
+| **Identity tracking quality**, real KITTI driving data, 3 sequences | appearance-fused association is never the worst of 3 methods; wins outright on 1 of 3 |
+| **MOT metrics implementation** (CLEAR-MOT + IDF1, from scratch) | cross-validated against `py-motmetrics` (the reference library) on 400+ trials |
+| **GPU (RTX 2080) vs. 16-thread CPU** for detection | measured, and honestly reported: **no speedup** for this model at batch size 1 |
+
+Full numbers, methodology, and the honest caveats behind every one of these are in [KITTI evaluation](#kitti-evaluation), [Phase 5](#phase-5--appearance-aware-reid-association), and [Phase 6](#phase-6--real-time-optimisation) below.
 
 ---
 
 ## Pipeline
 
-```
-        left camera        right camera
-             |                  |
-             +--------+---------+
-                      v
-             rectified stereo pair            (StereoFrame)
-                      v
-          StereoMatcher   (BM / SGBM)         -> disparity map  [px]
-                      v
-          disparity -> depth                  Z = f * B / (d + doffs)
-                      v
-          reprojection (Q matrix)             -> point cloud  (X,Y,Z) [m]
-                      v
-   +------------------+------------------+
-   v                                     v
- detector (2D)  ----> promote to 3D ---> Tracker  (predict -> gate -> Hungarian/
- HOG / ONNX           (median Z in box)   greedy associate -> update -> birth/death)
- (YOLOv8 / v5)                            gate: chi-sq Mahalanobis(3D) or IoU(2D)
-                                                     v
-                                          {track id, X,Y,Z, v, confirmed}
-                                                     v
-                                          CSV / PLY-polyline trajectory export
+```mermaid
+flowchart LR
+    LCam[Left camera] --> Rect[Rectified stereo pair]
+    RCam[Right camera] --> Rect
+
+    Rect --> SM["StereoMatcher (BM / SGBM)"]
+    SM --> Disp["Disparity map (px)"]
+    Disp --> Depth["Depth Z = f·B / (d + doffs)"]
+    Depth --> Reproj["Reprojection (Q matrix)"]
+    Reproj --> Cloud["3D point cloud (X,Y,Z), meters"]
+
+    LCam --> Det["Detector: HOG or ONNX (YOLOv8 / v5)"]
+    Det --> Promote["promoteTo3D (median depth in box)"]
+    Depth --> Promote
+    Promote --> Track["Tracker: predict -> gate -> associate -> update -> birth/death"]
+    Track --> State["track id, X, Y, Z, velocity, confirmed"]
+    State --> Export["CSV / PLY trajectory export"]
+
+    classDef stage fill:#1f6feb,color:#fff,stroke:#1f6feb;
+    class SM,Det,Promote,Track stage;
 ```
 
-Every stage above is implemented and covered by tests.
+Association inside the tracker is gated by chi-square Mahalanobis distance in 3D, 2D IoU, or a fusion of both plus an appearance cue — pick per run, see [Tracking → 3D MOT](#tracking--3d-mot). Every stage above is implemented and covered by tests.
+
+## Example output
+
+![Demo output: left camera frame, colorized estimated disparity, colorized depth, and ground-truth disparity](docs/images/demo_board.png)
+
+Left → right: the left camera frame (three cards at known depths in front of a textured background; overlaid with detections/tracks when `--track` is on), colorized **estimated** disparity, colorized **depth** (metres), and **ground-truth** disparity for comparison. Generated with `make demo` on the built-in synthetic scene, which is used throughout this README as a controlled, ground-truth-exact scenario before trusting results on real KITTI data.
 
 ## Why this project
 
@@ -205,17 +206,21 @@ number to read first:
 
 ```bash
 $ ./build/apps/benchmark_track --frames 120
-
--- this project's identity-preservation metrics --
-method                        ID switch   ID consist.%   fragm. false trk%     tracks    update (us)
-3D Mahalanobis + Hungarian            2          99.5%        1      25.0%          4          14.83
-2D IoU        + Hungarian             2          58.3%        2      60.0%          5           4.79
-
--- CLEAR-MOT + IDF1 (MotAccumulator, gate=1.5 m) --
-method                           MOTA     MOTP     IDF1     IDSW     Frag
-3D Mahalanobis + Hungarian      0.979    0.074    0.989        0        0
-2D IoU        + Hungarian       0.929    0.204    0.543        2        2
 ```
+
+**Identity-preservation metrics** (this project's own):
+
+| method | ID switch | ID consist.% | fragm. | false trk% | tracks | update (µs) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3D Mahalanobis + Hungarian | 2 | **99.5%** | 1 | 25.0% | 4 | 14.83 |
+| 2D IoU + Hungarian | 2 | 58.3% | 2 | 60.0% | 5 | 4.79 |
+
+**CLEAR-MOT + IDF1** (`MotAccumulator`, gate = 1.5 m):
+
+| method | MOTA | MOTP | IDF1 | IDSW | Frag |
+| --- | --- | --- | --- | --- | --- |
+| 3D Mahalanobis + Hungarian | 0.979 | 0.074 | **0.989** | 0 | 0 |
+| 2D IoU + Hungarian | 0.929 | 0.204 | 0.543 | 2 | 2 |
 
 Same switch count, very different consistency — exactly the "raw count lies,
 consistency doesn't" case. The standard metrics agree, more starkly: MOTA
@@ -269,12 +274,12 @@ Run on sequence 0000 (154 frames, the standard first KITTI tracking sequence —
 a short residential drive), 711 ground-truth object-frames after dropping
 `DontCare` regions (292 Van, 243 Car, 154 Cyclist, 22 Pedestrian):
 
-```
-sequence 0000   detector=onnx (yolov8n, COCO)   frames=all   gate=2 m
+`sequence 0000` — detector = ONNX (yolov8n, COCO), frames = all, gate = 2 m:
 
-3D Mahalanobis: MOTA=-2.304  MOTP=0.995 m  IDF1=0.182  IDSW=33  Frag=11  FP=2195  FN=121  Prec=0.212  Rec=0.830
-2D IoU        : MOTA=-2.135  MOTP=1.020 m  IDF1=0.187  IDSW=35  Frag=23  FP=1980  FN=214  Prec=0.201  Rec=0.699
-```
+| method | MOTA | MOTP | IDF1 | IDSW | Frag | FP | FN | Prec | Rec |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 3D Mahalanobis | -2.304 | 0.995 m | 0.182 | 33 | 11 | 2195 | 121 | 0.212 | 0.830 |
+| 2D IoU | -2.135 | 1.020 m | **0.187** | 35 | 23 | 1980 | 214 | 0.201 | 0.699 |
 
 `configs/kitti.yaml` restricts the detector to COCO's road-relevant classes
 (person, bicycle, car, motorcycle, bus, truck) and raises `measurement_noise`
@@ -362,12 +367,11 @@ instead of validate-against-a-reference-library.
 **Synthetic scene** (`benchmark_track` — cards have distinct colors by
 construction, tints already baked into `SyntheticStereoSource`):
 
-```
-method                        ID switch   ID consist.%   fragm. false trk%
-3D Mahalanobis + Hungarian            2          99.5%        1      25.0%
-2D IoU        + Hungarian             2          58.3%        2      60.0%
-3D+IoU+ReID    + Hungarian            0         100.0%        0      50.0%
-```
+| method | ID switch | ID consist.% | fragm. | false trk% |
+| --- | --- | --- | --- | --- |
+| 3D Mahalanobis + Hungarian | 2 | 99.5% | 1 | 25.0% |
+| 2D IoU + Hungarian | 2 | 58.3% | 2 | 60.0% |
+| 3D+IoU+ReID + Hungarian | 0 | **100.0%** | 0 | 50.0% |
 
 Fused ties or beats plain 3D Mahalanobis on every identity metric (IDF1 tied
 at 0.989) — but at a higher false-track rate (50% vs 25%). That's the union
@@ -383,12 +387,11 @@ sequences chosen for a genuinely different occlusion profile — 0003 (49% of
 object-frames have some occlusion, sparse: 2.7 objects/frame) and 0017 (62%
 occluded, dense: 6.1 objects/frame) — against 0000's own 30%/4.6:
 
-```
-                    IDF1 (3D / 2D / Fused)      IDSW (3D / 2D / Fused)    Frag (3D / 2D / Fused)
-0000  30% occl.     0.182 / 0.187 / 0.203       33 / 35 / 27              11 / 23 / 13
-0003  49% occl.     0.223 / 0.301 / 0.283        0 /  2 /  0               2 /  3 /  2
-0017  62% occl.     0.486 / 0.386 / 0.462        5 / 13 /  8               1 /  6 /  2
-```
+| sequence | occlusion | IDF1 (3D / 2D / Fused) | IDSW (3D / 2D / Fused) | Frag (3D / 2D / Fused) |
+| --- | --- | --- | --- | --- |
+| 0000 | 30% | 0.182 / 0.187 / **0.203** | 33 / 35 / 27 | 11 / 23 / 13 |
+| 0003 | 49% | 0.223 / **0.301** / 0.283 | 0 / 2 / 0 | 2 / 3 / 2 |
+| 0017 | 62% | **0.486** / 0.386 / 0.462 | 5 / 13 / 8 | 1 / 6 / 2 |
 
 **This is not "fusion wins."** It wins outright on 0000, but on 0003 plain
 2D IoU has the best IDF1 (0.301, fusion 0.283 second), and on 0017 plain 3D
@@ -460,15 +463,15 @@ choose your scene in advance.
 Profiled the real pipeline on real KITTI data before optimising anything —
 `benchmark_kitti --profile` wires `ProfileRegistry` through every stage:
 
-```
-sequence 0000   154 frames   cv::getNumThreads()=16
+`sequence 0000`, 154 frames, `cv::getNumThreads() = 16`:
 
-stereo                   152.8 ms/frame
-capture (imread)         137.9 ms/frame
-detect                    49.5 ms/frame
-depth + promote3d+appearance    <2 ms/frame combined
-track                      0.19 ms/frame
-```
+| stage | cost |
+| --- | --- |
+| stereo | 152.8 ms/frame |
+| capture (imread) | 137.9 ms/frame |
+| detect | 49.5 ms/frame |
+| depth + promote3d + appearance | <2 ms/frame combined |
+| track | 0.19 ms/frame |
 
 Stereo matching dominates — roughly 3x detection's cost, and everything
 else is noise by comparison. `capture (imread)` is almost as expensive as
