@@ -49,10 +49,12 @@ double Tracker::gate() const {
     if (params_.association == AssociationMethod::kIou2D)
         return 1.0 - params_.iou_gate;
     // kFusedAppearance: feasibility is decided per-pair in buildCostMatrix (the
-    // union of the two geometric gates), so every cost left in the matrix is
-    // already a feasible weighted blend in [0, 1] -- the solver's own gate
-    // just needs to not reject those.
-    return 1.0;
+    // union of the two geometric gates), so the solver's own gate just needs
+    // to not reject those. The max any single cost can reach is the sum of
+    // the three weights (each term is a normalised cost in [0, 1]) -- computed
+    // here rather than assumed to be 1.0, since nothing enforces that the
+    // weights are normalised.
+    return params_.fused_weight_3d + params_.fused_weight_iou + params_.fused_weight_appearance;
 }
 
 std::vector<std::vector<double>> Tracker::buildCostMatrix(

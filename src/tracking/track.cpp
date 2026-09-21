@@ -26,15 +26,9 @@ Track::Track(int id, const cv::Point3f& initial_position, double dt, double acce
       last_box_(initial_box),
       class_id_(class_id),
       // Deep-copy: cv::Mat's copy ctor is a shallow, refcounted alias. Without
-      // .clone() here, appearance_ shares the caller's buffer (e.g. a
-      // FrameData cached across many Tracker runs in benchmark_kitti
-      // --sweep), and correct()'s EMA blend below -- which reassigns
-      // appearance_ in place -- would silently corrupt that caller-owned
-      // data out from under it, making later, supposedly-independent runs
-      // over the same cached frames see already-mutated input. Caught via a
-      // determinism check: identical (association, weights) runs gave
-      // different results depending on how many other variants had already
-      // run first in the same process.
+      // .clone(), appearance_ would share the caller's buffer, and correct()'s
+      // in-place EMA blend below would silently mutate caller-owned data
+      // (e.g. a detection cached across multiple Tracker runs).
       appearance_(initial_appearance.empty() ? cv::Mat() : initial_appearance.clone()) {
     KalmanFilter::Vec x0 = KalmanFilter::Vec::Zero(6);
     x0(0) = static_cast<double>(initial_position.x);

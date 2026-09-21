@@ -93,22 +93,20 @@ void StereoMatcher::configure(const StereoMatcherParams& params) {
             tile_matchers_.push_back(
                 makeMatcher(params_, type, pre_cap, uniqueness, speckle_win, speckle_range));
         }
-        // Margin so each tile's block-matching window and SGBM's aggregation
-        // near the seam see close to the same neighbourhood the untiled
-        // matcher would have. Deliberately tight, not the conservative
-        // max(32, 8*block) first guess: on KITTI-sized (short, ~375-row)
-        // images the overlap competes directly with tile height for a fixed
-        // tile count, and an overly generous margin makes more tiles a net
-        // *loss* (each tile redoes a larger fraction of its neighbours'
-        // work). See docs/roadmap.md Phase 6 for the measured accuracy this
-        // buys and the tile-count sweep that motivated tightening it.
+        // Margin so each tile's matching window sees close to the same
+        // neighbourhood the untiled matcher would near the seam. Kept tight:
+        // a wider margin makes more tiles a net loss on short images, since
+        // each tile redoes a larger fraction of its neighbours' work. See
+        // docs/roadmap.md for the tile-count/accuracy trade-off this buys.
         overlap_rows_ = std::max(16, 3 * block_for_overlap);
     }
 }
 
 cv::Mat StereoMatcher::computeTiledRaw(const cv::Mat& left_gray, const cv::Mat& right_gray) const {
     const int rows = left_gray.rows;
-    const int n = static_cast<int>(tile_matchers_.size());
+    // Clamp to the row count: more tiles than rows would make base_h truncate
+    // to 0 and leave every tile but the last computing over an empty range.
+    const int n = std::min(static_cast<int>(tile_matchers_.size()), std::max(1, rows));
     cv::Mat raw(left_gray.size(), CV_16S);
     const int base_h = rows / n;
 
