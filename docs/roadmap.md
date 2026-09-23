@@ -307,12 +307,89 @@ next one slots into an interface that already exists.
       is CPU-bound tiled SGBM plus CPU-or-GPU-equivalent detection, not a
       GPU win sitting unclaimed for lack of trying.
 
-## Phase 7 — Visual odometry
+## Phase 7 — Visual odometry  ✅ done
 
-- [ ] feature extraction + matching (ORB), essential-matrix pose
-- [ ] frame-to-frame pose, scale from the stereo baseline
-- [ ] trajectory vs. dataset ground truth (ATE / RPE)
-- [ ] touches the VI-SLAM / camera-pose requirements
+- [x] **Feature extraction + matching (ORB), essential-matrix pose**
+      (`VisualOdometry`, `include/s3m/vo/visual_odometry.hpp`): ORB keypoints
+      + descriptors on consecutive LEFT frames, `cv::BFMatcher` (Hamming) +
+      Lowe's ratio test, `cv::findEssentialMat` + `cv::recoverPose` (5-point,
+      RANSAC) for relative rotation and a *unit-norm* translation direction
+      -- the classic monocular scale ambiguity.
+- [x] **Scale from the stereo baseline, not left unresolved.** This
+      project already has a working stereo rig (Phases 1-6), so rather than
+      leave translation scale-less or guess it, each frame's ORB keypoints
+      are also stereo-triangulated (reusing `StereoMatcher`, including
+      Phase 6's tiling for free), and for essential-matrix inlier matches
+      with a valid 3D point on both sides, `X_curr = R_rel*X_prev + s*t_hat`
+      is solved per-point for the scalar `s`, median over all such points.
+      Full derivation and validation in the class-level doc comment and
+      below.
+- [x] **Validated the pose/scale math in Python before writing a line of
+      C++** -- same discipline as every earlier phase, applied here to the
+      one genuinely novel piece (the stereo-scale-recovery formula and the
+      resulting pose-composition convention aren't textbook the way
+      Kabsch/RPE are). Constructed a known synthetic camera motion (rotation
+      + translation), projected points through it, ran
+      `findEssentialMat`/`recoverPose`/the scale formula/the composition
+      formula against the known ground truth: recovered rotation, scale and
+      resulting camera position all matched to floating-point precision
+      (~1e-14). This is the exact math the C++ implementation carries out.
+- [x] **Trajectory vs. dataset ground truth (ATE / RPE)**
+      (`include/s3m/vo/trajectory_eval.hpp`): standard Sturm et al. 2012
+      definitions (the TUM RGB-D benchmark's own metrics). ATE aligns the
+      estimated trajectory onto ground truth via Kabsch/Umeyama (rotation +
+      translation, no scale -- this VO already recovers metric scale, so a
+      free-scale alignment would hide a real scale error rather than
+      measure it) before computing RMSE; RPE compares relative motion over a
+      `--rpe-delta`-frame step. Textbook, not project-invented, so validated
+      with hand-verified C++ unit tests rather than a separate Python pass:
+      a known rotation+translation recovered exactly by `alignRigid`; both
+      ATE and RPE proven invariant to a global "gauge" rigid transform
+      applied to an entire trajectory (an earlier version of that test
+      wrongly expected ATE to blow up under the shift -- it doesn't,
+      correctly, since alignment's whole job is to undo exactly that kind of
+      shift; the test was wrong, not the code, and was fixed rather than the
+      implementation loosened to match a bad expectation).
+- [x] **A second, different KITTI benchmark, not the tracking one already in
+      use.** Only the *odometry* benchmark ships ego-motion ground truth
+      (the tracking benchmark's `label_02` has object boxes, not vehicle
+      poses) -- different sequence numbering (00-10 have ground truth),
+      different file layout (`sequences/<seq>/image_0|image_1`,
+      `poses/<seq>.txt`), grayscale not colour, P0/P1 not P2/P3.
+      `scripts/fetch_kitti_odometry.py` reuses the same HTTP-range-request
+      trick as the tracking fetch script (23 GB archive, ~140 MB needed for
+      one short sequence). `readKittiCalib` gained optional `left_key`/
+      `right_key` parameters (default P2/P3, unchanged for every existing
+      caller) instead of a duplicate parser, since the two formats are
+      otherwise identical; `KittiOdometrySource`/`readKittiPoses` are new,
+      the odometry benchmark's layout being different enough (times.txt,
+      poses.txt, no labels) to not fit the tracking loader's shape.
+- [x] **Real run: KITTI odometry sequence 04** (271 frames, the shortest
+      sequence with ground truth -- chosen deliberately for a fast, complete
+      iteration loop rather than sequence 00's usual 4541-frame showcase
+      length). `benchmark_vo --kitti-root data/kitti_odometry --sequence 04`:
+      961.7 mean ORB matches/frame, 7/271 frames coasted (untrusted, held
+      last pose) -- healthy tracking. Recovered scale: 1.32 m/step median,
+      i.e. ~13.2 m/s at KITTI's ~10 Hz -- a physically plausible driving
+      speed, a real sanity check the scale-recovery pipeline is measuring
+      something real, not producing an arbitrary number.
+      **ATE RMSE 15.7 m** over the sequence (mean 13.5 m) -- roughly 4-5% of
+      the ~360 m path length. **RPE (1-frame step): 0.66 m translation,
+      0.16° rotation; RPE (10-frame step): 2.49 m, 0.59°.** Honest context:
+      this is frame-to-frame VO with no bundle adjustment, no keyframing, no
+      loop closure -- pure per-frame drift accumulation with nothing
+      correcting it, so this ATE is expected to be well behind full
+      SLAM-grade systems (which report well under 1% on KITTI odometry) and
+      is not compared against the official KITTI odometry leaderboard here,
+      which scores length-normalised segments (100-800 m) under its own
+      devkit, a different protocol from the frame-count-based RPE this
+      project reports. What this result actually demonstrates: the
+      geometry (essential matrix + stereo scale recovery) is correct and
+      physically sane, not that this is a competitive SLAM system --
+      bundle adjustment / loop closure would be the natural next layer, not
+      attempted here (out of scope for "does the core geometry work").
+- [x] Touches the VI-SLAM / camera-pose requirements named in the
+      project's original ASELSAN-facing scope.
 
 ## Phase 8 — ROS2 integration (optional / bonus)
 

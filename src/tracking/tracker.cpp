@@ -11,9 +11,7 @@
 namespace s3m {
 namespace {
 
-bool classCompatible(int a, int b) {
-    return a < 0 || b < 0 || a == b;
-}
+bool classCompatible(int a, int b) { return a < 0 || b < 0 || a == b; }
 
 }  // namespace
 
@@ -25,8 +23,8 @@ TrackerParams TrackerParams::fromConfig(const TrackingParams& tp) {
     p.max_age = tp.max_age;
     p.min_hits = tp.min_hits;
     p.association = (tp.association == "iou2d")   ? AssociationMethod::kIou2D
-                    : (tp.association == "fused") ? AssociationMethod::kFusedAppearance
-                                                  : AssociationMethod::kMahalanobis3D;
+                    : (tp.association == "fused")  ? AssociationMethod::kFusedAppearance
+                                                    : AssociationMethod::kMahalanobis3D;
     p.gating_chi2 = tp.gating_chi2;
     p.iou_gate = tp.iou_gate;
     p.use_hungarian = tp.use_hungarian;
@@ -44,10 +42,8 @@ void Tracker::reset() {
 }
 
 double Tracker::gate() const {
-    if (params_.association == AssociationMethod::kMahalanobis3D)
-        return params_.gating_chi2;
-    if (params_.association == AssociationMethod::kIou2D)
-        return 1.0 - params_.iou_gate;
+    if (params_.association == AssociationMethod::kMahalanobis3D) return params_.gating_chi2;
+    if (params_.association == AssociationMethod::kIou2D) return 1.0 - params_.iou_gate;
     // kFusedAppearance: feasibility is decided per-pair in buildCostMatrix (the
     // union of the two geometric gates), so the solver's own gate just needs
     // to not reject those. The max any single cost can reach is the sum of
@@ -68,8 +64,7 @@ std::vector<std::vector<double>> Tracker::buildCostMatrix(
         const Track& t = tracks_[i];
         for (std::size_t k = 0; k < cols; ++k) {
             const Detection3D& d = detections[static_cast<std::size_t>(usable_dets[k])];
-            if (!classCompatible(t.classId(), d.class_id))
-                continue;
+            if (!classCompatible(t.classId(), d.class_id)) continue;
 
             if (params_.association == AssociationMethod::kMahalanobis3D) {
                 cost[i][k] = t.gatingDistanceSq(d.position);
@@ -78,17 +73,14 @@ std::vector<std::vector<double>> Tracker::buildCostMatrix(
             } else {
                 const double mahal_sq = t.gatingDistanceSq(d.position);
                 const double iou_val = iou(t.lastBox(), d.box);
-                if (mahal_sq > params_.gating_chi2 && iou_val < params_.iou_gate)
-                    continue;  // +inf
+                if (mahal_sq > params_.gating_chi2 && iou_val < params_.iou_gate) continue;  // +inf
 
                 const double m_norm = std::min(mahal_sq / params_.gating_chi2, 1.0);
                 const double iou_cost = 1.0 - iou_val;
-                const double a_cost =
-                    (!t.appearance().empty() && !d.appearance.empty())
-                        ? appearanceDistance(t.appearance(), d.appearance)
-                        : 0.5;  // no descriptor on one side -- neutral, not a penalty
-                cost[i][k] = params_.fused_weight_3d * m_norm +
-                             params_.fused_weight_iou * iou_cost +
+                const double a_cost = (!t.appearance().empty() && !d.appearance.empty())
+                                           ? appearanceDistance(t.appearance(), d.appearance)
+                                           : 0.5;  // no descriptor on one side -- neutral, not a penalty
+                cost[i][k] = params_.fused_weight_3d * m_norm + params_.fused_weight_iou * iou_cost +
                              params_.fused_weight_appearance * a_cost;
             }
         }
@@ -97,19 +89,17 @@ std::vector<std::vector<double>> Tracker::buildCostMatrix(
 }
 
 TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) {
-    for (Track& t : tracks_)
-        t.predict();
+    for (Track& t : tracks_) t.predict();
 
     std::vector<int> usable;
     usable.reserve(detections.size());
     for (int k = 0; k < static_cast<int>(detections.size()); ++k) {
-        if (detections[static_cast<std::size_t>(k)].valid)
-            usable.push_back(k);
+        if (detections[static_cast<std::size_t>(k)].valid) usable.push_back(k);
     }
 
     const std::vector<std::vector<double>> cost = buildCostMatrix(usable, detections);
     const Assignment assign = params_.use_hungarian ? solveAssignmentHungarian(cost, gate())
-                                                    : solveAssignmentGreedy(cost, gate());
+                                                     : solveAssignmentGreedy(cost, gate());
 
     TrackerUpdateResult result;
     result.detection_track_id.assign(detections.size(), -1);
@@ -127,14 +117,14 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
         result.detection_track_id[static_cast<std::size_t>(det_idx)] = tracks_[i].id();
     }
 
-    tracks_.erase(
-        std::remove_if(tracks_.begin(), tracks_.end(),
-                       [this](const Track& t) { return t.timeSinceUpdate() > params_.max_age; }),
-        tracks_.end());
+    tracks_.erase(std::remove_if(tracks_.begin(), tracks_.end(),
+                                 [this](const Track& t) {
+                                     return t.timeSinceUpdate() > params_.max_age;
+                                 }),
+                 tracks_.end());
 
     for (std::size_t k = 0; k < usable.size(); ++k) {
-        if (det_matched[k])
-            continue;
+        if (det_matched[k]) continue;
         const int det_idx = usable[k];
         const Detection3D& d = detections[static_cast<std::size_t>(det_idx)];
         Track born(next_id_++, d.position, params_.dt, params_.process_noise,
@@ -145,8 +135,7 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
     }
 
     result.tracks.reserve(tracks_.size());
-    for (const Track& t : tracks_)
-        result.tracks.push_back(t.snapshot());
+    for (const Track& t : tracks_) result.tracks.push_back(t.snapshot());
     return result;
 }
 

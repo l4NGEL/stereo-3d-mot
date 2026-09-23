@@ -83,6 +83,7 @@ add_library(s3m
     src/io/middlebury_source.cpp
     src/io/trajectory_io.cpp
     src/io/kitti_loader.cpp
+    src/io/kitti_odometry_loader.cpp
     src/detection/detector.cpp
     src/detection/letterbox.cpp
     src/detection/nms.cpp
@@ -92,6 +93,8 @@ add_library(s3m
     src/tracking/tracker.cpp
     src/tracking/mot_metrics.cpp
     src/tracking/appearance.cpp
+    src/vo/visual_odometry.cpp
+    src/vo/trajectory_eval.cpp
     src/viz/depth_viz.cpp)
 
 add_library(s3m::s3m ALIAS s3m)

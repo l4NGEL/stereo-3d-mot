@@ -17,18 +17,18 @@ namespace s3m {
 /// camera-2 frame, metres; `rotation_y` is yaw around the camera Y axis.
 struct KittiObject {
     int frame = 0;
-    int track_id = -1;  ///< -1 marks a DontCare region, not a real track
-    std::string type;   ///< "Car", "Pedestrian", "Cyclist", "DontCare", ...
+    int track_id = -1;   ///< -1 marks a DontCare region, not a real track
+    std::string type;    ///< "Car", "Pedestrian", "Cyclist", "DontCare", ...
     double truncated = 0.0;
-    int occluded = 0;  ///< 0 visible, 1 partly, 2 largely, 3 unknown
+    int occluded = 0;    ///< 0 visible, 1 partly, 2 largely, 3 unknown
     double alpha = 0.0;
     cv::Rect2f bbox;
     double height = 0.0;
     double width = 0.0;
     double length = 0.0;
-    cv::Point3d location;  ///< bottom-center, camera-2 rectified frame [m]
+    cv::Point3d location;   ///< bottom-center, camera-2 rectified frame [m]
     double rotation_y = 0.0;
-    double score = -1.0;  ///< only in result files; -1 means "not present" (GT)
+    double score = -1.0;    ///< only in result files; -1 means "not present" (GT)
 
     bool isDontCare() const { return type == "DontCare"; }
     /// Bottom-center + half height: a point roughly at the object's 3D middle,
@@ -43,15 +43,20 @@ struct KittiObject {
 /// std::runtime_error if the file cannot be opened.
 std::vector<KittiObject> readKittiLabels(const std::string& path);
 
-/// Parse one calib/<seq>.txt (KITTI tracking-benchmark calibration: `P0`..`P3`
-/// 3x4 projection matrices, `R_rect`, `Tr_velo_cam`, `Tr_imu_velo`) and build a
-/// StereoRig from the colour stereo pair P2 (left, "image_02") / P3 (right,
-/// "image_03") -- the images the tracking benchmark ships. For a rectified
-/// projection matrix P = [K | K*t], the left 3x3 block *is* K, and the
-/// per-camera offset along X is `-P[0,3]/K[0,0]`; the baseline used here is
-/// the difference between cameras 2 and 3. Throws std::runtime_error if the
-/// file is missing P2 or P3.
-StereoRig readKittiCalib(const std::string& path, cv::Size image_size);
+/// Parse one calib.txt (KITTI-devkit calibration format: `P0`..`P3` 3x4
+/// projection matrices, plus `R_rect`/`Tr_velo_cam`/`Tr_imu_velo` in the
+/// tracking benchmark's variant -- ignored here) and build a StereoRig from
+/// the stereo pair named by `left_key`/`right_key`. Defaults to P2/P3, the
+/// colour pair the tracking benchmark ships ("image_02"/"image_03"); the
+/// odometry benchmark's grayscale pair is P0/P1 ("image_0"/"image_1") --
+/// same file format, different key names, see readKittiOdometryCalib. For a
+/// rectified projection matrix P = [K | K*t], the left 3x3 block *is* K, and
+/// the per-camera offset along X is `-P[0,3]/K[0,0]`; the baseline used here
+/// is the difference between the two named cameras. Throws
+/// std::runtime_error if the file is missing either key.
+StereoRig readKittiCalib(const std::string& path, cv::Size image_size,
+                         const std::string& left_key = "P2",
+                         const std::string& right_key = "P3");
 
 /// One KITTI tracking sequence. Expected layout under `root`:
 ///   calib/<sequence>.txt
@@ -82,7 +87,7 @@ class KittiTrackingSource : public FrameSource {
     StereoRig rig_;
     std::string image02_dir_;
     std::string image03_dir_;
-    std::vector<int> frame_ids_;  ///< KITTI frame numbers, in order
+    std::vector<int> frame_ids_;                          ///< KITTI frame numbers, in order
     std::map<int, std::vector<KittiObject>> labels_by_frame_;
     int cursor_ = 0;
 };
