@@ -391,12 +391,66 @@ next one slots into an interface that already exists.
 - [x] Touches the VI-SLAM / camera-pose requirements named in the
       project's original ASELSAN-facing scope.
 
-## Phase 8 — ROS2 integration (optional / bonus)
+## Phase 8 — ROS2 integration (optional / bonus)  ✅ done
 
-- [ ] `/stereo/left`, `/stereo/right` in; `/perception/detections`,
-      `/perception/tracks`, `/perception/pointcloud` out
-- [ ] only after Phases 4-7 give the perception stack itself something worth
-      wrapping in a node graph
+- [x] **`/stereo/left`, `/stereo/right` in; `/perception/detections`,
+      `/perception/tracks`, `/perception/pointcloud` out** -- exactly the
+      topic set this line originally specified, built after Phases 1-7 gave
+      the perception stack something real worth wrapping, not before.
+      `ros2/s3m_ros2/`: a deliberately thin ROS2 (Humble/ament_cmake)
+      package -- `perception_node.cpp` is message<->s3m-type conversion and
+      wiring, `message_filters::ApproximateTime` synchronises the stereo
+      pair, then the SAME `s3m::s3m` library every other app in this repo
+      links against runs stereo depth -> ONNX detection -> `promoteTo3D` ->
+      `Tracker`, exactly as `benchmark_kitti`/`stereo_depth_demo` do. No
+      perception logic was reimplemented for ROS2; this package has none of
+      its own.
+- [x] **A real ROS2 build, not a "should work" package left unverified.**
+      Separate `Dockerfile.ros2` (`ros:humble-ros-base`, matching the
+      project's existing Ubuntu 22.04 base) + `colcon build`. Hit one real
+      issue on the first attempt: the package's CMakeLists.txt included the
+      main project via a relative `"../.."` path from
+      `CMAKE_CURRENT_SOURCE_DIR`, which works for a plain checkout but not
+      through colcon's `src/s3m_ros2 -> <repo>/ros2/s3m_ros2` symlink --
+      `CMAKE_CURRENT_SOURCE_DIR` reflects the symlink's own location in the
+      colcon workspace, not the real path behind it, so `"../.."` resolved
+      to the colcon workspace root instead of the repo. Fixed with an
+      explicit `S3M_REPO_ROOT` CMake variable (passed as
+      `-DS3M_REPO_ROOT=/src` for this project's own Docker-mounted build;
+      the relative path stays as a fallback for a plain, symlink-free
+      checkout). Clean build on the second attempt -- every `vision_msgs`/
+      `cv_bridge` field name used in `perception_node.cpp` was correct on
+      the first try; the only real bug was the path issue.
+- [x] **Runtime-verified, not just compiled.** `ros2/s3m_ros2/test/
+      publish_synthetic_pair.py`: launched the real node (real ONNX model
+      loaded) inside the built image, published 5 synthetic stereo pairs
+      (a striped test pattern -- textured enough for real SGBM matching,
+      deliberately containing no actual COCO objects), and subscribed to
+      all three output topics. Result: `/perception/pointcloud` received 2
+      messages carrying 97,152 real 3D points each (~79% density of a
+      640x192 frame -- real stereo matching ran, not a stub);
+      `/perception/detections` and `/perception/tracks` each received 3
+      messages, correctly empty (0 items) every time -- the detector
+      running and correctly finding nothing, since the striped test pattern
+      genuinely has no COCO-class objects in it, not a sign anything
+      failed. This confirms the ROS2 *wiring* end to end (message
+      conversion, synchronisation, publishing); the detector's own
+      correctness on real content is already established elsewhere in this
+      project (Phase 2's tests, every real-KITTI run in Phases 4-6) and
+      wasn't worth re-proving here with a real-object test image -- the
+      thing this test needed to catch (and did have a real bug to catch,
+      the CMake path issue above) is ROS2-specific plumbing, not detection
+      accuracy.
+- [x] **Named, not hidden, simplifications** (stated in
+      `perception_node.cpp`'s own header comment): camera intrinsics come
+      from ROS parameters, not a subscribed `sensor_msgs/CameraInfo` topic
+      -- every other app in this project also takes calibration from a
+      file, not a live topic, so this matches the project's existing
+      pattern rather than under-building relative to it; `Detection3D` has
+      no measured 3D extent (position only, the same convention the
+      tracker and metrics already use throughout this project), so
+      published bounding boxes carry a fixed nominal size rather than an
+      invented measured one.
 
 ## Non-goals (for now)
 

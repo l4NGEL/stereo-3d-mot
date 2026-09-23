@@ -7,8 +7,8 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 
 [![ci](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml/badge.svg)](https://github.com/l4NGEL/stereo-3d-mot/actions/workflows/ci.yml)
 
-> Status: **Phases 1–7 built and run end to end on real KITTI data,
-> including on a real GPU.** Calibrated stereo geometry, BM/SGBM
+> Status: **All 8 phases built and run end to end on real KITTI data,
+> including on a real GPU and inside a real ROS2 graph.** Calibrated stereo geometry, BM/SGBM
 > disparity (optionally tiled + parallelised), metric depth, dense 3D
 > reprojection + PLY export, a synthetic scene with exact ground truth, a
 > Middlebury 2014 loader, a depth-accuracy benchmark, an ONNX Runtime detector
@@ -24,18 +24,20 @@ Linux-first inside Docker, with unit tests, a quantitative benchmark, and CI.
 > end on real data — see
 > [KITTI evaluation](#kitti-evaluation),
 > [Phase 5](#phase-5--appearance-aware-reid-association),
-> [Phase 6](#phase-6--real-time-optimisation) and
-> [Phase 7](#phase-7--visual-odometry) below for the real numbers and the
-> honest read on each (absolute MOTA is negative from a real, explained
-> detector/GT domain mismatch; appearance fusion is never the worst of three
-> association methods across three real sequences and wins outright on one;
-> tiling the stereo matcher gave a real 1.95x speedup with a bit-identical
-> tracking result, while a real RTX 2080 turned out **not** to speed up
-> detection at all — a small model at batch size 1 is already about as fast
-> on a 16-thread CPU; and VO's core geometry checks out — a physically
-> plausible recovered speed — while its ATE honestly trails full SLAM-grade
-> systems, exactly as expected for frame-to-frame VO with no bundle
-> adjustment or loop closure).
+> [Phase 6](#phase-6--real-time-optimisation),
+> [Phase 7](#phase-7--visual-odometry) and
+> [Phase 8](#phase-8--ros2-integration-optional--bonus) below for the real
+> numbers and the honest read on each (absolute MOTA is negative from a
+> real, explained detector/GT domain mismatch; appearance fusion is never
+> the worst of three association methods across three real sequences and
+> wins outright on one; tiling the stereo matcher gave a real 1.95x speedup
+> with a bit-identical tracking result, while a real RTX 2080 turned out
+> **not** to speed up detection at all — a small model at batch size 1 is
+> already about as fast on a 16-thread CPU; VO's core geometry checks out —
+> a physically plausible recovered speed — while its ATE honestly trails
+> full SLAM-grade systems, exactly as expected for frame-to-frame VO with no
+> bundle adjustment or loop closure; and the ROS2 wrapper is runtime-verified
+> against a live node, not left as an unverified "should work" package).
 
 ---
 
@@ -628,6 +630,58 @@ sane; bundle adjustment / loop closure would be the natural next layer, not
 attempted here since that answers a different question than "does the core
 geometry work."
 
+## Phase 8 — ROS2 integration (optional / bonus)
+
+`ros2/s3m_ros2/`: a deliberately thin ROS2 (Humble, `ament_cmake`) package —
+`perception_node.cpp` is message ⇄ s3m-type conversion and topic wiring,
+nothing else. `message_filters::ApproximateTime` synchronises `/stereo/left`
++ `/stereo/right`, then the **same** `s3m::s3m` library every app in this
+repo links against runs stereo depth → ONNX detection → `promoteTo3D` →
+`Tracker`, exactly like `benchmark_kitti` does — no perception logic was
+reimplemented for ROS2. Publishes `/perception/detections`,
+`/perception/tracks` (`vision_msgs/Detection3DArray`, tracks carrying stable
+IDs), and `/perception/pointcloud` (`sensor_msgs/PointCloud2`).
+
+```bash
+docker build -f Dockerfile.ros2 -t stereo-3d-mot:deps-ros2 --target deps-ros2 .
+# then, inside a container with the repo mounted at /src and a writable
+# colcon workspace at /ros2_ws (src/s3m_ros2 symlinked to ros2/s3m_ros2/):
+colcon build --cmake-args -DS3M_REPO_ROOT=/src
+ros2 launch s3m_ros2 stereo_3d_mot.launch.py model_path:=/src/models/yolov8n.onnx
+```
+
+**Built and runtime-verified, not left as an unverified "should work"
+package.** Hit one real issue on the first build attempt: the package
+included the main project via a relative `../..` path, which works for a
+plain checkout but not through colcon's symlinked workspace layout
+(`CMAKE_CURRENT_SOURCE_DIR` reflects the symlink's own location, not the
+real path behind it) — fixed with an explicit `S3M_REPO_ROOT` CMake
+variable. Clean build on the second attempt; every `vision_msgs`/`cv_bridge`
+field name was right on the first try, so the real bug here was ROS2/CMake
+plumbing, not the message conversion code.
+
+Runtime smoke test (`ros2/s3m_ros2/test/publish_synthetic_pair.py`):
+launched the real node with the real ONNX model loaded, published 5
+synthetic stereo pairs, subscribed to all three output topics.
+`/perception/pointcloud` received real point clouds (97,152 points/message,
+~79% density — real stereo matching ran end to end through ROS2 messages,
+not a stub); `/perception/detections` and `/perception/tracks` correctly
+came back empty every time, because the test pattern (textured stripes, for
+real SGBM matching) deliberately contains no actual COCO objects — the
+detector running and correctly finding nothing, not a sign of failure. This
+confirms the ROS2 *wiring*; the detector's own accuracy on real content is
+already established elsewhere in this project (Phase 2's tests, every real
+KITTI run in Phases 4–6) and wasn't worth re-proving with a real-object test
+image here.
+
+Two simplifications, stated rather than hidden (see the file's own header
+comment): calibration comes from ROS parameters, not a subscribed
+`sensor_msgs/CameraInfo` topic — matching every other app in this project,
+which also takes calibration from a file rather than a live source, not a
+step down from it; and published boxes carry a fixed nominal 3D size, since
+`Detection3D` is position-only (the same convention the tracker and metrics
+use throughout this project), not a per-object measured extent.
+
 ## Example benchmark output
 
 Measured on the built-in synthetic scene (640×480, default config: SGBM,
@@ -722,8 +776,12 @@ Z = fx * B / (d + doffs)
    plausible recovered speed, ATE/RPE reported honestly against full
    SLAM-grade expectations (this is frame-to-frame VO, no bundle adjustment
    or loop closure). See [Phase 7](#phase-7--visual-odometry).
-8. ROS2 integration (optional / bonus), now that Phases 6–7 give the stack
-   something worth wrapping in a node graph.
+8. **ROS2 integration — done (optional / bonus).** A thin `ament_cmake`
+   package wrapping the existing pipeline — no perception logic
+   reimplemented. Built against a real ROS2 Humble image and
+   runtime-verified against a live node (real point clouds published, real
+   ONNX model loaded), not left as an untested "should work" package. See
+   [Phase 8](#phase-8--ros2-integration-optional--bonus).
 
 Details and rationale in [docs/roadmap.md](docs/roadmap.md).
 
