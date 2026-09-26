@@ -12,7 +12,8 @@ namespace {
 
 std::string trim(const std::string& s) {
     const std::size_t begin = s.find_first_not_of(" \t\r\n");
-    if (begin == std::string::npos) return "";
+    if (begin == std::string::npos)
+        return "";
     const std::size_t end = s.find_last_not_of(" \t\r\n");
     return s.substr(begin, end - begin + 1);
 }
@@ -24,17 +25,20 @@ std::string zeroPad(int n, int width) {
 }
 
 std::string withTrailingSlash(std::string dir) {
-    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\') dir += '/';
+    if (!dir.empty() && dir.back() != '/' && dir.back() != '\\')
+        dir += '/';
     return dir;
 }
 
 int countLines(const std::string& path) {
     std::ifstream file(path);
-    if (!file) throw std::runtime_error("KittiOdometrySource: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("KittiOdometrySource: cannot open '" + path + "'");
     int n = 0;
     std::string line;
     while (std::getline(file, line)) {
-        if (!trim(line).empty()) ++n;
+        if (!trim(line).empty())
+            ++n;
     }
     return n;
 }
@@ -43,12 +47,14 @@ int countLines(const std::string& path) {
 
 std::vector<Pose> readKittiPoses(const std::string& path) {
     std::ifstream file(path);
-    if (!file) throw std::runtime_error("readKittiPoses: cannot open '" + path + "'");
+    if (!file)
+        throw std::runtime_error("readKittiPoses: cannot open '" + path + "'");
 
     std::vector<Pose> poses;
     std::string line;
     while (std::getline(file, line)) {
-        if (trim(line).empty()) continue;
+        if (trim(line).empty())
+            continue;
         std::istringstream is(line);
         double v[12];
         for (double& x : v) {
@@ -93,13 +99,15 @@ KittiOdometrySource::KittiOdometrySource(const std::string& root, const std::str
         if (static_cast<int>(poses_.size()) != frame_count_) {
             throw std::runtime_error("KittiOdometrySource: '" + poses_path + "' has " +
                                      std::to_string(poses_.size()) + " poses but sequence '" +
-                                     sequence + "' has " + std::to_string(frame_count_) + " frames");
+                                     sequence + "' has " + std::to_string(frame_count_) +
+                                     " frames");
         }
     }
 }
 
 std::optional<StereoFrame> KittiOdometrySource::next() {
-    if (cursor_ >= frame_count_) return std::nullopt;
+    if (cursor_ >= frame_count_)
+        return std::nullopt;
 
     const std::string name = zeroPad(cursor_, 6) + ".png";
     StereoFrame frame;

@@ -10,13 +10,16 @@ namespace s3m {
 namespace {
 
 cv::Mat toGray(const cv::Mat& image) {
-    if (image.channels() == 1) return image;
+    if (image.channels() == 1)
+        return image;
     cv::Mat gray;
     cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
     return gray;
 }
 
-cv::Mat toCvMat(const cv::Matx33d& m) { return cv::Mat(m); }
+cv::Mat toCvMat(const cv::Matx33d& m) {
+    return cv::Mat(m);
+}
 
 }  // namespace
 
@@ -46,9 +49,11 @@ VisualOdometry::FrameFeatures VisualOdometry::extract(const cv::Mat& left, const
         const cv::Point2f& pt = f.keypoints[i].pt;
         const int x = cvRound(pt.x);
         const int y = cvRound(pt.y);
-        if (x < 0 || x >= disparity.cols || y < 0 || y >= disparity.rows) continue;
+        if (x < 0 || x >= disparity.cols || y < 0 || y >= disparity.rows)
+            continue;
         const float d = disparity.at<float>(y, x);
-        if (!std::isfinite(d) || d == StereoMatcher::kInvalidDisparity) continue;
+        if (!std::isfinite(d) || d == StereoMatcher::kInvalidDisparity)
+            continue;
         f.points3d[i] = rig_.triangulate(cv::Point2d(pt.x, pt.y), d);
         f.valid3d[i] = 1;
     }
@@ -63,7 +68,8 @@ VoFrameResult VisualOdometry::processFrame(const cv::Mat& left, const cv::Mat& r
         R_wc_ = cv::Matx33d::eye();
         C_world_ = cv::Point3d();
         result.ok = true;
-        result.pose.rotation = R_wc_.t();  // camera->world = (world->camera)^-1 = transpose (orthonormal)
+        result.pose.rotation =
+            R_wc_.t();  // camera->world = (world->camera)^-1 = transpose (orthonormal)
         result.pose.position = C_world_;
         prev_ = std::move(curr);
         has_prev_ = true;
@@ -82,17 +88,20 @@ VoFrameResult VisualOdometry::processFrame(const cv::Mat& left, const cv::Mat& r
         return result;
     };
 
-    if (prev_.descriptors.empty() || curr.descriptors.empty()) return coast();
+    if (prev_.descriptors.empty() || curr.descriptors.empty())
+        return coast();
 
     std::vector<std::vector<cv::DMatch>> knn;
     matcher_->knnMatch(prev_.descriptors, curr.descriptors, knn, 2);
     std::vector<cv::DMatch> good;
     good.reserve(knn.size());
     for (const auto& m : knn) {
-        if (m.size() == 2 && m[0].distance < params_.match_ratio * m[1].distance) good.push_back(m[0]);
+        if (m.size() == 2 && m[0].distance < params_.match_ratio * m[1].distance)
+            good.push_back(m[0]);
     }
     result.num_matches = static_cast<int>(good.size());
-    if (result.num_matches < params_.min_inliers) return coast();
+    if (result.num_matches < params_.min_inliers)
+        return coast();
 
     std::vector<cv::Point2f> pts_prev(good.size());
     std::vector<cv::Point2f> pts_curr(good.size());
@@ -105,17 +114,20 @@ VoFrameResult VisualOdometry::processFrame(const cv::Mat& left, const cv::Mat& r
     cv::Mat inlier_mask;
     const cv::Mat E = cv::findEssentialMat(pts_prev, pts_curr, K, cv::RANSAC, params_.ransac_prob,
                                            params_.ransac_threshold, inlier_mask);
-    if (E.empty() || E.rows != 3 || E.cols != 3) return coast();
+    if (E.empty() || E.rows != 3 || E.cols != 3)
+        return coast();
 
     cv::Mat R_cv;
     cv::Mat t_cv;
     const int inliers = cv::recoverPose(E, pts_prev, pts_curr, K, R_cv, t_cv, inlier_mask);
     result.num_inliers = inliers;
-    if (inliers < params_.min_inliers) return coast();
+    if (inliers < params_.min_inliers)
+        return coast();
 
     cv::Matx33d R_rel;
     for (int r = 0; r < 3; ++r)
-        for (int c = 0; c < 3; ++c) R_rel(r, c) = R_cv.at<double>(r, c);
+        for (int c = 0; c < 3; ++c)
+            R_rel(r, c) = R_cv.at<double>(r, c);
     const cv::Vec3d t_hat(t_cv.at<double>(0), t_cv.at<double>(1), t_cv.at<double>(2));
 
     // Scale from stereo: median over inlier matches that also have a valid
@@ -123,19 +135,23 @@ VoFrameResult VisualOdometry::processFrame(const cv::Mat& left, const cv::Mat& r
     std::vector<double> scale_candidates;
     scale_candidates.reserve(good.size());
     for (std::size_t k = 0; k < good.size(); ++k) {
-        if (!inlier_mask.at<uchar>(static_cast<int>(k))) continue;
+        if (!inlier_mask.at<uchar>(static_cast<int>(k)))
+            continue;
         const std::size_t qi = static_cast<std::size_t>(good[k].queryIdx);
         const std::size_t ti = static_cast<std::size_t>(good[k].trainIdx);
-        if (!prev_.valid3d[qi] || !curr.valid3d[ti]) continue;
+        if (!prev_.valid3d[qi] || !curr.valid3d[ti])
+            continue;
         const cv::Vec3d Xp(prev_.points3d[qi].x, prev_.points3d[qi].y, prev_.points3d[qi].z);
         const cv::Vec3d Xc(curr.points3d[ti].x, curr.points3d[ti].y, curr.points3d[ti].z);
         const cv::Vec3d diff = Xc - (R_rel * Xp);
         scale_candidates.push_back(diff.dot(t_hat));
     }
-    if (scale_candidates.size() < 3) return coast();  // too few to trust a median
+    if (scale_candidates.size() < 3)
+        return coast();  // too few to trust a median
     std::sort(scale_candidates.begin(), scale_candidates.end());
     const double scale = scale_candidates[scale_candidates.size() / 2];
-    if (!std::isfinite(scale) || scale <= 0.0) return coast();  // moving backward-only is not a VO bug worth trusting blindly
+    if (!std::isfinite(scale) || scale <= 0.0)
+        return coast();  // moving backward-only is not a VO bug worth trusting blindly
 
     const cv::Vec3d t_scaled = scale * t_hat;
 

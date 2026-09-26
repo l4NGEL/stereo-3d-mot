@@ -19,7 +19,8 @@ struct RigidAlignment {
 /// alignment minimising sum ||target_i - (R*source_i + t)||^2. Throws
 /// std::invalid_argument if the two point sets differ in size or have fewer
 /// than 3 points.
-RigidAlignment alignRigid(const std::vector<cv::Point3d>& source, const std::vector<cv::Point3d>& target);
+RigidAlignment alignRigid(const std::vector<cv::Point3d>& source,
+                          const std::vector<cv::Point3d>& target);
 
 struct TrajectoryError {
     double ate_rmse = 0.0;        ///< metres, after optimal SE(3) alignment to ground truth

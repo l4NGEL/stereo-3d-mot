@@ -64,11 +64,12 @@ class KittiOdometryFixture : public ::testing::Test {
 }  // namespace
 
 TEST_F(KittiOdometryFixture, ReadKittiOdometryCalibUsesP0P1NotP2P3) {
-    const StereoRig rig =
-        readKittiOdometryCalib((root_ / "sequences" / "04" / "calib.txt").string(), cv::Size(96, 64));
+    const StereoRig rig = readKittiOdometryCalib(
+        (root_ / "sequences" / "04" / "calib.txt").string(), cv::Size(96, 64));
     EXPECT_NEAR(rig.left().fx(), 700.0, 1e-6);
     EXPECT_NEAR(rig.left().cx(), 600.0, 1e-6);
-    EXPECT_NEAR(rig.right().cx(), 600.0, 1e-6);  // P1's cx, same as P0 here -- distinct from P3's 590
+    EXPECT_NEAR(rig.right().cx(), 600.0,
+                1e-6);  // P1's cx, same as P0 here -- distinct from P3's 590
     EXPECT_NEAR(rig.baseline(), 0.54, 1e-6);
 }
 

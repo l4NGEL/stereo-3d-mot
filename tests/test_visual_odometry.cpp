@@ -33,7 +33,8 @@ TEST(VisualOdometry, FirstFrameIsAlwaysTheIdentityOrigin) {
     EXPECT_NEAR(r0.pose.position.y, 0.0, 1e-9);
     EXPECT_NEAR(r0.pose.position.z, 0.0, 1e-9);
     for (int r = 0; r < 3; ++r)
-        for (int c = 0; c < 3; ++c) EXPECT_NEAR(r0.pose.rotation(r, c), (r == c) ? 1.0 : 0.0, 1e-9);
+        for (int c = 0; c < 3; ++c)
+            EXPECT_NEAR(r0.pose.rotation(r, c), (r == c) ? 1.0 : 0.0, 1e-9);
 }
 
 // A featureless (flat-color) frame pair can't produce any ORB matches, so

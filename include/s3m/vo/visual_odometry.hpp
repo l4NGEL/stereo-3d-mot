@@ -32,10 +32,10 @@ struct VisualOdometryParams {
 /// usable for a continuous trajectory, just not a fresh measurement.
 struct VoFrameResult {
     bool ok = false;
-    Pose pose;             ///< camera-to-world; see kitti_odometry_loader.hpp
-    int num_matches = 0;   ///< ratio-test-passing matches against the previous frame
-    int num_inliers = 0;   ///< of those, recoverPose's cheirality-check inliers
-    double scale = 0.0;    ///< recovered translation scale (diagnostic; 0 if not ok)
+    Pose pose;            ///< camera-to-world; see kitti_odometry_loader.hpp
+    int num_matches = 0;  ///< ratio-test-passing matches against the previous frame
+    int num_inliers = 0;  ///< of those, recoverPose's cheirality-check inliers
+    double scale = 0.0;   ///< recovered translation scale (diagnostic; 0 if not ok)
 };
 
 /// Frame-to-frame stereo visual odometry: ORB features matched between
@@ -87,7 +87,7 @@ class VisualOdometry {
     FrameFeatures prev_;
 
     cv::Matx33d R_wc_ = cv::Matx33d::eye();  ///< current world -> camera rotation
-    cv::Point3d C_world_;                     ///< current camera center, world frame
+    cv::Point3d C_world_;                    ///< current camera center, world frame
 };
 
 }  // namespace s3m

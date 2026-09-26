@@ -50,7 +50,8 @@ TEST(AlignRigid, RecoversKnownRotationAndTranslation) {
 
     const RigidAlignment align = alignRigid(source, target);
     for (int r = 0; r < 3; ++r)
-        for (int c = 0; c < 3; ++c) EXPECT_NEAR(align.rotation(r, c), R_true(r, c), 1e-9);
+        for (int c = 0; c < 3; ++c)
+            EXPECT_NEAR(align.rotation(r, c), R_true(r, c), 1e-9);
     EXPECT_NEAR(align.translation.x, t_true.x, 1e-9);
     EXPECT_NEAR(align.translation.y, t_true.y, 1e-9);
     EXPECT_NEAR(align.translation.z, t_true.z, 1e-9);
@@ -59,8 +60,8 @@ TEST(AlignRigid, RecoversKnownRotationAndTranslation) {
 TEST(AlignRigid, ThrowsOnMismatchedOrTooFewPoints) {
     const std::vector<cv::Point3d> three = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
     const std::vector<cv::Point3d> two = {{0, 0, 0}, {1, 0, 0}};
-    EXPECT_THROW(alignRigid(two, two), std::invalid_argument);       // < 3 points
-    EXPECT_THROW(alignRigid(three, two), std::invalid_argument);     // size mismatch
+    EXPECT_THROW(alignRigid(two, two), std::invalid_argument);    // < 3 points
+    EXPECT_THROW(alignRigid(three, two), std::invalid_argument);  // size mismatch
 }
 
 TEST(EvaluateTrajectory, ZeroErrorForIdenticalTrajectories) {

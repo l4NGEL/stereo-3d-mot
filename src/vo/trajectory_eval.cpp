@@ -39,7 +39,8 @@ double rotationAngleDeg(const cv::Matx33d& r) {
 
 }  // namespace
 
-RigidAlignment alignRigid(const std::vector<cv::Point3d>& source, const std::vector<cv::Point3d>& target) {
+RigidAlignment alignRigid(const std::vector<cv::Point3d>& source,
+                          const std::vector<cv::Point3d>& target) {
     if (source.size() != target.size() || source.size() < 3) {
         throw std::invalid_argument("alignRigid: need matching point sets with at least 3 points");
     }
@@ -93,20 +94,24 @@ TrajectoryError evaluateTrajectory(const std::vector<Pose>& estimated,
     }
     TrajectoryError err;
     err.num_poses = static_cast<int>(estimated.size());
-    if (estimated.empty()) return err;
+    if (estimated.empty())
+        return err;
 
     std::vector<cv::Point3d> est_pos;
     std::vector<cv::Point3d> gt_pos;
     est_pos.reserve(estimated.size());
     gt_pos.reserve(estimated.size());
-    for (const Pose& p : estimated) est_pos.push_back(p.position);
-    for (const Pose& p : ground_truth) gt_pos.push_back(p.position);
+    for (const Pose& p : estimated)
+        est_pos.push_back(p.position);
+    for (const Pose& p : ground_truth)
+        gt_pos.push_back(p.position);
 
     const RigidAlignment align = alignRigid(est_pos, gt_pos);
     double sq_sum = 0.0;
     double abs_sum = 0.0;
     for (std::size_t i = 0; i < est_pos.size(); ++i) {
-        const cv::Vec3d aligned = align.rotation * cv::Vec3d(est_pos[i]) + cv::Vec3d(align.translation);
+        const cv::Vec3d aligned =
+            align.rotation * cv::Vec3d(est_pos[i]) + cv::Vec3d(align.translation);
         const double e = cv::norm(aligned - cv::Vec3d(gt_pos[i]));
         sq_sum += e * e;
         abs_sum += e;

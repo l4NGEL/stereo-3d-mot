@@ -17,18 +17,18 @@ namespace s3m {
 /// camera-2 frame, metres; `rotation_y` is yaw around the camera Y axis.
 struct KittiObject {
     int frame = 0;
-    int track_id = -1;   ///< -1 marks a DontCare region, not a real track
-    std::string type;    ///< "Car", "Pedestrian", "Cyclist", "DontCare", ...
+    int track_id = -1;  ///< -1 marks a DontCare region, not a real track
+    std::string type;   ///< "Car", "Pedestrian", "Cyclist", "DontCare", ...
     double truncated = 0.0;
-    int occluded = 0;    ///< 0 visible, 1 partly, 2 largely, 3 unknown
+    int occluded = 0;  ///< 0 visible, 1 partly, 2 largely, 3 unknown
     double alpha = 0.0;
     cv::Rect2f bbox;
     double height = 0.0;
     double width = 0.0;
     double length = 0.0;
-    cv::Point3d location;   ///< bottom-center, camera-2 rectified frame [m]
+    cv::Point3d location;  ///< bottom-center, camera-2 rectified frame [m]
     double rotation_y = 0.0;
-    double score = -1.0;    ///< only in result files; -1 means "not present" (GT)
+    double score = -1.0;  ///< only in result files; -1 means "not present" (GT)
 
     bool isDontCare() const { return type == "DontCare"; }
     /// Bottom-center + half height: a point roughly at the object's 3D middle,
@@ -55,8 +55,7 @@ std::vector<KittiObject> readKittiLabels(const std::string& path);
 /// is the difference between the two named cameras. Throws
 /// std::runtime_error if the file is missing either key.
 StereoRig readKittiCalib(const std::string& path, cv::Size image_size,
-                         const std::string& left_key = "P2",
-                         const std::string& right_key = "P3");
+                         const std::string& left_key = "P2", const std::string& right_key = "P3");
 
 /// One KITTI tracking sequence. Expected layout under `root`:
 ///   calib/<sequence>.txt
@@ -87,7 +86,7 @@ class KittiTrackingSource : public FrameSource {
     StereoRig rig_;
     std::string image02_dir_;
     std::string image03_dir_;
-    std::vector<int> frame_ids_;                          ///< KITTI frame numbers, in order
+    std::vector<int> frame_ids_;  ///< KITTI frame numbers, in order
     std::map<int, std::vector<KittiObject>> labels_by_frame_;
     int cursor_ = 0;
 };
