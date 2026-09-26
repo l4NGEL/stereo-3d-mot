@@ -1,0 +1,1040 @@
+{
+ "failures": 0,
+ "report": {
+  "0000": {
+   "mahalanobis3d": {
+    "motmetrics": {
+     "mota": -2.3037974683544302,
+     "motp": 0.9947583032567224,
+     "idf1": 0.18249427917620137,
+     "precision": 0.2118491921005386,
+     "recall": 0.829817158931083,
+     "num_objects": 711,
+     "num_switches": 33,
+     "num_fragmentations": 11,
+     "num_false_positives": 2195,
+     "num_misses": 121
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -2.3038,
+     "motp": 0.994758,
+     "idf1": 0.182494,
+     "num_switches": 33,
+     "num_fragmentations": 11,
+     "num_false_positives": 2195,
+     "num_misses": 121,
+     "precision": 0.211849,
+     "recall": 0.829817
+    },
+    "published": {
+     "mota": -2.304,
+     "motp": 0.995,
+     "idf1": 0.182,
+     "idsw": 33,
+     "frag": 11,
+     "fp": 2195,
+     "fn": 121,
+     "prec": 0.212,
+     "rec": 0.83
+    },
+    "checks": [
+     {
+      "key": "mota",
+      "expected": -2.304,
+      "reproduced": -2.3037974683544302,
+      "ok": true
+     },
+     {
+      "key": "motp",
+      "expected": 0.995,
+      "reproduced": 0.9947583032567224,
+      "ok": true
+     },
+     {
+      "key": "idf1",
+      "expected": 0.182,
+      "reproduced": 0.18249427917620137,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 33,
+      "reproduced": 33,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 11,
+      "reproduced": 11,
+      "ok": true
+     },
+     {
+      "key": "fp",
+      "expected": 2195,
+      "reproduced": 2195,
+      "ok": true
+     },
+     {
+      "key": "fn",
+      "expected": 121,
+      "reproduced": 121,
+      "ok": true
+     },
+     {
+      "key": "prec",
+      "expected": 0.212,
+      "reproduced": 0.2118491921005386,
+      "ok": true
+     },
+     {
+      "key": "rec",
+      "expected": 0.83,
+      "reproduced": 0.829817158931083,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -2.3038,
+      "reproduced": -2.3037974683544302,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 0.994758,
+      "reproduced": 0.9947583032567224,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.182494,
+      "reproduced": 0.18249427917620137,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 33,
+      "reproduced": 33,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 11,
+      "reproduced": 11,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 2195,
+      "reproduced": 2195,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 121,
+      "reproduced": 121,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.211849,
+      "reproduced": 0.2118491921005386,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.829817,
+      "reproduced": 0.829817158931083,
+      "ok": true
+     }
+    ]
+   },
+   "iou2d": {
+    "motmetrics": {
+     "mota": -2.1350210970464136,
+     "motp": 1.0198539508438353,
+     "idf1": 0.18695106649937265,
+     "precision": 0.2006459426725878,
+     "recall": 0.69901547116737,
+     "num_objects": 711,
+     "num_switches": 35,
+     "num_fragmentations": 23,
+     "num_false_positives": 1980,
+     "num_misses": 214
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -2.13502,
+     "motp": 1.01985,
+     "idf1": 0.186951,
+     "num_switches": 35,
+     "num_fragmentations": 23,
+     "num_false_positives": 1980,
+     "num_misses": 214,
+     "precision": 0.200646,
+     "recall": 0.699015
+    },
+    "published": {
+     "mota": -2.135,
+     "motp": 1.02,
+     "idf1": 0.187,
+     "idsw": 35,
+     "frag": 23,
+     "fp": 1980,
+     "fn": 214,
+     "prec": 0.201,
+     "rec": 0.699
+    },
+    "checks": [
+     {
+      "key": "mota",
+      "expected": -2.135,
+      "reproduced": -2.1350210970464136,
+      "ok": true
+     },
+     {
+      "key": "motp",
+      "expected": 1.02,
+      "reproduced": 1.0198539508438353,
+      "ok": true
+     },
+     {
+      "key": "idf1",
+      "expected": 0.187,
+      "reproduced": 0.18695106649937265,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 35,
+      "reproduced": 35,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 23,
+      "reproduced": 23,
+      "ok": true
+     },
+     {
+      "key": "fp",
+      "expected": 1980,
+      "reproduced": 1980,
+      "ok": true
+     },
+     {
+      "key": "fn",
+      "expected": 214,
+      "reproduced": 214,
+      "ok": true
+     },
+     {
+      "key": "prec",
+      "expected": 0.201,
+      "reproduced": 0.2006459426725878,
+      "ok": true
+     },
+     {
+      "key": "rec",
+      "expected": 0.699,
+      "reproduced": 0.69901547116737,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -2.13502,
+      "reproduced": -2.1350210970464136,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 1.01985,
+      "reproduced": 1.0198539508438353,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.186951,
+      "reproduced": 0.18695106649937265,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 35,
+      "reproduced": 35,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 23,
+      "reproduced": 23,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 1980,
+      "reproduced": 1980,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 214,
+      "reproduced": 214,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.200646,
+      "reproduced": 0.2006459426725878,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.699015,
+      "reproduced": 0.69901547116737,
+      "ok": true
+     }
+    ]
+   },
+   "fused": {
+    "motmetrics": {
+     "mota": -2.270042194092827,
+     "motp": 0.9647705121002487,
+     "idf1": 0.2032806092560047,
+     "precision": 0.20643729189789123,
+     "recall": 0.7848101265822784,
+     "num_objects": 711,
+     "num_switches": 27,
+     "num_fragmentations": 13,
+     "num_false_positives": 2145,
+     "num_misses": 153
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -2.27004,
+     "motp": 0.964771,
+     "idf1": 0.203281,
+     "num_switches": 27,
+     "num_fragmentations": 13,
+     "num_false_positives": 2145,
+     "num_misses": 153,
+     "precision": 0.206437,
+     "recall": 0.78481
+    },
+    "published": {
+     "idf1": 0.203,
+     "idsw": 27,
+     "frag": 13
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.203,
+      "reproduced": 0.2032806092560047,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 27,
+      "reproduced": 27,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 13,
+      "reproduced": 13,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -2.27004,
+      "reproduced": -2.270042194092827,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 0.964771,
+      "reproduced": 0.9647705121002487,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.203281,
+      "reproduced": 0.2032806092560047,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 27,
+      "reproduced": 27,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 13,
+      "reproduced": 13,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 2145,
+      "reproduced": 2145,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 153,
+      "reproduced": 153,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.206437,
+      "reproduced": 0.20643729189789123,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.78481,
+      "reproduced": 0.7848101265822784,
+      "ok": true
+     }
+    ]
+   }
+  },
+  "0003": {
+   "mahalanobis3d": {
+    "motmetrics": {
+     "mota": -1.8273195876288661,
+     "motp": 1.0485595056362083,
+     "idf1": 0.222537207654146,
+     "precision": 0.15347018572825025,
+     "recall": 0.40463917525773196,
+     "num_objects": 388,
+     "num_switches": 0,
+     "num_fragmentations": 2,
+     "num_false_positives": 866,
+     "num_misses": 231
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -1.82732,
+     "motp": 1.04856,
+     "idf1": 0.222537,
+     "num_switches": 0,
+     "num_fragmentations": 2,
+     "num_false_positives": 866,
+     "num_misses": 231,
+     "precision": 0.15347,
+     "recall": 0.404639
+    },
+    "published": {
+     "idf1": 0.223,
+     "idsw": 0,
+     "frag": 2
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.223,
+      "reproduced": 0.222537207654146,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 0,
+      "reproduced": 0,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -1.82732,
+      "reproduced": -1.8273195876288661,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 1.04856,
+      "reproduced": 1.0485595056362083,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.222537,
+      "reproduced": 0.222537207654146,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 0,
+      "reproduced": 0,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 866,
+      "reproduced": 866,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 231,
+      "reproduced": 231,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.15347,
+      "reproduced": 0.15347018572825025,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.404639,
+      "reproduced": 0.40463917525773196,
+      "ok": true
+     }
+    ]
+   },
+   "iou2d": {
+    "motmetrics": {
+     "mota": -0.8994845360824741,
+     "motp": 1.0699256471685707,
+     "idf1": 0.3006535947712418,
+     "precision": 0.24597364568081992,
+     "recall": 0.4329896907216495,
+     "num_objects": 388,
+     "num_switches": 2,
+     "num_fragmentations": 3,
+     "num_false_positives": 515,
+     "num_misses": 220
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -0.899485,
+     "motp": 1.06993,
+     "idf1": 0.300654,
+     "num_switches": 2,
+     "num_fragmentations": 3,
+     "num_false_positives": 515,
+     "num_misses": 220,
+     "precision": 0.245974,
+     "recall": 0.43299
+    },
+    "published": {
+     "idf1": 0.301,
+     "idsw": 2,
+     "frag": 3
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.301,
+      "reproduced": 0.3006535947712418,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 3,
+      "reproduced": 3,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -0.899485,
+      "reproduced": -0.8994845360824741,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 1.06993,
+      "reproduced": 1.0699256471685707,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.300654,
+      "reproduced": 0.3006535947712418,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 3,
+      "reproduced": 3,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 515,
+      "reproduced": 515,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 220,
+      "reproduced": 220,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.245974,
+      "reproduced": 0.24597364568081992,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.43299,
+      "reproduced": 0.4329896907216495,
+      "ok": true
+     }
+    ]
+   },
+   "fused": {
+    "motmetrics": {
+     "mota": -0.9639175257731958,
+     "motp": 1.0745161236059795,
+     "idf1": 0.2828096118299446,
+     "precision": 0.23054755043227665,
+     "recall": 0.41237113402061853,
+     "num_objects": 388,
+     "num_switches": 0,
+     "num_fragmentations": 2,
+     "num_false_positives": 534,
+     "num_misses": 228
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -0.963918,
+     "motp": 1.07452,
+     "idf1": 0.28281,
+     "num_switches": 0,
+     "num_fragmentations": 2,
+     "num_false_positives": 534,
+     "num_misses": 228,
+     "precision": 0.230548,
+     "recall": 0.412371
+    },
+    "published": {
+     "idf1": 0.283,
+     "idsw": 0,
+     "frag": 2
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.283,
+      "reproduced": 0.2828096118299446,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 0,
+      "reproduced": 0,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -0.963918,
+      "reproduced": -0.9639175257731958,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 1.07452,
+      "reproduced": 1.0745161236059795,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.28281,
+      "reproduced": 0.2828096118299446,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 0,
+      "reproduced": 0,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 534,
+      "reproduced": 534,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 228,
+      "reproduced": 228,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.230548,
+      "reproduced": 0.23054755043227665,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.412371,
+      "reproduced": 0.41237113402061853,
+      "ok": true
+     }
+    ]
+   }
+  },
+  "0017": {
+   "mahalanobis3d": {
+    "motmetrics": {
+     "mota": -0.4971687429218572,
+     "motp": 0.5181678531766041,
+     "idf1": 0.48597449908925316,
+     "precision": 0.38345864661654133,
+     "recall": 0.8086070215175538,
+     "num_objects": 883,
+     "num_switches": 5,
+     "num_fragmentations": 1,
+     "num_false_positives": 1148,
+     "num_misses": 169
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -0.497169,
+     "motp": 0.518168,
+     "idf1": 0.485974,
+     "num_switches": 5,
+     "num_fragmentations": 1,
+     "num_false_positives": 1148,
+     "num_misses": 169,
+     "precision": 0.383459,
+     "recall": 0.808607
+    },
+    "published": {
+     "idf1": 0.486,
+     "idsw": 5,
+     "frag": 1
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.486,
+      "reproduced": 0.48597449908925316,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 5,
+      "reproduced": 5,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 1,
+      "reproduced": 1,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -0.497169,
+      "reproduced": -0.4971687429218572,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 0.518168,
+      "reproduced": 0.5181678531766041,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.485974,
+      "reproduced": 0.48597449908925316,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 5,
+      "reproduced": 5,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 1,
+      "reproduced": 1,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 1148,
+      "reproduced": 1148,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 169,
+      "reproduced": 169,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.383459,
+      "reproduced": 0.38345864661654133,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.808607,
+      "reproduced": 0.8086070215175538,
+      "ok": true
+     }
+    ]
+   },
+   "iou2d": {
+    "motmetrics": {
+     "mota": -0.7315968289920725,
+     "motp": 0.5412599798337749,
+     "idf1": 0.3860845839017735,
+     "precision": 0.34553440702781846,
+     "recall": 0.8018120045300113,
+     "num_objects": 883,
+     "num_switches": 13,
+     "num_fragmentations": 6,
+     "num_false_positives": 1341,
+     "num_misses": 175
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -0.731597,
+     "motp": 0.54126,
+     "idf1": 0.386085,
+     "num_switches": 13,
+     "num_fragmentations": 6,
+     "num_false_positives": 1341,
+     "num_misses": 175,
+     "precision": 0.345534,
+     "recall": 0.801812
+    },
+    "published": {
+     "idf1": 0.386,
+     "idsw": 13,
+     "frag": 6
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.386,
+      "reproduced": 0.3860845839017735,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 13,
+      "reproduced": 13,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 6,
+      "reproduced": 6,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -0.731597,
+      "reproduced": -0.7315968289920725,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 0.54126,
+      "reproduced": 0.5412599798337749,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.386085,
+      "reproduced": 0.3860845839017735,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 13,
+      "reproduced": 13,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 6,
+      "reproduced": 6,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 1341,
+      "reproduced": 1341,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 175,
+      "reproduced": 175,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.345534,
+      "reproduced": 0.34553440702781846,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.801812,
+      "reproduced": 0.8018120045300113,
+      "ok": true
+     }
+    ]
+   },
+   "fused": {
+    "motmetrics": {
+     "mota": -0.5175537938844847,
+     "motp": 0.5422417986502422,
+     "idf1": 0.46187363834422657,
+     "precision": 0.3800106894708712,
+     "recall": 0.8052095130237825,
+     "num_objects": 883,
+     "num_switches": 8,
+     "num_fragmentations": 2,
+     "num_false_positives": 1160,
+     "num_misses": 172
+    },
+    "reference_counter_agrees": true,
+    "cpp": {
+     "mota": -0.517554,
+     "motp": 0.542242,
+     "idf1": 0.461874,
+     "num_switches": 8,
+     "num_fragmentations": 2,
+     "num_false_positives": 1160,
+     "num_misses": 172,
+     "precision": 0.380011,
+     "recall": 0.80521
+    },
+    "published": {
+     "idf1": 0.462,
+     "idsw": 8,
+     "frag": 2
+    },
+    "checks": [
+     {
+      "key": "idf1",
+      "expected": 0.462,
+      "reproduced": 0.46187363834422657,
+      "ok": true
+     },
+     {
+      "key": "idsw",
+      "expected": 8,
+      "reproduced": 8,
+      "ok": true
+     },
+     {
+      "key": "frag",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:mota",
+      "expected": -0.517554,
+      "reproduced": -0.5175537938844847,
+      "ok": true
+     },
+     {
+      "key": "cpp:motp",
+      "expected": 0.542242,
+      "reproduced": 0.5422417986502422,
+      "ok": true
+     },
+     {
+      "key": "cpp:idf1",
+      "expected": 0.461874,
+      "reproduced": 0.46187363834422657,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_switches",
+      "expected": 8,
+      "reproduced": 8,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_fragmentations",
+      "expected": 2,
+      "reproduced": 2,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_false_positives",
+      "expected": 1160,
+      "reproduced": 1160,
+      "ok": true
+     },
+     {
+      "key": "cpp:num_misses",
+      "expected": 172,
+      "reproduced": 172,
+      "ok": true
+     },
+     {
+      "key": "cpp:precision",
+      "expected": 0.380011,
+      "reproduced": 0.3800106894708712,
+      "ok": true
+     },
+     {
+      "key": "cpp:recall",
+      "expected": 0.80521,
+      "reproduced": 0.8052095130237825,
+      "ok": true
+     }
+    ]
+   }
+  }
+ }
+}

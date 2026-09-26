@@ -340,3 +340,20 @@ configuration and not as shipped, both are stated.
 ## 10. Deviations log
 
 *(appended after the freeze; each entry gives the date, what changed, why, and whether any result had been seen)*
+
+### 2026-09-26 — clarification after the dev selection was seen, before any held-out run
+
+- **What was seen:** the dev-only selection of §4 (`docs/evaluation/results/dev_selection.json`, full grid in
+  `dev_selection_grid.csv`). By the pre-registered rule it chose `iou2d_s0.25_h3` with emission `E = 0`
+  (pooled dev P-K2D MOTA 0.530, IDF1 0.617, 333 FP, 231 FN, 35 IDSW over 1274 GT). `fused_s0.35_h3`, `E = 0`
+  was inside the 0.005 tie (MOTA 0.529, IDF1 0.698, 18 IDSW) and lost only on the closest-to-shipped tie-break.
+  The three as-shipped systems (`E = 30`) scored pooled dev MOTA −0.97 / −0.70 / −0.72
+  (Mahalanobis-3D / IoU-2D / fused).
+- **Consequence for §5:** §5 says ablations are run "against the dev-selected system". The selected system is itself the
+  plain-IoU variant (A5), so measuring stereo/3D, fusion and appearance *only* against it would hide what each of those
+  features contributes when it is switched on. Leave-one-out deltas are therefore reported against **both** the
+  dev-selected system and the full fused system `F` = `fused_s0.25_h3` at the same `E = 0`. No threshold in §7 changes.
+- **Held-out variant list frozen** in `configs/eval/variants_test.txt` (F, A1, A2, A3, A4, A5, A7 at score 0.25,
+  `min_hits` 3; emission is applied by the scorer). Both `configs/kitti_tiled.yaml` (primary) and `configs/kitti.yaml`
+  (untiled, for A9) are run on the held-out sequences. The 27-variant dev grid is **not** run on held-out data.
+- No held-out sequence had been processed when this entry was written.

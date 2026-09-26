@@ -16,3 +16,9 @@ s3m_add_app(benchmark_detect)
 s3m_add_app(benchmark_track)
 s3m_add_app(benchmark_kitti)
 s3m_add_app(benchmark_vo)
+
+# Evaluation harness (docs/evaluation/PROTOCOL.md): these only produce data
+# and timings; scoring lives in scripts/eval/.
+s3m_add_app(eval_kitti)
+s3m_add_app(benchmark_e2e)
+s3m_add_app(dump_disparity)
