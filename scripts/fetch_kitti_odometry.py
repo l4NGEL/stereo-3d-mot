@@ -73,32 +73,44 @@ def fetch_small_zip_members(url: str, out_dir: str, prefix: str | None = None) -
     print(f"  extracted {n} file(s) -> {out_dir}/")
 
 
-def fetch_camera(sequence: str, camera: str, out_dir: str) -> int:
-    session = requests.Session()
-    zf = zipfile.ZipFile(HttpRangeFile(f"{BASE}/data_odometry_gray.zip", session))
+def fetch_camera(zf: zipfile.ZipFile, sequence: str, camera: str, out_dir: str,
+                 max_frames: int | None = None) -> int:
+    """Fetch one camera's frames of one sequence from an already-opened remote
+    zip. `max_frames` keeps only the first N frames; files already on disk with
+    the right byte size are skipped (an interrupted run resumes)."""
     prefix = f"dataset/sequences/{sequence}/{camera}/"
     names = sorted(n for n in zf.namelist() if n.startswith(prefix) and n.endswith(".png"))
     if not names:
         print(f"  no files found for sequence {sequence} camera {camera}", file=sys.stderr)
         return 0
+    if max_frames is not None:
+        names = names[:max_frames]
 
     os.makedirs(out_dir, exist_ok=True)
     total = sum(zf.getinfo(n).file_size for n in names)
     got = 0
     for i, name in enumerate(names):
-        data = zf.read(name)
-        with open(os.path.join(out_dir, os.path.basename(name)), "wb") as out:
-            out.write(data)
-        got += len(data)
+        dest = os.path.join(out_dir, os.path.basename(name))
+        size = zf.getinfo(name).file_size
+        if os.path.exists(dest) and os.path.getsize(dest) == size:
+            got += size
+        else:
+            data = zf.read(name)
+            with open(dest, "wb") as out:
+                out.write(data)
+            got += len(data)
         if (i + 1) % 25 == 0 or i + 1 == len(names):
-            print(f"  {camera}: {i + 1}/{len(names)} frames  {got / 1e6:.1f}/{total / 1e6:.1f} MB")
+            print(f"  {camera}/{sequence}: {i + 1}/{len(names)} frames  {got / 1e6:.1f}/{total / 1e6:.1f} MB")
     return len(names)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("sequence", help="zero-padded odometry sequence id with ground truth, e.g. 04 (00-10)")
+    ap.add_argument("sequence", nargs="+",
+                    help="zero-padded odometry sequence id(s) with ground truth, e.g. 04 (00-10)")
     ap.add_argument("--out", default="data/kitti_odometry", help="output root (default: data/kitti_odometry)")
+    ap.add_argument("--max-frames", type=int, default=None,
+                    help="only fetch the first N frames of each sequence (default: all)")
     args = ap.parse_args()
 
     print("fetching calibration (all sequences, ~0.6 MB) ...")
@@ -109,10 +121,13 @@ def main() -> int:
     fetch_small_zip_members(f"{BASE}/data_odometry_poses.zip", os.path.join(args.out, "poses"),
                             prefix="dataset/poses/")
 
-    for camera, label in CAMERAS:
-        print(f"fetching {label} ({camera})/{args.sequence} from data_odometry_gray.zip (range requests) ...")
-        n = fetch_camera(args.sequence, camera, os.path.join(args.out, "sequences", args.sequence, camera))
-        print(f"  wrote {n} frames -> {args.out}/sequences/{args.sequence}/{camera}/")
+    zf = zipfile.ZipFile(HttpRangeFile(f"{BASE}/data_odometry_gray.zip", requests.Session()))
+    for sequence in args.sequence:
+        for camera, label in CAMERAS:
+            print(f"fetching {label} ({camera})/{sequence} from data_odometry_gray.zip (range requests) ...")
+            n = fetch_camera(zf, sequence, camera,
+                             os.path.join(args.out, "sequences", sequence, camera), args.max_frames)
+            print(f"  wrote {n} frames -> {args.out}/sequences/{sequence}/{camera}/")
     return 0
 
 

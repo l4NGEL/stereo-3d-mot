@@ -80,41 +80,56 @@ class HttpRangeFile:
         raise last_err  # type: ignore[misc]
 
 
-def fetch_camera(archive: str, sequence: str, camera: str, out_dir: str) -> int:
-    session = requests.Session()
-    zf = zipfile.ZipFile(HttpRangeFile(f"{BASE}/{archive}", session))
+def fetch_camera(zf: zipfile.ZipFile, sequence: str, camera: str, out_dir: str,
+                 max_frames: int | None = None) -> int:
+    """Fetch one camera's frames of one sequence from an already-opened remote
+    zip. `max_frames` keeps only the first N frames (by file name order); files
+    already on disk with the right byte size are skipped, so an interrupted
+    run resumes instead of starting over."""
     prefix = f"training/{camera}/{sequence}/"
     names = sorted(n for n in zf.namelist() if n.startswith(prefix) and not n.endswith("/"))
     if not names:
-        print(f"  no files found for sequence {sequence} in {archive}", file=sys.stderr)
+        print(f"  no files found for sequence {sequence} under {prefix}", file=sys.stderr)
         return 0
+    if max_frames is not None:
+        names = names[:max_frames]
 
     os.makedirs(out_dir, exist_ok=True)
     total = sum(zf.getinfo(n).file_size for n in names)
     got = 0
     t0 = time.time()
     for i, name in enumerate(names):
-        data = zf.read(name)
-        with open(os.path.join(out_dir, os.path.basename(name)), "wb") as out:
-            out.write(data)
-        got += len(data)
+        dest = os.path.join(out_dir, os.path.basename(name))
+        size = zf.getinfo(name).file_size
+        if os.path.exists(dest) and os.path.getsize(dest) == size:
+            got += size
+        else:
+            data = zf.read(name)
+            with open(dest, "wb") as out:
+                out.write(data)
+            got += len(data)
         if (i + 1) % 25 == 0 or i + 1 == len(names):
             dt = max(time.time() - t0, 1e-6)
-            print(f"  {camera}: {i + 1}/{len(names)} frames  {got / 1e6:.1f}/{total / 1e6:.1f} MB"
+            print(f"  {camera}/{sequence}: {i + 1}/{len(names)} frames  {got / 1e6:.1f}/{total / 1e6:.1f} MB"
                   f"  ({got / 1e6 / dt:.2f} MB/s)")
     return len(names)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("sequence", help="zero-padded training sequence id, e.g. 0000")
+    ap.add_argument("sequence", nargs="+", help="zero-padded training sequence id(s), e.g. 0000")
     ap.add_argument("--out", default="data/kitti", help="KittiTrackingSource root (default: data/kitti)")
+    ap.add_argument("--max-frames", type=int, default=None,
+                    help="only fetch the first N frames of each sequence (default: all)")
     args = ap.parse_args()
 
     for camera, archive in CAMERAS:
-        print(f"fetching {camera}/{args.sequence} from {archive} (range requests, not the full archive) ...")
-        n = fetch_camera(archive, args.sequence, camera, os.path.join(args.out, camera, args.sequence))
-        print(f"  wrote {n} frames -> {args.out}/{camera}/{args.sequence}/")
+        zf = zipfile.ZipFile(HttpRangeFile(f"{BASE}/{archive}", requests.Session()))
+        for sequence in args.sequence:
+            print(f"fetching {camera}/{sequence} from {archive} (range requests, not the full archive) ...")
+            n = fetch_camera(zf, sequence, camera, os.path.join(args.out, camera, sequence),
+                             args.max_frames)
+            print(f"  wrote {n} frames -> {args.out}/{camera}/{sequence}/")
     return 0
 
 
