@@ -396,3 +396,16 @@ was committed at 15:14:42 (the session was paused by a usage limit in between). 
   and their occlusion field had been surveyed in aggregate in Phase 5 to pick dev sequences with different occlusion profiles.
   No detector or tracker output existed for any held-out sequence then, so this cannot have influenced a threshold, a parameter or a
   selection — but the held-out ground truth was not entirely unseen, and this is stated here rather than implied away.
+
+### 2026-09-27 — Phase 1 remediation: ghost-track emission fixed in the product code (root-cause fix, not a scoring-code change)
+
+After this report's results were frozen and reported, `apps/benchmark_kitti.cpp`, `apps/benchmark_track.cpp` and
+`ros2/s3m_ros2/src/perception_node.cpp` were changed to stop reporting a confirmed track's coasted (unmatched) position
+as an observation (`isEmittable()`, `include/s3m/tracking/tracker.hpp`) — see `REPORT.md` §12 for the full writeup and
+evidence. This is a fix to the **product**, not to any scoring/matching code, and does not touch held-out sequences,
+the seed, matching rules, metric definitions, or any §7 threshold. No frozen number in §7's acceptance table changed,
+because `S*`/`F`/`A4_plain_mahalanobis` (the systems TR-1..TR-7h are computed on) were already scored with emission
+policy `E=0` before the freeze — the dev-selection grid (§4) swept `E` as one of its dimensions. What changed is that
+`main` now actually behaves the way those systems were already being credited for; the pre-fix behavior (`E=30`,
+every confirmed track including coasting ones) is preserved as historical data (`out/eval/raw/cpp_benchmark_kitti/`,
+`docs/evaluation/results/tracking_{dev,test}.json`'s `*_E30` rows) but is no longer reproducible by building `main`.

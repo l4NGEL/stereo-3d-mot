@@ -40,14 +40,13 @@
 
 using namespace s3m;
 using sensor_msgs::msg::Image;
-using ApproxSync =
-    message_filters::sync_policies::ApproximateTime<Image, Image>;
+using ApproxSync = message_filters::sync_policies::ApproximateTime<Image, Image>;
 
 namespace {
 
 vision_msgs::msg::Detection3DArray toDetectionArray(const std::vector<Detection3D>& dets,
-                                                     const std_msgs::msg::Header& header,
-                                                     const std::vector<int>* track_ids = nullptr) {
+                                                    const std_msgs::msg::Header& header,
+                                                    const std::vector<int>* track_ids = nullptr) {
     vision_msgs::msg::Detection3DArray msg;
     msg.header = header;
     msg.detections.reserve(dets.size());
@@ -91,7 +90,8 @@ sensor_msgs::msg::PointCloud2 toPointCloud2(const cv::Mat& points3d, const cv::M
     int count = 0;
     for (int y = 0; y < valid_mask.rows; ++y) {
         const uchar* row = valid_mask.ptr<uchar>(y);
-        for (int x = 0; x < valid_mask.cols; ++x) count += row[x] ? 1 : 0;
+        for (int x = 0; x < valid_mask.cols; ++x)
+            count += row[x] ? 1 : 0;
     }
     msg.width = static_cast<std::uint32_t>(count);
     msg.is_dense = true;
@@ -108,7 +108,8 @@ sensor_msgs::msg::PointCloud2 toPointCloud2(const cv::Mat& points3d, const cv::M
         const uchar* mrow = valid_mask.ptr<uchar>(y);
         const cv::Vec3f* prow = points3d.ptr<cv::Vec3f>(y);
         for (int x = 0; x < valid_mask.cols; ++x) {
-            if (!mrow[x]) continue;
+            if (!mrow[x])
+                continue;
             *it_x = prow[x][0];
             *it_y = prow[x][1];
             *it_z = prow[x][2];
@@ -127,7 +128,8 @@ class PerceptionNode : public rclcpp::Node {
     PerceptionNode() : Node("s3m_perception") {
         const std::string model_path = declare_parameter("model_path", std::string(""));
         const std::string left_topic = declare_parameter("left_topic", std::string("/stereo/left"));
-        const std::string right_topic = declare_parameter("right_topic", std::string("/stereo/right"));
+        const std::string right_topic =
+            declare_parameter("right_topic", std::string("/stereo/right"));
         const double fx = declare_parameter("fx", 700.0);
         const double fy = declare_parameter("fy", 700.0);
         const double cx = declare_parameter("cx", 600.0);
@@ -161,22 +163,24 @@ class PerceptionNode : public rclcpp::Node {
             "/perception/detections", rclcpp::QoS(10));
         tracks_pub_ = create_publisher<vision_msgs::msg::Detection3DArray>("/perception/tracks",
                                                                            rclcpp::QoS(10));
-        cloud_pub_ =
-            create_publisher<sensor_msgs::msg::PointCloud2>("/perception/pointcloud", rclcpp::QoS(10));
+        cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("/perception/pointcloud",
+                                                                     rclcpp::QoS(10));
 
         left_sub_.subscribe(this, left_topic);
         right_sub_.subscribe(this, right_topic);
-        sync_ = std::make_shared<message_filters::Synchronizer<ApproxSync>>(ApproxSync(10), left_sub_,
-                                                                             right_sub_);
-        sync_->registerCallback(
-            std::bind(&PerceptionNode::onStereoPair, this, std::placeholders::_1, std::placeholders::_2));
+        sync_ = std::make_shared<message_filters::Synchronizer<ApproxSync>>(ApproxSync(10),
+                                                                            left_sub_, right_sub_);
+        sync_->registerCallback(std::bind(&PerceptionNode::onStereoPair, this,
+                                          std::placeholders::_1, std::placeholders::_2));
 
-        RCLCPP_INFO(get_logger(), "s3m_perception ready: %s + %s -> /perception/{detections,tracks,pointcloud}",
-                   left_topic.c_str(), right_topic.c_str());
+        RCLCPP_INFO(get_logger(),
+                    "s3m_perception ready: %s + %s -> /perception/{detections,tracks,pointcloud}",
+                    left_topic.c_str(), right_topic.c_str());
     }
 
  private:
-    void onStereoPair(const Image::ConstSharedPtr& left_msg, const Image::ConstSharedPtr& right_msg) {
+    void onStereoPair(const Image::ConstSharedPtr& left_msg,
+                      const Image::ConstSharedPtr& right_msg) {
         cv::Mat left;
         cv::Mat right;
         try {
@@ -198,7 +202,8 @@ class PerceptionNode : public rclcpp::Node {
         std::vector<Detection3D> confirmed;
         std::vector<int> ids;
         for (const TrackState& t : tr.tracks) {
-            if (!t.confirmed) continue;
+            if (!isEmittable(t))
+                continue;  // confirmed AND matched this frame -- see tracker.hpp
             Detection3D d;
             d.position = t.position;
             d.class_id = t.class_id;

@@ -152,7 +152,14 @@ MotSummary run(const std::vector<FrameData>& frames, const TrackerParams& params
         std::vector<MotObject> hyp;
         hyp.reserve(tracks.size());
         for (const TrackState& t : tracks) {
-            if (t.confirmed)
+            // isEmittable(), not just t.confirmed: a confirmed track that
+            // coasted (no real detection this frame) is a Kalman prediction,
+            // not an observation -- reporting it as one is what
+            // docs/evaluation/REPORT.md's H-ghost finding measured as ~90% of
+            // this benchmark's false positives. The track stays alive
+            // in-tracker regardless (up to max_age) so it can still be
+            // re-matched; only what THIS frame reports changes.
+            if (isEmittable(t))
                 hyp.push_back(toMotObject(t.id, t.position));
         }
         acc.update(fd.gt, hyp);

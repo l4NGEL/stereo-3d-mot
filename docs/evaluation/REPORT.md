@@ -336,6 +336,45 @@ scripts/eval/run_all.sh --score-only # only the Python scoring stage, from the d
 
 `scripts/eval/run_all.sh --score-only` was re-run from the dumps after the results were produced and reproduced every result file (see IN-1 in the table). Deviations from the protocol, with dates and what had been seen when each was made: `PROTOCOL.md` §10.
 
+## 12. Remediation log
+
+Follow-up work after this report shipped, fixing root causes the report identified rather than the measurement. Each entry: what changed, the same acceptance criteria re-applied, and whether any frozen number moved. Full data in `results/phase1_ghost_fix.json` etc.; code changes in their own commits, never amending `fcde488`.
+
+### Phase 1 (2026-09-27) — ghost-track emission (§6, H-ghost)
+
+**Root cause.** `Tracker::update()` correctly keeps a track alive and coasting (Kalman-predicted, no real measurement) for up to `max_age` frames so it can be re-matched later — that internal bookkeeping was never the problem. The problem was three call sites (`apps/benchmark_kitti.cpp`, `apps/benchmark_track.cpp`, `ros2/s3m_ros2/src/perception_node.cpp`) that reported *every* confirmed track to their consumer (the MOT accumulator, a ROS2 topic) regardless of whether it had actually matched a detection that frame — a coasting track's predicted position was indistinguishable, to the consumer, from an observation. §6 measured this as ~90% of the held-out legacy-protocol false positives.
+
+**Fix.** One predicate, `isEmittable(const TrackState&)` in `include/s3m/tracking/tracker.hpp` (`confirmed && time_since_update == 0`), applied at the three call sites above. Nothing inside `Tracker`/`Track` changed — predict, gate, associate, correct, coast, birth, death, `max_age` are all untouched, so a track's ability to be re-matched after a miss is unaffected (proven by a new test, below). `apps/eval_kitti.cpp` (the evaluation harness's own dump) was deliberately left unchanged — it needs every track's full state to let the Python scorer sweep the emission policy `E`, which is exactly what `isEmittable()` now also enforces as the product's *only* behavior instead of one configurable option among several.
+
+**New tests** (`tests/test_tracker.cpp`): `Tracker.EmittableExcludesCoastingFramesButMatchingSurvivesThem` drives a track through a detected frame, a first miss, a second consecutive miss, and a re-match, asserting `isEmittable()` at each step and that the re-matched track keeps its original id; `Tracker.EmittableRequiresConfirmedAndMatchedThisFrameBothNotEither` checks a matched-but-not-yet-confirmed track is still not emittable. 126/126 C++ tests pass (124 + 2 new, 1 expected skip), clang-format clean.
+
+**Two pieces of evidence the fix is correct, not just plausible:**
+
+1. *Native validation.* The actual fixed `apps/benchmark_kitti` binary was run on real KITTI data (dev sequences, `configs/kitti.yaml`, identical to the pre-fix reference run) and its own printed MOTA/IDF1/FP/FN/IDSW were compared against the independent Python scorer's `E=0` filter applied to the *same* `eval_kitti` dumps. **6/6 exact matches** (FP/FN/IDSW bit-identical, MOTA/IDF1 to the printed precision) — `phase1_ghost_fix.json → native_cpp_vs_python_cross_check`.
+2. *Held-out reproduction.* Recomputing the fixed system's held-out P-K2D numbers via this new, independent script reproduces `fcde488`'s frozen `tracking_test.json` for the identical system (`A4_plain_mahalanobis` vs `SORT`, MOTA diff −0.116 [−0.276, −0.062]) to the last digit.
+
+**Old vs fixed vs SORT**, same detections, same sequences as `fcde488` (paired bootstrap, 10,000 resamples over sequences):
+
+| | Protocol | OLD (shipped, E=30) | FIXED (E=0) | Δ (FIXED − OLD), 95% CI | SORT (baseline) | Δ (FIXED − SORT), 95% CI |
+|---|---|---|---|---|---|---|
+| Dev MOTA | K2D | −0.970 | +0.502 | **+1.472 [+0.519, +3.406]**, excludes 0 | +0.526 | −0.024 [−0.135, +0.018], noise |
+| Dev IDF1 | K2D | 0.376 | 0.616 | **+0.240 [+0.120, +0.387]**, excludes 0 | 0.610 | +0.006 [−0.082, +0.214], noise |
+| Dev MOTA | LEGACY | −1.406 | +0.084 | **+1.490 [+0.650, +2.383]**, excludes 0 | n/a¹ | — |
+| **Held-out MOTA** | **K2D** | **−1.388** | **+0.435** | **+1.823 [+0.722, +4.153]**, excludes 0 | +0.551 | **−0.116 [−0.276, −0.062]**, excludes 0 |
+| **Held-out IDF1** | **K2D** | **0.300** | **0.556** | **+0.256 [+0.141, +0.350]**, excludes 0 | 0.624 | −0.067 [−0.269, +0.055], noise |
+| Held-out MOTA | LEGACY | −1.329 | +0.298 | **+1.626 [+0.707, +2.985]**, excludes 0 | n/a¹ | — |
+| Held-out IDF1 | LEGACY | 0.279 | 0.488 | **+0.209 [+0.140, +0.229]**, excludes 0 | n/a¹ | — |
+
+¹ SORT is 2D-only and never populates a 3D position (see `sort_baseline.py`); scoring it under the 3D-distance P-LEGACY protocol would match every hypothesis against the camera origin and is not a meaningful comparison — reported under P-K2D only, where SORT's 2D IoU output is directly comparable.
+
+**Consistent with §6, both metrics move together, no trade-off to report.** The root-cause diagnosis (H-ghost) is confirmed by an independent, C++-native measurement, not just the Python post-hoc filter that produced it.
+
+**Does any frozen acceptance verdict change? No — by construction.** TR-1 through TR-7h were already computed on `S*`/`F`/`A4_plain_mahalanobis` (§5.4), all of which were *already* scored with emission policy `E=0` — the dev-selection grid (§5.4) swept `E` as one of its dimensions before this report was frozen, and the winning/reported systems all had `E=0`. What Phase 1 fixes is the gap between that measurement and the actual product: before this commit, the binary itself (and the ROS2 node) still emitted every confirmed track including coasting ones (`E=30`) — only the evaluation harness's Python layer was filtering. Every number in the acceptance table (§2) is therefore **unchanged**; what changed is that the shipped code now genuinely behaves the way it was already being credited for, and the "OLD" (as-shipped, pre-fix) numbers above — which were previously only a diagnostic side-table (`*_E30` rows) — are now historical, not reproducible from `main` any more.
+
+**What this does *not* fix.** FIXED is still significantly *worse* than the depth-free SORT baseline on held-out MOTA (unchanged from `fcde488`, reproduced above) — the ghost-emission bug explains why the pipeline's earlier MOTA was catastrophically negative, not why depth-based association fails to beat a 2D tracker. That is Phase 2.
+
+Commands: `scripts/eval/run_phase1_ghost_fix.py` (writes `results/phase1_ghost_fix.json`); the fixed-binary logs are `out/eval/raw/cpp_benchmark_kitti_fixed/*.txt` (old logs at `out/eval/raw/cpp_benchmark_kitti/*.txt` untouched). Hardware/data: identical to §11/`INVENTORY.md` (same dumps, same detections, no new download).
+
 <!-- APPENDIX-BEGIN -->
 ## Appendix A — per-sequence tracking results and localisation quality
 

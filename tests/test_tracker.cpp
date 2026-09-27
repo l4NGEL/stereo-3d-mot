@@ -93,6 +93,60 @@ TEST(Tracker, CoastsOnMissThenDiesAfterMaxAge) {
     EXPECT_TRUE(tracker.tracks().empty());
 }
 
+// docs/evaluation/REPORT.md's H-ghost finding: on held-out KITTI, ~90% of the legacy
+// protocol's false positives were confirmed tracks reported after they'd stopped
+// matching any real detection. isEmittable() (tracker.hpp) is the fix -- these two
+// tests pin down its exact contract across the sequence that matters: a detected
+// frame, the first missed frame, consecutive missed frames, and a re-match, proving
+// coasting costs a track its emission but never its identity or matching ability.
+TEST(Tracker, EmittableExcludesCoastingFramesButMatchingSurvivesThem) {
+    Tracker tracker(basicParams(AssociationMethod::kMahalanobis3D));  // max_age = 5
+    const Detection3D d = makeDetection(cv::Rect2f(300, 200, 40, 40), 3.0);
+
+    tracker.update({d});
+    tracker.update({d});
+    const TrackerUpdateResult r_confirm = tracker.update({d});  // hit 3 -> confirmed
+    ASSERT_EQ(r_confirm.tracks.size(), 1u);
+    ASSERT_TRUE(r_confirm.tracks[0].confirmed);
+    EXPECT_TRUE(isEmittable(r_confirm.tracks[0]));  // detected this frame -> emittable
+    const int id = r_confirm.tracks[0].id;
+
+    const TrackerUpdateResult r_miss1 = tracker.update({});  // first missed frame
+    ASSERT_EQ(r_miss1.tracks.size(), 1u);
+    EXPECT_EQ(r_miss1.tracks[0].time_since_update, 1);
+    EXPECT_FALSE(isEmittable(r_miss1.tracks[0]));
+
+    const TrackerUpdateResult r_miss2 = tracker.update({});  // consecutive missed frame
+    ASSERT_EQ(r_miss2.tracks.size(), 1u);
+    EXPECT_EQ(r_miss2.tracks[0].time_since_update, 2);
+    EXPECT_FALSE(isEmittable(r_miss2.tracks[0]));
+    EXPECT_TRUE(r_miss2.tracks[0].confirmed);  // still confirmed -- only emission is filtered
+
+    // Re-match: same id, time_since_update resets, emittable again. Coasting cost the
+    // track its emission on the missed frames, not its identity or its ability to be
+    // matched again -- Tracker's own predict/gate/associate/correct logic is untouched.
+    const TrackerUpdateResult r_rematch = tracker.update({d});
+    ASSERT_EQ(r_rematch.tracks.size(), 1u);
+    EXPECT_EQ(r_rematch.tracks[0].id, id);
+    EXPECT_EQ(r_rematch.tracks[0].time_since_update, 0);
+    EXPECT_TRUE(isEmittable(r_rematch.tracks[0]));
+    ASSERT_EQ(r_rematch.detection_track_id.size(), 1u);
+    EXPECT_EQ(r_rematch.detection_track_id[0], id);  // the detection matched the SAME track
+}
+
+TEST(Tracker, EmittableRequiresConfirmedAndMatchedThisFrameBothNotEither) {
+    Tracker tracker(basicParams(AssociationMethod::kMahalanobis3D));
+    const Detection3D d = makeDetection(cv::Rect2f(300, 200, 40, 40), 3.0);
+
+    // hit 1 of min_hits=3: matched THIS frame (time_since_update == 0) but not yet
+    // confirmed -- isEmittable must require both, not either alone.
+    const TrackerUpdateResult r0 = tracker.update({d});
+    ASSERT_EQ(r0.tracks.size(), 1u);
+    EXPECT_EQ(r0.tracks[0].time_since_update, 0);
+    EXPECT_FALSE(r0.tracks[0].confirmed);
+    EXPECT_FALSE(isEmittable(r0.tracks[0]));
+}
+
 TEST(Tracker, InvalidDetectionsAreIgnored) {
     Tracker tracker(basicParams(AssociationMethod::kMahalanobis3D));
     Detection3D invalid = makeDetection(cv::Rect2f(300, 200, 40, 40), 3.0);

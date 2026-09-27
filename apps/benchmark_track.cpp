@@ -207,7 +207,7 @@ MethodResult run(const SyntheticStereoSource::Options& scene_opts, const Tracker
 
         std::vector<MotObject> hyp;
         for (const TrackState& t : res.tracks) {
-            if (!t.confirmed)
+            if (!isEmittable(t))  // confirmed AND matched this frame -- see tracker.hpp
                 continue;
             MotObject o;
             o.id = t.id;

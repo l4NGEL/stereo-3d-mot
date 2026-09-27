@@ -69,6 +69,27 @@ struct TrackerUpdateResult {
     std::vector<int> detection_track_id;
 };
 
+/// Whether a track's CURRENT state is fit to hand a consumer (an evaluator, a
+/// visualizer, a ROS2 publisher, ...) as "this object is here right now".
+///
+/// `TrackerUpdateResult::tracks` deliberately keeps every surviving track,
+/// confirmed and tentative, coasted or freshly matched -- Tracker needs the
+/// full set alive internally so a track that misses a few frames can still be
+/// re-matched later (see CoastsOnMissThenDiesAfterMaxAge). That internal
+/// bookkeeping need is not the same question as "should this frame's output
+/// claim this position was observed": a confirmed track with
+/// `time_since_update > 0` has not been touched by a real detection this
+/// frame -- everything about its reported position past that point is a
+/// Kalman *prediction*, not a measurement, and a consumer that cannot tell
+/// the difference will report it as a false positive against any ground
+/// truth that (correctly) doesn't have an object there anymore. Filtering on
+/// this at the reporting boundary -- not by shortening `max_age`, which would
+/// also cost the track its ability to be re-matched -- is what
+/// docs/evaluation/REPORT.md measures as the emission policy `E = 0`.
+inline bool isEmittable(const TrackState& t) {
+    return t.confirmed && t.time_since_update == 0;
+}
+
 /// Multi-object tracker: predict every track, associate against this frame's
 /// detections, update matches, coast or kill misses, birth new tracks for
 /// leftover detections.
