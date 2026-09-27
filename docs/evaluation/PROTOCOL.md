@@ -424,3 +424,25 @@ alternative thresholds. Result and its honest reading in REPORT.md's remediation
 improvement over plain 3D Mahalanobis, but not over plain 2D IoU, and still significantly worse than SORT.
 This is a new AssociationMethod, not a change to kMahalanobis3D/kIou2D/kFusedAppearance or to any held-out
 sequence, seed, matching rule, or SS7 threshold; no existing acceptance-table number is affected.
+
+### 2026-09-27 — Phase 3 remediation: detection threshold selected (dev-only), stereo MODE_HH tested and rejected, VO rotation-error breakdown quantified
+
+Detection: score threshold swept on the 3 dev sequences only; rule (smallest threshold satisfying both the
+precision and recall floor simultaneously, else max dev F1) chose 0.31 for Vehicle, no change for Person,
+verified once on held-out (`results/phase3_detection_threshold_heldout.json`) -- Vehicle's DE-1 now passes.
+**Disclosure**: before the formal dev-only selection, an exploratory combined dev+held-out sweep was run
+to understand the shape of both curves; the selection rule itself never reads a held-out value, but strict
+blindness to held-out was not maintained during exploration -- see REPORT.md's Phase 3 write-up. Committed
+as a SEPARATE config (`configs/kitti_tiled_score031.yaml`), not a change to `configs/kitti_tiled.yaml`,
+specifically so `scripts/eval/run_all.sh` continues to reproduce every already-frozen number unchanged (no
+SS7 threshold, held-out sequence, seed, or tracking number is affected by this entry).
+
+Stereo: SGBM `MODE_HH` tested once (not swept) against the full, still-untouched-for-tuning KITTI Stereo
+2015 set -- D1-all did not improve (20.37% -> 20.69%, though D1-valid-only and EPE did). Not applied; no
+code or config changed.
+
+VO: rotation-vs-error correlation quantified on held-out data only (a measurement, not a fit -- no
+selection was made). No fix applied; a candidate next step is named and costed in REPORT.md SS14, not
+attempted.
+
+No SS7 acceptance-table number is affected by the stereo or VO analysis in this entry (informational only).

@@ -1,0 +1,88 @@
+{
+ "100": {
+  "length_m": 100,
+  "n": 192,
+  "median_gt_rotation_deg": 31.286736628042483,
+  "low_rotation": {
+   "n": 96,
+   "mean_gt_rotation_deg": 9.990131537273703,
+   "t_rel_pct": 6.128215607689192,
+   "r_deg_per_m": 0.07781582381458889
+  },
+  "high_rotation": {
+   "n": 96,
+   "mean_gt_rotation_deg": 92.05552035746922,
+   "t_rel_pct": 7.337016744014039,
+   "r_deg_per_m": 0.09911719294189901
+  }
+ },
+ "200": {
+  "length_m": 200,
+  "n": 134,
+  "median_gt_rotation_deg": 52.6050166981007,
+  "low_rotation": {
+   "n": 67,
+   "mean_gt_rotation_deg": 19.208648759181678,
+   "t_rel_pct": 11.444071454751494,
+   "r_deg_per_m": 0.07284465649955332
+  },
+  "high_rotation": {
+   "n": 67,
+   "mean_gt_rotation_deg": 122.52512013633394,
+   "t_rel_pct": 12.521401834683045,
+   "r_deg_per_m": 0.07991988580981466
+  }
+ },
+ "300": {
+  "length_m": 300,
+  "n": 68,
+  "median_gt_rotation_deg": 89.93147377914624,
+  "low_rotation": {
+   "n": 34,
+   "mean_gt_rotation_deg": 50.344476211745985,
+   "t_rel_pct": 18.461877166395418,
+   "r_deg_per_m": 0.06009811574892987
+  },
+  "high_rotation": {
+   "n": 34,
+   "mean_gt_rotation_deg": 140.88980342164268,
+   "t_rel_pct": 19.32312380483613,
+   "r_deg_per_m": 0.10339765504954342
+  }
+ },
+ "400": {
+  "length_m": 400,
+  "n": 27,
+  "median_gt_rotation_deg": 92.0653218339312,
+  "low_rotation": {
+   "n": 14,
+   "mean_gt_rotation_deg": 41.01219827199117,
+   "t_rel_pct": 16.985994015328988,
+   "r_deg_per_m": 0.03557744686767215
+  },
+  "high_rotation": {
+   "n": 13,
+   "mean_gt_rotation_deg": 170.12555671658967,
+   "t_rel_pct": 18.068441615568354,
+   "r_deg_per_m": 0.11054002446057164
+  }
+ },
+ "500": {
+  "length_m": 500,
+  "n": 2,
+  "median_gt_rotation_deg": 176.96087882072084,
+  "low_rotation": {
+   "n": 1,
+   "mean_gt_rotation_deg": 176.752152817283,
+   "t_rel_pct": 20.698167395346946,
+   "r_deg_per_m": 0.1339536316047069
+  },
+  "high_rotation": {
+   "n": 1,
+   "mean_gt_rotation_deg": 177.1696048241587,
+   "t_rel_pct": 24.52307590818168,
+   "r_deg_per_m": 0.12250520024194668
+  }
+ },
+ "overall_pearson_corr_abs_rotation_vs_t_rel": 0.2548474130388357
+}

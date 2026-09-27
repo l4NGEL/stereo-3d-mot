@@ -407,6 +407,36 @@ Paired bootstrap (10,000 resamples over the 8 held-out sequences):
 
 Commands: `scripts/eval/run_phase2_range_gate_selection.py` (dev selection), `scripts/eval/run_phase2_measure.py` (single held-out measurement). Same hardware/data as §11.
 
+### Phase 3 (2026-09-27) — detection, stereo, VO error breakdowns; only evidence-backed changes applied
+
+**Detection.** DE-1 (Vehicle) and DE-3 (Person) both failed on *precision*, not recall (§4). Sweeping the detector's score threshold on the 3 dev sequences only (`scripts/eval/run_phase3_detection_threshold.py`-equivalent computation, `results/phase3_detection_threshold_selection.json`) shows dev and held-out have visibly different precision/recall trade-offs at the same threshold (e.g. Vehicle @0.25: dev P=0.618/R=0.931 vs held-out P=0.788/R=0.761) — a caveat worth stating before trusting any threshold chosen on one to transfer to the other. *Methodology note:* an exploratory combined dev+held-out sweep was run first to understand the shape of the curves before the formal dev-only selection step below; the selection rule itself never reads a held-out value, but full blindness to held-out was not maintained — disclosed here rather than presented as cleaner than it was.
+
+Pre-registered rule: smallest score threshold that satisfies both the precision and recall floor on dev simultaneously; if none does, the threshold maximising dev F1. Vehicle: no dev threshold satisfies both floors (dev's own precision tops out around 0.79–0.92 only once recall has already collapsed) — the F1-maximising threshold is **0.31**. Person: dev already satisfies both floors at every threshold from 0.25 up, and dev F1 is *highest* at the current default — **no change**.
+
+Held-out, measured once at the chosen threshold (single global `score_threshold`, since the shipped detector has no per-class threshold):
+
+| Class | Precision (0.25 → 0.31) | Recall (0.25 → 0.31) | F1 | DE-* verdict |
+|---|---|---|---|---|
+| Vehicle | 0.788 → **0.851** | 0.761 → 0.716 | 0.774 → 0.778 | **KALDI → GEÇTİ** (both floors now cleared) |
+| Person (same global threshold) | 0.709 → 0.741 | 0.679 → 0.648 | 0.694 → 0.691 | still KALDI (0.741 < 0.75), improved |
+
+**Speed effect: none.** The score threshold is applied after the ONNX forward pass (§8's `detect` cost is the inference itself); it only shrinks the candidate list NMS runs over, and NMS is not the measured bottleneck. Not re-benchmarked — the architecture rules it out, and re-running the speed harness to confirm a zero effect was judged not worth the machine time.
+
+Committed as `configs/kitti_tiled_score031.yaml` — kept **separate** from `configs/kitti_tiled.yaml` (the same convention that file itself follows relative to `configs/kitti.yaml`), because `kitti_tiled.yaml` is what `scripts/eval/run_all.sh` uses to regenerate every already-frozen tracking number; mutating it would silently break `IN-1`'s reproducibility guarantee. **This is a detection-only recommendation** — raising the threshold reduces what the tracker sees, and Phase 1/2's tracking numbers (measured at 0.25) were not re-verified at 0.31. Treat the two results together only after that is done.
+
+**Stereo.** §3's breakdown already covers range (GT-depth bins) and occlusion (`disp_occ_0` vs `disp_noc_0`): occlusion alone accounts for 1.49 pp of the 20.37% D1-all (20.37% including occluded pixels vs 18.88% on the non-occluded subset); "invalid disparity" is exactly `1 − density` (16% of GT pixels, concentrated in the left margin, §3); a true instance-level foreground/background mask isn't part of the Stereo 2015 download used here, so range is used as the closest available proxy (already broken out by depth bin in §3). One well-established, off-the-shelf algorithmic option — SGBM's `MODE_HH` (full-scale two-pass dynamic programming, no parameter search) — was tested once against the same, still-untouched-for-tuning Stereo 2015 set (`results/phase3_stereo_hh_probe.json`):
+
+| | D1-all (holes = error) | D1 (valid pixels only) | Density | EPE |
+|---|---|---|---|---|
+| Baseline (`mode_hh=0`, shipped) | 20.37% | 5.24% | 84.0% | 1.150 px |
+| `MODE_HH` probe | 20.69% | **4.07%** | 82.7% | **1.031 px** |
+
+Mixed, not a win on the metric that matters: `MODE_HH` estimates disparity more accurately where it produces one (D1-valid-only and EPE both improve), but produces an estimate for fewer pixels, and the two effects roughly cancel on D1-all (0.32 pp *worse*). **No stereo change was applied** — per instruction to apply only evidence-backed changes, and since D1-all did not improve, the "does a D1-all improvement help the tracker" question has no improved case to test here.
+
+**Visual odometry.** §7 already breaks error down by sequence and segment length; turning sequences (00, 06, 10) show 2–4× the rotation-error rate of near-straight ones (07, 08). Quantified directly per segment (`results/phase3_vo_rotation_breakdown.json`, held-out only, no dev involved since this is pure measurement, not a fit): splitting each segment length's 423 held-out segments at the median GT rotation magnitude, the high-rotation half has higher `r_rel` at every length (e.g. 400 m: 0.036 → 0.111 deg/m, ≈3×), and higher `t_rel` too (400 m: 17.0% → 18.1%) — rotation error is not confined to the rotation channel, it leaks into translation. Pearson correlation between a segment's |GT rotation| and its `t_rel` over all 423 segments: **r = 0.255**. No speed/velocity-conditioned breakdown was completed (would need a per-frame speed proxy cross-referenced with segment timestamps — estimated a few hours, not attempted here for lack of remaining scope). **No VO fix was applied**: the natural next step (a rotation-rate-adaptive RANSAC threshold, or short windowed multi-frame pose refinement instead of pure frame-to-frame) is a real code change to the pose-estimation core, not a config value, and applying it without careful validation would risk exactly the kind of unverified change this remediation is trying to avoid — left as a scoped, costed follow-up (§14).
+
+Commands: ad hoc, single-purpose scripts run once each (not added to `run_all.sh`, since none of their outputs are part of the acceptance table): the detection threshold sweep and held-out check, the stereo `MODE_HH` probe (`configs/eval/stereo_hh_probe.yaml` + `apps/dump_disparity --config` + the existing `stereo_eval.d1_counts`), and the VO rotation breakdown (`vo_eval.kitti_segment_errors` + `_rot_angle` on the existing held-out pose dumps). No C++ production code changed this phase.
+
 <!-- APPENDIX-BEGIN -->
 ## Appendix A — per-sequence tracking results and localisation quality
 
