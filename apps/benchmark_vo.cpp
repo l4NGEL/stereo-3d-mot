@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "common.hpp"
+#include "s3m/core/timer.hpp"
 #include "s3m/io/kitti_odometry_loader.hpp"
 #include "s3m/vo/trajectory_eval.hpp"
 #include "s3m/vo/visual_odometry.hpp"
@@ -68,12 +69,13 @@ void writeKittiPoses(const std::string& path, const std::vector<Pose>& poses) {
     }
 }
 
-void writeFrameLog(const std::string& path, const std::vector<VoFrameResult>& log) {
+void writeFrameLog(const std::string& path, const std::vector<VoFrameResult>& log,
+                   const std::vector<double>& process_ms) {
     std::ofstream f(path);
-    f << "frame,ok,matches,inliers,scale\n" << std::fixed << std::setprecision(6);
+    f << "frame,ok,matches,inliers,scale,process_ms\n" << std::fixed << std::setprecision(6);
     for (std::size_t i = 0; i < log.size(); ++i) {
         f << i << ',' << (log[i].ok ? 1 : 0) << ',' << log[i].num_matches << ','
-          << log[i].num_inliers << ',' << log[i].scale << '\n';
+          << log[i].num_inliers << ',' << log[i].scale << ',' << process_ms[i] << '\n';
     }
 }
 
@@ -110,6 +112,7 @@ int main(int argc, char** argv) {
 
     std::vector<Pose> estimated;
     std::vector<VoFrameResult> frame_log;
+    std::vector<double> process_ms;  // decode excluded (source->next() timed separately below)
     int coasted = 0;
     std::vector<int> match_counts;
     std::vector<double> scales;
@@ -123,7 +126,9 @@ int main(int argc, char** argv) {
         if (!frame)
             break;
 
+        Stopwatch sw;
         const VoFrameResult r = vo.processFrame(frame->left, frame->right);
+        process_ms.push_back(sw.elapsedMs());
         estimated.push_back(r.pose);
         frame_log.push_back(r);
         if (!r.ok && frame_index > 0)
@@ -180,7 +185,7 @@ int main(int argc, char** argv) {
         const std::string out = args.get("out");
         std::filesystem::create_directories(out);
         writeKittiPoses(out + "/poses_est.txt", estimated);
-        writeFrameLog(out + "/frames.csv", frame_log);
+        writeFrameLog(out + "/frames.csv", frame_log, process_ms);
         std::cout << "wrote " << out << "/poses_est.txt, frames.csv\n";
     }
 

@@ -8,6 +8,11 @@ and what was **not** measured. Inventory of data, weights, hardware and provenan
 Verdict vocabulary (fixed in the protocol): **GEÇTİ** measured and meets the target · **KALDI** measured and fails it ·
 **ÖLÇÜLEMEDİ** could not be measured (with what is missing) · **KANITLANMADI** measured, but the effect is inside the noise.
 
+**Update (2026-09-27):** §§12–15 below are a four-phase root-cause remediation done after this report was first frozen (`fcde488`).
+§1–§11 are left exactly as first written — they are the *original* findings and still describe what was true then; where a fix
+changed something, §§12–15 say so explicitly rather than silently editing the numbers above. If you only read one new section, read
+§15 — the full 32-criteria table, before and after.
+
 ## 1. Bottom line
 
 | Component | Headline (held-out data unless stated) | Verdicts | Not measured / main caveat |
@@ -436,6 +441,91 @@ Mixed, not a win on the metric that matters: `MODE_HH` estimates disparity more 
 **Visual odometry.** §7 already breaks error down by sequence and segment length; turning sequences (00, 06, 10) show 2–4× the rotation-error rate of near-straight ones (07, 08). Quantified directly per segment (`results/phase3_vo_rotation_breakdown.json`, held-out only, no dev involved since this is pure measurement, not a fit): splitting each segment length's 423 held-out segments at the median GT rotation magnitude, the high-rotation half has higher `r_rel` at every length (e.g. 400 m: 0.036 → 0.111 deg/m, ≈3×), and higher `t_rel` too (400 m: 17.0% → 18.1%) — rotation error is not confined to the rotation channel, it leaks into translation. Pearson correlation between a segment's |GT rotation| and its `t_rel` over all 423 segments: **r = 0.255**. No speed/velocity-conditioned breakdown was completed (would need a per-frame speed proxy cross-referenced with segment timestamps — estimated a few hours, not attempted here for lack of remaining scope). **No VO fix was applied**: the natural next step (a rotation-rate-adaptive RANSAC threshold, or short windowed multi-frame pose refinement instead of pure frame-to-frame) is a real code change to the pose-estimation core, not a config value, and applying it without careful validation would risk exactly the kind of unverified change this remediation is trying to avoid — left as a scoped, costed follow-up (§14).
 
 Commands: ad hoc, single-purpose scripts run once each (not added to `run_all.sh`, since none of their outputs are part of the acceptance table): the detection threshold sweep and held-out check, the stereo `MODE_HH` probe (`configs/eval/stereo_hh_probe.yaml` + `apps/dump_disparity --config` + the existing `stereo_eval.d1_counts`), and the VO rotation breakdown (`vo_eval.kitti_segment_errors` + `_rot_angle` on the existing held-out pose dumps). No C++ production code changed this phase.
+
+### Phase 4 (2026-09-27) — the 20 FPS target, stage by stage
+
+**Budget.** 20 FPS = 50 ms/frame, end to end. §8 measured the shipped pipeline (tiled stereo, CPU detector) at **171.2 ms/frame mean (5.84 FPS)**, 3.4× over budget on throughput and over 4× on the p95 tail. Per-stage p50/p95/mean, CUDA's one-time ~2.3 s initialisation excluded as instructed (§8 already reports steady-state CUDA numbers only), pooled over 1,239 post-warm-up frames of the shipped tracking pipeline (`apps/benchmark_e2e`, decode → stereo → depth → detect → promote+appearance → track):
+
+| Stage | Mean | Median (p50) | p95 | p99 | Share of total |
+|---|---|---|---|---|---|
+| **Stereo matching** | **90.3 ms** | 87.2 | 114.2 | 134.5 | **52.8%** |
+| **Detection (CPU)** | **52.8 ms** | 51.9 | 63.0 | 73.4 | **30.9%** |
+| Image decode | 25.5 ms | 25.1 | 29.4 | 31.5 | 14.9% |
+| Depth map | 1.4 ms | 1.4 | 1.7 | 2.2 | 0.8% |
+| Promote to 3D + appearance | 0.9 ms | 0.8 | 2.0 | 2.4 | 0.5% |
+| Tracking (association + Kalman) | 0.2 ms | 0.1 | 0.7 | 1.0 | 0.1% |
+| **Total (compute + decode)** | **171.2 ms** | 165.8 | 205.0 | 233.6 | 100% |
+
+Stereo and detection together are **83.7%** of the frame budget; tracking, depth conversion and 3D promotion combined are under 3 ms — exactly what §5.5's cost table already established from a different angle (removing depth-based association saves nothing worth measuring; removing stereo and detection would save nearly everything).
+
+**Visual odometry is a separate real-time path, not part of this loop** — `apps/benchmark_vo` runs its own stereo match (for scale) + ORB extraction/matching + essential-matrix estimation, and is never combined with the detection/tracking pipeline in this codebase. Instrumented this phase (`apps/benchmark_vo.cpp`, a `Stopwatch` around `VisualOdometry::processFrame()`, decode excluded — additive only, `poses_est.txt` reproduces byte-identically before/after) and measured on all 6 available sequences (dev 04 + 5 held-out, 2,741 frames): **mean 100.1 ms/frame (9.99 FPS), median 97.4 ms, p95 121.3 ms** — consistent within ±3 ms across every sequence (`results/phase4_vo_speed.json`). VO's own stereo pass is comparable in cost to the tracking pipeline's (~90 ms) because it is a second, independent `StereoMatcher` instance on the same image pair — if a future design combined VO and tracking in one pipeline, sharing that one stereo computation (rather than running it twice) is the obvious, low-risk win; not attempted here since VO and tracking are not currently combined in any shipped path.
+
+**Peak memory (baseline, for future comparison):** `apps/benchmark_e2e` on sequence 0000, tiled config, CPU detector: **256.6 MB resident (`/usr/bin/time -v`, 505% CPU / ~5 of 16 threads busy on average, 20.85 s wall for 154 frames)**. No change in this phase, so no before/after memory delta to report — this is the number future speed work should be compared against.
+
+**Largest bottleneck first, as instructed — and why no further change was applied.** Stereo is the largest single cost (52.8%) and was already the target of the one algorithmic change this project has made for speed: tiling (§8, 1.43–1.95× depending on config, num_tiles=4 the measured sweet spot — going wider was already shown to be a net loss because the fixed overlap margin competes with tile height on KITTI's ~375-row images). Two further candidates were considered and NOT attempted, for reasons stated rather than left implicit:
+
+- **GPU stereo matching** (`cv::cuda::StereoSGBM`/`StereoBM`) — needs an OpenCV build with CUDA support; the project's apt-installed OpenCV 4.5.4 does not have it. Rebuilding OpenCV from source with CUDA inside the Docker image, then validating numerical parity against the CPU path (the same rigor §5.3 applied to the CUDA *detector*), is a multi-hour-to-multi-day task with real risk of subtly different disparity output (GPU SGBM implementations are not always bit-identical to the CPU one) — not attempted within this remediation's scope.
+- **Pipelining** (overlap frame *N+1*'s decode/stereo with frame *N*'s detect/track in a producer–consumer thread structure) — would not reduce total work, but could raise throughput toward `1 / (slowest single stage)` instead of `1 / (sum of stages)`; with stereo still at ~90 ms that ceiling is **≈11 FPS**, real but still short of 20. This is architecturally the safer of the two candidates (no numerical change, same computations, just overlapped), but a correct, race-free implementation (shared `Tracker` state, stable id sequencing, ordered output) is a non-trivial rewrite that this remediation's own rule — validate before applying — argues against attempting without dedicated time for it and its own tests.
+
+Both are named, scoped and costed in §14 rather than attempted speculatively. **The 20 FPS target is not met, and nothing safe to attempt within this phase's scope would meet it either** — the honest bottleneck-first conclusion is that closing the gap needs one of the two items above, not a smaller tuning change; every configuration lever cheap enough to try safely (tiling, thread count, CUDA detection, the confidence threshold in Phase 3) has already been tried and is already reflected in the 171.2 ms/frame figure.
+
+Commands: `apps/benchmark_vo` (rebuilt with timing instrumentation, `apps/benchmark_vo.cpp`), `/usr/bin/time -v` around `apps/benchmark_e2e`. Same hardware as §11/`INVENTORY.md`.
+
+## 14. Outstanding work: measurement-based next steps and cost
+
+Criteria still KALDI after Phases 1–4, what would plausibly close each, and a rough cost (this author's engineering judgement, not a schedule commitment):
+
+| Criteria | What the measurements point to | Estimated cost | Risk |
+|---|---|---|---|
+| SP-1/2/3 (speed) | GPU stereo matching (needs OpenCV rebuilt with CUDA) *or* a pipelined decode/compute architecture (ceiling ≈11 FPS with stereo unchanged, still short of 20) — both named and reasoned about in §13, neither attempted | GPU stereo: 1–3 days incl. numerical-parity validation. Pipelining: 1–2 days incl. concurrency tests. Neither alone reaches 20 FPS; both together might. | Medium (GPU: possible disparity drift vs CPU, needs the same parity check §5.3 gave the CUDA detector). Medium (pipelining: concurrency correctness — track-id sequencing, ordered output) |
+| TR-2/3/4/5, TR-7a (tracking accuracy vs targets, vs SORT) | §5.3/Phase 2 converge on the same conclusion from two directions: the stereo/3D association machinery does not earn its keep at current depth accuracy (§3, ~1.5 m RMSE). Closing this gap needs *better depth*, not a better association rule — a stereo accuracy improvement was tried (Phase 3) and didn't move D1-all | Depends entirely on the depth fix (see ST-3 row) — no separate tracking-side cost | — |
+| ST-3 (object depth RMSE ≤1.0 m) | The measured 1.1 m median bias plus range-dependent noise (§3) is a stereo-matching accuracy ceiling, not a tracker-tuning problem; Phase 3's one candidate (MODE_HH) didn't help. A learned stereo network (the roadmap's own "ONNX seam would allow it later" non-goal) is the credible next lever | 3–5 days: export/integrate a pretrained model (e.g. RAFT-Stereo or similar via ONNX), re-run the full stereo+object-depth+tracking evaluation chain | Medium-high — new dependency, new failure modes, needs the same D1/object-depth/tracking re-verification this whole report is built on |
+| VO-1/2/4 (odometry accuracy) | Phase 3's rotation-error breakdown (r=0.255 correlation, 2–4× worse on high-rotation segments) points at the frame-to-frame-only design, not a bug: no bundle adjustment or loop closure to correct accumulated drift, and no windowing to make single-frame essential-matrix estimates more robust under fast rotation | Windowed/multi-frame refinement: 2–3 days. Full bundle adjustment or loop closure: multi-week, a different system design, out of proportion to this project's scope | Medium — real algorithm change to the one piece of VO math that was Python-validated before porting (docs/roadmap.md Phase 7); would need the same validation discipline repeated |
+| DE-3 (Person precision ≥0.75) | Phase 3 closed part of the gap (0.709→0.741) with the same global threshold that fixed DE-1; the remainder looks like a genuine detector-capability limit on small/occluded pedestrians (§4's recall-by-height table: 0.02 recall on 25–40 px persons) rather than a threshold problem | A larger/fine-tuned detector, or two-stage refinement on person candidates | 2–4 days for fine-tuning (needs labelled data + training compute this evaluation didn't use) |
+| DE-4 (COCO mAP) | Out of scope by design (§4) — not a KITTI claim | N/A | N/A |
+
+## 15. fcde488 vs. remediated: the full acceptance table, side by side
+
+Every one of `fcde488`'s 32 frozen criteria, its original measurement and verdict, and what four phases of root-cause remediation changed (or didn't). Generated from `results/verdicts.json` (untouched) and each phase's own result files by `scripts/eval/make_remediation_table.py` — nothing here is retyped by hand.
+
+<!-- REMEDIATION-TABLE-BEGIN -->
+| ID | fcde488 (old) | fcde488 verdict | Remediated (new) | New verdict | Changed? |
+|---|---|---|---|---|---|
+| SP-1 | 5.84 FPS (reps [5.63, 6.0, 5.92]) | **KALDI** | Phase 4 breaks down the bottleneck (stereo 52.8%, detect 30.9%) and costs the two candidates that could close the gap; neither was safe to apply within scope | **KALDI** | no |
+| SP-2 | p95 205.0 ms (median 165.8) | **KALDI** | unchanged; see SP-1 | **KALDI** | no |
+| SP-3 | 6.87 FPS | **KALDI** | unchanged; see SP-1 | **KALDI** | no |
+| DE-1 | P 0.788 [0.772,0.802], R 0.761 | **KALDI** | P 0.851 [dev-selected score=0.31, held-out], R 0.716 — Phase 3: score_threshold 0.25→0.31 (dev-selected, held-out-verified); both floors now cleared | **GEÇTİ** | **YES** |
+| DE-2 | 0.798 (all-point 0.812) | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| DE-3 | P 0.709, R 0.679, AP50 0.652 | **KALDI** | Phase 3: same global threshold change improves P 0.709→0.741, R 0.679→0.648 — closer, still short of 0.75 | **KALDI** | no |
+| DE-4 | not measured in this project | **ÖLÇÜLEMEDİ** | unchanged (no phase touched this criterion) | **ÖLÇÜLEMEDİ** | no |
+| TR-1 | MOTA +0.492 | **GEÇTİ** | Phase 1 confirms: the emitted system was already E=0 pre-freeze; root cause (ghost tracks) now fixed in the product itself, see Phase 1 | **GEÇTİ** | no |
+| TR-2 | MOTA 0.519, IDF1 0.591 | **KALDI** | unchanged; Phase 2's range-gated association (dev-selected) scores MOTA/IDF1 in the same range, not enough to cross 0.50/0.60 | **KALDI** | no |
+| TR-3 | MOTA 0.446, IDF1 0.487 | **KALDI** | unchanged | **KALDI** | no |
+| TR-4 | 246/4550 = 5.41 % | **KALDI** | unchanged | **KALDI** | no |
+| TR-5 | MOTA -0.059 [-0.129,-0.026], IDF1 -0.070 [-0.147,-0.032] | **KALDI** | unchanged; Phase 2's improved association is also still worse than SORT (MOTA −0.051 [−0.116,−0.027]) | **KALDI** | no |
+| TR-6 | legacy regression PASS; counters 347 inputs, 0 disagreements | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| TR-7a | MOTA -0.057 [-0.160,-0.023]; IDF1 +0.003 [-0.152,+0.099] | **KALDI** | unchanged (no phase touched this criterion) | **KALDI** | no |
+| TR-7b | MOTA +0.005 [-0.040,+0.033]; IDF1 +0.067 [-0.026,+0.106] | **KANITLANMADI** | unchanged (no phase touched this criterion) | **KANITLANMADI** | no |
+| TR-7c | MOTA +0.003 [+0.000,+0.007]; IDF1 +0.005 [-0.002,+0.013] | **KANITLANMADI** | unchanged (no phase touched this criterion) | **KANITLANMADI** | no |
+| TR-7d | MOTA +0.010 [+0.001,+0.028]; IDF1 +0.004 [-0.031,+0.068] | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| TR-7e | MOTA -0.002 [-0.016,+0.008]; IDF1 -0.003 [-0.079,+0.037] | **KANITLANMADI** | unchanged (no phase touched this criterion) | **KANITLANMADI** | no |
+| TR-7f | MOTA +0.003 [-0.002,+0.010]; IDF1 +0.009 [-0.008,+0.040] | **KANITLANMADI** | unchanged (no phase touched this criterion) | **KANITLANMADI** | no |
+| TR-7g | MOTA +1.387 [+0.645,+2.982]; IDF1 +0.206 [+0.090,+0.364] | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| TR-7h | max abs change in MOTA 0.0070 and in IDF1 0.0035 over 11 systems; bit-identical for 4 | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| VO-1 | 13.78 % (421 segments) | **KALDI** | Phase 3 quantifies the cause (rotation-error breakdown) but applies no fix; number unchanged | **KALDI** | no |
+| VO-2 | 0.0796 deg/m | **KALDI** | unchanged; see VO-1 | **KALDI** | no |
+| VO-3 | min 98.2 % | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| VO-4 | worst 19.69 % {"test_tiled_00": 19.36, "test_tiled_06": 18.07, "test_tiled_07": 3.36, "test_tiled_08": 8.26, "test_tiled_10": 19.69} | **KALDI** | unchanged; see VO-1 | **KALDI** | no |
+| ST-1 | bad-2.0 0.85 %, RMSE 1.281 px (worst seed 1.400), density 98.90 % | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| ST-2 | SGBM(4 tiles) 20.37 % (valid-only 5.24 %, density 84.0 %); BM 62.90 % | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| ST-3 | RMSE 1.50 m (median signed +1.11 m, n=1515); vs cuboid centre RMSE 1.16 m | **KALDI** | unchanged; Phase 3's one tested stereo candidate (MODE_HH) did not improve D1-all, so was not applied | **KALDI** | no |
+| ST-4 | 0.108 pp | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| IN-1 | scripts/eval/run_all.sh --score-only re-run from the dumps: 24 result files, 0 differ | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| IN-2 | dets + 8 tracker dumps of sequence 0012 identical (byte compare) | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+| IN-3 | model metadata: 'Ultralytics YOLOv8n model trained on coco.yaml'; selection committed before held-out frontend | **GEÇTİ** | unchanged (no phase touched this criterion) | **GEÇTİ** | no |
+
+**1 of 32 criteria changed verdict** (DE-1, KALDI → GEÇTİ). The other 31 are unchanged from fcde488 — several have new, independent evidence behind them (Phases 1–4 above), which did not move the number past its threshold; that is reported as plainly as the one that did.
+<!-- REMEDIATION-TABLE-END -->
 
 <!-- APPENDIX-BEGIN -->
 ## Appendix A — per-sequence tracking results and localisation quality
