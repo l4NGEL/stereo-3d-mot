@@ -1,0 +1,67 @@
+{
+ "association_ms_per_frame": {
+  "A1_no_appearance": {
+   "mean_ms": 0.1393223404255319,
+   "median_ms": 0.08915000000000001,
+   "p95_ms": 0.3665899999999999,
+   "frames": 1128
+  },
+  "A2_no_iou_cost": {
+   "mean_ms": 0.14334485815602838,
+   "median_ms": 0.093,
+   "p95_ms": 0.3989,
+   "frames": 1128
+  },
+  "A3_no_3d_cost": {
+   "mean_ms": 0.16348271276595744,
+   "median_ms": 0.10114999999999999,
+   "p95_ms": 0.45107999999999954,
+   "frames": 1128
+  },
+  "A4_plain_mahalanobis": {
+   "mean_ms": 0.22844468085106384,
+   "median_ms": 0.1526,
+   "p95_ms": 0.7177099999999995,
+   "frames": 1128
+  },
+  "A5_plain_iou": {
+   "mean_ms": 0.11310514184397162,
+   "median_ms": 0.0911,
+   "p95_ms": 0.29983,
+   "frames": 1128
+  },
+  "A7_greedy": {
+   "mean_ms": 0.12616613475177305,
+   "median_ms": 0.07694999999999999,
+   "p95_ms": 0.3503599999999994,
+   "frames": 1128
+  },
+  "F_fused": {
+   "mean_ms": 0.14082180851063827,
+   "median_ms": 0.08855,
+   "p95_ms": 0.37623499999999943,
+   "frames": 1128
+  }
+ },
+ "note": "association times come from the replays inside the eval_kitti runs (machine not idle then); stage times below come from the quiet speed benchmark",
+ "promote_plus_appearance_ms_per_frame": {
+  "mean": 0.8637325262308314
+ },
+ "depth_map_ms_per_frame": {
+  "mean": 1.433631234866828
+ },
+ "stereo_ms_per_frame_tiled": {
+  "mean": 90.32855641646489
+ },
+ "estimate_depth_free_pipeline": {
+  "assumptions": "left image decode = half of the measured 2x imread; detector and tracker times as measured; no stereo, no depth map, no 3D promotion; NOT measured end to end",
+  "CPU detector": {
+   "ms_per_frame": 65.70100768421685,
+   "fps": 15.220466705874086
+  },
+  "CUDA detector (run 1)": {
+   "ms_per_frame": 32.473261356533236,
+   "fps": 30.794566305512515
+  }
+ }
+}

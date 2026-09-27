@@ -1,0 +1,37 @@
+seq,frame,hid,cls,x,y,w,h,Z,auto_category,sheet,item,label,note
+1,16,9,2,1130.995972,324.196899,110.634888,49.300568,4.078717,residual,1,1,D,"dark hood/roof very close to the camera, unclear"
+1,64,51,2,739.30304,166.895889,80.223999,43.580032,27.714272,residual,1,2,A,parked cars
+1,64,56,2,1058.55481,141.468765,77.924316,39.745682,35.157669,residual,1,3,A,parked white van
+1,89,22,2,1053.716553,141.943268,64.055542,33.386169,38.597519,residual,1,4,A,
+1,120,63,2,469.216187,172.860733,69.886169,33.056305,35.850765,residual,1,5,A,
+2,93,53,5,1050.172119,135.183533,145.060913,48.259613,48.818974,residual,1,6,B,"glass bus shelter, not a bus"
+2,97,59,0,468.122986,172.2509,18.123108,46.400055,27.888592,residual,1,7,B,round traffic sign on a pole
+2,108,59,0,432.063934,171.839371,23.182343,45.030289,22.787169,residual,1,8,B,round traffic sign on a pole
+2,114,59,0,414.369873,174.080307,26.09668,53.33876,20.540428,residual,1,9,B,round traffic sign on a pole
+2,116,68,2,1020.40741,169.410736,51.678406,30.028458,36.395695,residual,1,10,A,moving white van
+2,120,59,0,405.697662,173.418549,25.774872,50.218048,18.847008,residual,1,11,B,round traffic sign on a pole
+2,132,69,2,524.025879,180.919525,32.810547,30.328552,27.323542,residual,1,12,A,
+4,34,35,2,564.297729,189.039551,31.479553,31.360977,27.255091,residual,2,1,A,
+7,123,42,2,689.479553,182.084625,44.971069,68.953842,15.950229,residual,2,2,A,
+8,8,17,0,237.883514,188.164536,19.66806,52.355179,27.081511,residual,2,3,B,"red-white road delineator post with an orange lamp, detected as person"
+8,36,27,0,147.403503,187.131851,25.835678,57.702744,24.170305,residual,2,4,B,"red-white road delineator post with an orange lamp, detected as person"
+8,43,30,0,288.995941,186.878494,17.040039,43.684616,33.100449,residual,2,5,B,"red-white road delineator post with an orange lamp, detected as person"
+8,50,30,0,111.977692,186.392868,23.815903,66.200912,20.179245,residual,2,6,B,"red-white road delineator post with an orange lamp, detected as person"
+8,55,33,0,314.677734,176.111252,16.824097,43.820526,33.215584,residual,2,7,B,"red-white road delineator post with an orange lamp, detected as person"
+8,56,33,0,295.407928,178.247543,19.52243,45.149384,31.833902,residual,2,8,B,"red-white road delineator post with an orange lamp, detected as person"
+8,65,35,0,351.489746,182.540161,15.869476,42.182831,36.240627,residual,2,9,B,"red-white road delineator post with an orange lamp, detected as person"
+8,76,35,0,367.395233,176.314087,15.701324,41.356262,34.986225,residual,2,10,B,"red-white road delineator post with an orange lamp, detected as person"
+8,107,54,0,206.744568,179.381088,30.878906,68.953476,19.352491,residual,2,11,B,"red-white road delineator post with an orange lamp, detected as person"
+8,120,59,0,126.454689,175.297104,28.074165,82.053604,16.664755,residual,2,12,B,"red-white road delineator post with an orange lamp, detected as person"
+8,129,58,0,421.796387,172.482651,13.550781,35.560501,40.345238,residual,3,1,B,"red-white road delineator post with an orange lamp, detected as person"
+8,130,43,0,192.218597,179.037231,31.876099,73.27298,17.035862,residual,3,2,B,"red-white road delineator post with an orange lamp, detected as person"
+8,135,64,0,359.68927,169.829208,14.875366,47.429352,29.819786,residual,3,3,B,"red-white road delineator post with an orange lamp, detected as person"
+8,138,35,0,307.800995,172.673294,21.148346,58.298584,22.724566,residual,3,4,B,"red-white road delineator post with an orange lamp, detected as person"
+10,79,30,0,154.732193,199.904526,23.694794,53.615753,22.556248,residual,3,5,C,person on a bicycle (KITTI Cyclist = rider + bike)
+16,7,14,0,128.982361,167.781128,100.556091,190.894653,5.770947,residual,3,6,C,"cyclist, close"
+16,15,12,2,1147.11377,189.34169,48.127441,33.294876,26.190531,residual,3,7,A,blurred dark car
+16,23,12,2,1147.553223,189.439224,47.994873,32.955246,26.251587,residual,3,8,A,blurred dark car
+16,28,12,2,1146.82373,189.270493,48.268921,31.518478,26.19614,residual,3,9,A,blurred dark car
+16,99,12,2,1147.987183,189.735474,47.046143,33.049576,25.907438,residual,3,10,A,blurred dark car
+16,130,7,2,1058.386353,187.686813,51.383423,33.113358,24.382952,residual,3,11,A,
+16,138,28,0,584.151184,157.327744,33.407837,85.473068,16.342735,residual,3,12,C,cyclist at distance

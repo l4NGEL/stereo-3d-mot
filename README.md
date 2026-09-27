@@ -11,6 +11,8 @@ A from-scratch C++17 computer-vision systems project built with OpenCV, Eigen an
 
 **Current status:** All 8 roadmap phases are implemented and run end-to-end on real data — real KITTI tracking and odometry sequences, a real NVIDIA GPU, and a live ROS2 node. The project contains stereo depth, YOLOv8/v5 inference, 3D multi-object tracking, KITTI evaluation, appearance-aware association, real-time optimisation, stereo visual odometry and a ROS2 wrapper.
 
+**Independent evaluation (2026-09-26):** every component was re-measured on held-out data against targets fixed in advance — see [docs/evaluation/REPORT.md](docs/evaluation/REPORT.md). The metric code and the numbers below reproduce exactly, but **most accuracy and speed targets are not met** (tracking is not better than a depth-free SORT baseline, visual odometry drifts 14 % by the standard KITTI metric, the pipeline runs at ~6 FPS against a 20 FPS target), and some earlier explanations were wrong; those are corrected in place below.
+
 ## What does this project do?
 
 In simple terms, the system takes two camera images (left + right) and tries to answer:
@@ -357,7 +359,7 @@ scripts/download_kitti.sh 0000 --with-images
 | 3D Mahalanobis | -2.304 | 0.995 m | 0.182 | 33 | 11 | 2195 | 121 | 0.212 | 0.830 |
 | 2D IoU | -2.135 | 1.020 m | **0.187** | 35 | 23 | 1980 | 214 | 0.201 | 0.699 |
 
-**Important interpretation.** The negative MOTA should not be read without the detector/ground-truth context: the experiment uses YOLOv8n trained on COCO against KITTI tracking ground truth, and KITTI tracking labels are not an exhaustive annotation of every visible instance in the scene — so many correct detections still score as false positives. Real stereo depth is also much noisier than the synthetic benchmark's, which is why 2D and 3D association land much closer together here than in the synthetic result above. The project reports these limitations directly rather than presenting the synthetic result as a universal 3D-vs-2D conclusion.
+**Important interpretation (corrected by the independent evaluation).** The negative MOTA is real and reproduces on eight KITTI sequences that were never used (−0.76 … −1.33 with this protocol), but the earlier explanation — labels are not exhaustive — accounts for only ~10 % of the false positives. About 90 % are **"ghost" tracks**: the tracker keeps reporting a confirmed track for up to 30 frames after it stopped matching anything, and this protocol counts each of those as a false positive. Reporting only the tracks matched in the current frame turns the same held-out runs from −1.33 to +0.30. Under a KITTI-like protocol (2D IoU ≥ 0.5, moderate-difficulty labels, ignore rules) the dev-selected tracker reaches **MOTA 0.49 / IDF1 0.55** on the held-out sequences, which is statistically *worse* than a depth-free SORT baseline on the same detections (0.55 / 0.62), and plain 3D Mahalanobis association is worse than plain 2D IoU. Real stereo depth is also much noisier than the synthetic benchmark's (object-level RMSE 1.5 m at 5–30 m), which is why 2D and 3D association land close together here. Details, protocol and caveats: [docs/evaluation/REPORT.md](docs/evaluation/REPORT.md).
 
 ## Phase 5 — Appearance-Aware Association
 
@@ -445,18 +447,18 @@ The resulting tracking metrics were bit-identical to the untiled version on the 
 Including image loading: 342.2 → 238.4 ms/frame (2.92 → 4.19 FPS).
 Excluding the Docker/Windows image-loading artifact: 204.2 → 128.2 ms/frame (**4.90 → 7.80 FPS**).
 
-The project improved substantially, but the measured result is still below the original 20 FPS target.
+The project improved substantially, but the measured result is still below the original 20 FPS target. Re-measured in the independent evaluation (image files on the container's own filesystem, 1239 frames): 171 ms/frame with decoding (**5.84 FPS**, p95 205 ms) and 146 ms without (6.87 FPS) — the 7.80 FPS above came from an earlier session (run-to-run variation on a laptop is 5–10 %). See [docs/evaluation/REPORT.md](docs/evaluation/REPORT.md) §8.
 
 ### GPU detection experiment
 
-CUDA support was implemented and tested on a real NVIDIA RTX 2080 (8 GB) via ONNX Runtime's CUDA execution provider. The result: CUDA did **not** significantly improve YOLOv8n detection at batch size 1.
+CUDA support was implemented and tested on a real NVIDIA RTX 2080 (8 GB) via ONNX Runtime's CUDA execution provider. The first comparison (a mean over all frames) reported no speed-up:
 
 ```
 CPU:  ~49.5–54.3 ms/frame
-CUDA:  48.4 ms/frame
+CUDA:  48.4 ms/frame          <- includes a one-time ~2.3 s CUDA/cuDNN initialisation
 ```
 
-The model is small (~3.2M parameters), so CPU inference with ONNX Runtime's optimized kernels is already competitive. Possible future GPU optimisations — not currently implemented — include FP16 inference, ONNX Runtime IOBinding, CUDA graphs, batch inference, and GPU stereo matching.
+**Correction (independent evaluation).** In steady state CUDA detection takes 12–17 ms (median) against ~52 ms on the CPU, and the whole pipeline runs at 6.6–7.8 FPS instead of 5.5 FPS; the earlier "no speed-up" was an artifact of averaging over the initialisation. It is still far from 20 FPS because stereo matching (~90 ms) and PNG decoding (~25 ms) dominate; the GPU in this laptop also reached 86 °C and was at times shared with another workload, so the tail latencies are noisy. Possible further optimisations — not implemented — include FP16 inference, ONNX Runtime IOBinding, CUDA graphs, batch inference, and GPU stereo matching.
 
 ## Phase 7 — Visual Odometry
 
@@ -495,11 +497,12 @@ python scripts/fetch_kitti_odometry.py 04
 | Frames processed | 271 (7 "coasted" — untrusted, last pose held) |
 | Mean ORB matches / frame | 961.7 |
 | Recovered scale (median) | 1.32 m/step (≈ 13.2 m/s at ~10 Hz — a plausible driving speed) |
-| ATE RMSE | 15.7 m (≈ 4–5% of the ~360 m path) |
+| ATE RMSE | 15.7 m (4.0 % of the 394 m path — after a rigid alignment, which absorbs part of the drift) |
 | RPE, 1-frame step | 0.66 m / 0.16° |
 | RPE, 10-frame step | 2.49 m / 0.59° |
+| **KITTI segment metric** (independent evaluation) | **t_rel 14.0 %**, r_rel 0.017 deg/m |
 
-**Interpretation.** This is plain frame-to-frame VO — no bundle adjustment, no keyframing, no loop closure — so drift accumulates with nothing correcting it, and it is expected to trail SLAM-grade systems (well under 1% on KITTI odometry). It is not compared against the official KITTI leaderboard, which scores length-normalised 100–800 m segments under its own devkit (a different protocol from the frame-count RPE reported here). What the result does show is that the core geometry — essential-matrix decomposition plus stereo-based scale — is correct and physically sane.
+**Interpretation.** This is plain frame-to-frame VO — no bundle adjustment, no keyframing, no loop closure — so drift accumulates with nothing correcting it, and it is expected to trail SLAM-grade systems (well under 1% on KITTI odometry). The "ATE / path" figure above is *not* the standard KITTI translation error; the independent evaluation computed the devkit-style segment metric (100–400 m segments): **14.0 % on this sequence and 13.8 % pooled over five held-out sequences (3.4 % … 19.7 % each), r_rel 0.08 deg/m**, with the recovered stereo scale 7–22 % off per frame. The geometry is sane (correct rotation/translation direction, plausible speed) but the accuracy target (≤ 5 %) is not met. See [docs/evaluation/REPORT.md](docs/evaluation/REPORT.md) §7.
 
 ## Phase 8 — ROS2 Integration
 
@@ -545,6 +548,8 @@ depth:
 ```
 
 Results depend on the machine and configuration; `--out <dir>` also writes a Markdown results table.
+
+These numbers are the mean of the first 5 frames of the default seed on an easy scene (the right image is a shifted copy of the left). Over 30 frames × 5 seeds the disparity RMSE is 1.28 px (bad-2.0 0.85 %). On real scenes (KITTI Stereo 2015, 200 pairs with ground-truth disparity) the shipped matcher has **D1-all 20.4 %** counting pixels without an estimate as errors (5.2 % on the pixels that have one; 16 % of pixels get none, mostly the left 128 columns) — see [docs/evaluation/REPORT.md](docs/evaluation/REPORT.md) §3.
 
 ## Project Structure
 

@@ -357,3 +357,42 @@ configuration and not as shipped, both are stated.
   `min_hits` 3; emission is applied by the scorer). Both `configs/kitti_tiled.yaml` (primary) and `configs/kitti.yaml`
   (untiled, for A9) are run on the held-out sequences. The 27-variant dev grid is **not** run on held-out data.
 - No held-out sequence had been processed when this entry was written.
+
+### 2026-09-26 — added review strata, after the rule-selected review frames were looked at, before the additional items were
+
+- **What was seen:** the 31 rule-selected frames (12 top-FP, 12 top-FN, 8 top-FN of 0003, overlapping) of the dev sequences.
+  Their 86 unmatched detections split, by the automatic rules, into `in_dontcare` 18, `overlaps_valid_label_3d_gate_rejected`
+  18, `on_ignored_or_neutral_label` 17, `two_wheeler_class` 12, `too_small` 1 and `residual` 20. Only `residual` items are
+  outside every automatic rule and therefore need the manual A/B/C/D judgement of §6.
+- **Why the sample is too weak:** the 20 residual items come from 15 frames of two scenes and 8 of them are the same
+  parked truck in consecutive frames; 12 of the 31 frames are the last frames of 0000 and 10 of the FN frames are the first
+  frames of 0017 (no track confirmed yet), i.e. the "most FP / most FN" rule picks sequence boundaries, not typical errors.
+- **Added strata (same category definitions, same single reviewer):**
+  (a) a seeded uniform random sample (seed 20260927) of 60 residual legacy false positives from all dev frames;
+  (b) an audit of the automatic categories: 10 seeded random items from each of `in_dontcare`,
+  `on_ignored_or_neutral_label`, `overlaps_valid_label_3d_gate_rejected`, `two_wheeler_class`, shown WITHOUT their automatic
+  category, labelled "real object of the claimed class: yes / no / unclear".
+  Both are reported separately from the rule-selected frames. No rule or threshold changes.
+
+### 2026-09-26 — held-out review sample sizes fixed (held-out tracking numbers had been seen; the held-out review items had not)
+
+§6 says the review is repeated on a held-out sample to confirm the distribution. Sizes and seed, fixed before any held-out
+image was looked at: legacy false positives of the as-shipped `A4_plain_mahalanobis` (score 0.25, `min_hits` 3, all confirmed
+tracks) on the eight held-out sequences; 36 residual items (seed 20260928, 3 sheets) and 4 items from each of the four audited
+automatic categories (16 items, 2 sheets), same definitions and same single reviewer as on dev.
+
+### 2026-09-26 — correction of a factual statement in §1 (found from file timestamps while writing the inventory)
+
+§1 says the held-out data "had not been downloaded when the thresholds were written". For the **tracking** sequences that is
+not accurate. The eight held-out tracking sequences (both cameras) were downloaded at 12:05–12:3x, i.e. before the protocol
+was committed at 15:14:42 (the session was paused by a usage limit in between). What is true, and what protects the split:
+
+- The held-out sequences were **selected** by the seeded draw before anything was downloaded, and nothing was opened,
+  viewed or processed before the protocol commit (15:14:42) and the dev-selection commit `e8f6613` (15:36:48). The first held-out
+  frontend output on disk is dated 15:38:09.
+- The Stereo 2015 images (first file 15:11:05) and the odometry held-out images (first file 15:21:03) were also on disk before or
+  around the protocol commit, and equally unopened until later.
+- The KITTI **label files of all 21 training sequences**, including the held-out ones, had been on disk since Phase 4 (2026-09-11),
+  and their occlusion field had been surveyed in aggregate in Phase 5 to pick dev sequences with different occlusion profiles.
+  No detector or tracker output existed for any held-out sequence then, so this cannot have influenced a threshold, a parameter or a
+  selection — but the held-out ground truth was not entirely unseen, and this is stated here rather than implied away.

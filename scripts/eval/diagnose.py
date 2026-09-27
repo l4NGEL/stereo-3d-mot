@@ -21,6 +21,34 @@ NEAR_RANGE_M = 4.0
 
 
 # ------------------------------------------------------------------ legacy FP attribution
+
+def classify_legacy_fp(t, f: int, labels: pd.DataFrame, real: pd.DataFrame, cat_by_group: dict) -> str:
+    """The FIRST rule that explains one P-LEGACY false positive (track row `t` at frame `f`)."""
+    box = np.array([[t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"]]])
+    if t["tsu"] > 0:
+        return "ghost_coasting"
+    if int(t["cls"]) in TWO_WHEELERS:
+        return "two_wheeler_class"
+    dc = labels[(labels["frame"] == f) & (labels["type"] == "DontCare")][["x1", "y1", "x2", "y2"]].to_numpy()
+    if len(dc) and (ioa_matrix(box, dc) >= P.DONTCARE_IOA).any():
+        return "in_dontcare"
+    grp = P.COCO_GROUP.get(int(t["cls"]))
+    gt_f = real[real["frame"] == f]
+    gboxes = gt_f[["x1", "y1", "x2", "y2"]].to_numpy()
+    valid_hit = other_hit = False
+    if grp and len(gboxes):
+        cats = cat_by_group[grp].loc[gt_f.index].to_numpy()
+        iou = iou_matrix(box, gboxes)[0]
+        valid_hit = bool(((cats == "valid") & (iou >= P.MATCH_IOU)).any())
+        other_hit = bool(((cats != "valid") & (iou >= P.MATCH_IOU)).any())
+    if other_hit and not valid_hit:
+        return "on_ignored_or_neutral_label"
+    if valid_hit:
+        return "overlaps_valid_label_3d_gate_rejected"
+    if t["h"] < P.MIN_HEIGHT:
+        return "too_small"
+    return "residual"
+
 def legacy_fp_breakdown(b: Bundle, variant: str) -> dict:
     """Where the P-LEGACY false positives come from, each assigned to the FIRST rule that fits:
     ghost (coasting track) -> two-wheeler class -> in a DontCare region -> on an ignored/neutral
@@ -40,36 +68,9 @@ def legacy_fp_breakdown(b: Bundle, variant: str) -> dict:
         t = trk.loc[(f, h)]
         if isinstance(t, pd.DataFrame):
             t = t.iloc[0]
-        box = np.array([[t["x"], t["y"], t["x"] + t["w"], t["y"] + t["h"]]])
-        if t["tsu"] > 0:
-            out["ghost_coasting"] += 1
-            continue
-        if int(t["cls"]) in TWO_WHEELERS:
-            out["two_wheeler_class"] += 1
-            continue
-        dc = labels[(labels["frame"] == f) & (labels["type"] == "DontCare")][["x1", "y1", "x2", "y2"]].to_numpy()
-        if len(dc) and (ioa_matrix(box, dc) >= P.DONTCARE_IOA).any():
-            out["in_dontcare"] += 1
-            continue
-        grp = P.COCO_GROUP.get(int(t["cls"]))
-        gt_f = real[real["frame"] == f]
-        cats = cat_by_group[grp].loc[gt_f.index] if grp else None
-        gboxes = gt_f[["x1", "y1", "x2", "y2"]].to_numpy()
-        iou = iou_matrix(box, gboxes)[0] if len(gboxes) else np.zeros(0)
-        if grp and len(iou):
-            valid_hit = ((cats.to_numpy() == "valid") & (iou >= P.MATCH_IOU)).any()
-            other_hit = ((cats.to_numpy() != "valid") & (cats.to_numpy() != "none") & (iou >= P.MATCH_IOU)).any() \
-                or ((cats.to_numpy() == "none") & (iou >= P.MATCH_IOU)).any()
-        else:
-            valid_hit = other_hit = False
-        if other_hit and not valid_hit:
-            out["on_ignored_or_neutral_label"] += 1
-        elif valid_hit:
-            out["overlaps_valid_label_3d_gate_rejected"] += 1
-        elif t["h"] < P.MIN_HEIGHT:
-            out["too_small"] += 1
-        else:
-            out["residual"] += 1
+        cat = classify_legacy_fp(t, f, labels, real, cat_by_group)
+        out[cat] += 1
+        if cat == "residual":
             residual_rows.append({"frame": f, "id": h, "cls": int(t["cls"]), "x": t["x"], "y": t["y"],
                                   "w": t["w"], "h": t["h"], "Z": t["Z"]})
     total = int(sum(out.values()))

@@ -1,0 +1,61 @@
+seq,frame,hid,cls,x,y,w,h,Z,auto_category,sheet,item,label,note,is_truck
+0,5,6,2,737.76178,178.665482,72.312683,46.087112,18.377537,residual,1,1,B,"covered scooter/bike, not a car",False
+0,6,6,2,750.343201,179.095276,67.213867,45.95256,17.962063,residual,1,2,B,"covered scooter/bike, not a car",False
+0,55,16,2,477.925415,185.094223,43.33429,29.844574,31.070723,residual,1,3,B,market stall / bench,False
+0,65,4,2,625.714417,180.683517,81.875183,44.831177,22.26976,residual,1,4,B,scooter + bicycle,False
+0,68,4,2,610.786255,187.908798,94.138367,48.66037,22.132181,residual,1,5,B,scooter + bicycle,False
+0,69,31,0,930.748108,168.97699,60.875061,148.060364,7.77347,residual,1,6,C,rider on bicycle: KITTI labels rider+bike as Cyclist,False
+0,74,33,0,824.484375,171.387024,28.669434,63.78804,20.597668,residual,1,7,D,small figure at a kiosk,False
+0,75,31,0,990.3302,166.466751,56.587769,136.583755,8.007154,residual,1,8,C,rider on bicycle (Cyclist),False
+0,76,31,0,990.4104,170.258163,57.906982,128.09404,8.091533,residual,1,9,C,rider on bicycle (Cyclist),False
+0,79,33,0,760.061951,174.565994,29.787415,77.018616,19.782162,residual,1,10,D,small figure at a kiosk,False
+0,80,39,2,1107.031006,167.638306,66.137573,73.826904,12.359732,residual,1,11,A,white van partly hidden by another car,False
+0,81,35,2,278.89978,198.232056,64.60199,41.77597,19.696918,residual,1,12,B,market stall with blue canopy,False
+0,87,33,0,624.379761,174.49617,32.009033,84.095383,16.541075,residual,2,1,D,"figure at a pole / kiosk, unclear",False
+0,109,40,2,773.457825,183.235382,31.504456,33.203949,41.376884,residual,2,2,A,,False
+0,109,63,2,850.337402,190.870911,38.42865,41.707565,26.602287,residual,2,3,A,,False
+0,132,85,2,263.157959,197.563538,45.476929,64.314636,16.803278,residual,2,4,A,,False
+0,133,92,2,309.026398,192.835526,31.684753,49.095367,23.200266,residual,2,5,A,,False
+0,141,95,2,559.610657,179.910416,27.015747,48.853622,22.180992,residual,2,6,D,narrow partial car,False
+0,146,82,2,575.711914,174.901321,23.121277,26.616257,34.077877,residual,2,7,D,cars and a person mixed,False
+0,147,42,2,332.777863,188.199295,47.348663,63.08725,16.469887,residual,2,8,A,,False
+0,153,100,2,631.705566,177.334274,37.828796,40.752884,24.242805,residual,2,9,A,,False
+3,120,17,2,200.166428,179.124527,32.389023,28.338699,48.159439,residual,2,10,A,,False
+3,122,26,2,169.164902,184.834824,40.907883,25.924408,43.677998,residual,2,11,A,,False
+17,10,2,7,0.058452,95.005043,257.68219,269.343536,4.254029,residual,2,12,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,13,2,7,0.295968,96.2202,260.143829,267.843201,4.250948,residual,3,1,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,21,2,7,0.304723,95.631531,261.905731,268.198242,4.260885,residual,3,2,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,22,2,7,0.317213,95.677757,260.315521,268.053009,4.261795,residual,3,3,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,25,2,7,0.118481,94.989517,259.875214,269.069214,4.267205,residual,3,4,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,32,2,7,0.328448,96.835075,260.656616,267.187927,4.276454,residual,3,5,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,47,2,7,0.237457,97.102913,261.664886,267.5383,4.291183,residual,3,6,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,50,7,0,578.575317,142.001129,26.724304,89.947495,13.626381,residual,3,7,A,"walking pedestrian, no matching label",False
+17,51,2,7,0.328244,96.43895,259.000031,267.334229,4.278928,residual,3,8,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,55,2,7,0.344236,96.310547,260.640167,267.483246,4.274415,residual,3,9,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,59,2,7,0.310238,95.296288,259.424957,268.852509,4.264102,residual,3,10,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,60,2,7,0.299849,95.313797,261.036926,268.965942,4.260653,residual,3,11,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,64,2,7,0.35159,96.28376,260.875885,267.825165,4.261945,residual,3,12,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,67,14,0,1182.163574,160.852051,41.515503,206.486267,3.14328,residual,4,1,A,"person cut by the image border, no label",False
+17,71,2,7,0.337378,96.914856,261.020416,266.986176,4.260384,residual,4,2,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,72,2,7,0.340647,96.865601,260.431427,266.939362,4.260543,residual,4,3,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,72,15,0,432.664062,141.249985,21.280487,48.504761,28.746677,residual,4,4,D,"dark figures among bicycles, unclear",False
+17,73,2,7,0.352349,97.070694,261.098083,266.859741,4.256416,residual,4,5,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,74,2,7,0.291153,96.330627,260.117035,265.93985,4.257314,residual,4,6,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,75,2,7,0.291474,96.276756,260.874146,266.072235,4.261375,residual,4,7,A,,True
+17,79,2,7,0.290161,96.070671,260.978882,266.363007,4.266348,residual,4,8,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,81,2,7,0.29661,95.870247,261.369659,266.522736,4.267714,residual,4,9,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,91,2,7,0.294918,95.839897,260.898163,266.45108,4.277735,residual,4,10,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,94,2,7,0.294918,96.138023,260.625153,266.3013,4.28338,residual,4,11,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,95,2,7,0.296669,96.135223,261.524963,266.38858,4.280478,residual,4,12,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,102,2,7,0.329616,96.57132,261.061981,267.37384,4.280183,residual,5,1,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,109,2,7,0.296435,95.796822,261.035919,266.444885,4.266905,residual,5,2,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,112,2,7,0.287214,96.01709,261.339294,266.291046,4.263903,residual,5,3,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,113,2,7,0.798898,95.521339,261.384766,267.206207,4.268242,residual,5,4,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,115,2,7,0.3234,96.686417,261.507233,267.169189,4.264606,residual,5,5,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,117,2,7,0.336036,96.593033,261.496796,267.473877,4.267048,residual,5,6,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,118,2,7,0.334956,96.543541,261.841827,267.308044,4.270519,residual,5,7,A,,True
+17,121,2,7,0.807945,95.551338,261.700165,267.279327,4.270695,residual,5,8,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,123,2,7,0.082936,95.261612,260.938049,268.852234,4.261377,residual,5,9,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,136,2,7,0.337933,97.070694,261.309601,266.820435,4.248308,residual,5,10,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,139,2,7,0.337612,96.578323,261.48349,267.306213,4.252341,residual,5,11,A,"blue parked truck (Buechele), unlabelled, static, 0017",True
+17,140,2,7,0.344236,96.600739,261.491974,267.410492,4.252204,residual,5,12,A,"blue parked truck (Buechele), unlabelled, static, 0017",True

@@ -19,13 +19,21 @@ def group_dets(dets: pd.DataFrame, group: str) -> pd.DataFrame:
     return dets[dets["cls"].isin(cls_ids)]
 
 
-def match_frame(det_boxes: np.ndarray, det_scores: np.ndarray, valid_boxes: np.ndarray,
-                ign_boxes: np.ndarray, dontcare: np.ndarray, iou_thr: float):
+def match_frame(det_boxes, det_scores, valid_boxes, ign_boxes, dontcare, iou_thr):
     """Status of each detection in one frame: 'tp' | 'fp' | 'ign', plus the TP's IoU."""
+    status, tp_iou, _ = match_frame_ex(det_boxes, det_scores, valid_boxes, ign_boxes, dontcare, iou_thr)
+    return status, tp_iou
+
+
+def match_frame_ex(det_boxes: np.ndarray, det_scores: np.ndarray, valid_boxes: np.ndarray,
+                   ign_boxes: np.ndarray, dontcare: np.ndarray, iou_thr: float):
+    """As match_frame, plus for every valid GT box the score of the detection that matched it
+    (NaN if none): recall at any operating score t is then mean(match_score >= t)."""
     order = np.argsort(-det_scores, kind="stable")
     status = np.empty(len(det_boxes), dtype=object)
     tp_iou = np.zeros(len(det_boxes))
     matched = np.zeros(len(valid_boxes), dtype=bool)
+    gt_score = np.full(len(valid_boxes), np.nan)
     iou_valid = iou_matrix(det_boxes, valid_boxes)
     iou_ign = iou_matrix(det_boxes, ign_boxes)
     in_dc = (ioa_matrix(det_boxes, dontcare) >= P.DONTCARE_IOA).any(axis=1) \
@@ -37,6 +45,7 @@ def match_frame(det_boxes: np.ndarray, det_scores: np.ndarray, valid_boxes: np.n
         j = int(np.argmax(cand)) if len(cand) else -1
         if j >= 0 and cand[j] >= iou_thr:
             matched[j] = True
+            gt_score[j] = det_scores[i]
             status[i] = "tp"
             tp_iou[i] = cand[j]
         elif len(ign_boxes) and iou_ign[i].max() >= P.MATCH_IOU:
@@ -45,24 +54,42 @@ def match_frame(det_boxes: np.ndarray, det_scores: np.ndarray, valid_boxes: np.n
             status[i] = "ign"
         else:
             status[i] = "fp"
-    return status, tp_iou
+    return status, tp_iou, gt_score
 
 
 def score_sequence(seq: SequenceGT, dets: pd.DataFrame, group: str, iou_thr: float) -> pd.DataFrame:
-    """One row per detection: frame, score, status, iou (TP only). Also `n_gt` in attrs."""
+    """One row per detection: frame, score, status, iou (TP only). `attrs['n_gt']` is the number
+    of evaluable GT objects and `attrs['gt_table']` has one row per evaluable GT object with the
+    score of the detection that matched it (NaN if none) -- for recall by size / distance."""
     gd = group_dets(dets, group)
-    rows = []
-    for f, g in gd.groupby("frame"):
-        gt = seq.frame(group, int(f))
-        boxes = g[["x", "y", "x2", "y2"]].to_numpy()
-        status, tp_iou = match_frame(boxes, g["score"].to_numpy(), gt["valid_boxes"],
-                                     gt["ign_boxes"], seq.dontcare.get(int(f), np.zeros((0, 4))),
-                                     iou_thr)
-        rows.append(pd.DataFrame({"frame": int(f), "score": g["score"].to_numpy(),
-                                  "status": status, "iou": tp_iou}))
+    by_frame = {int(f): g for f, g in gd.groupby("frame")}
+    lab = seq.real
+    valid_lab = lab[P.gt_categories(lab, group) == "valid"]
+    rows, gt_rows = [], []
+    for f in range(seq.n_frames):
+        gt = seq.frame(group, f)
+        g = by_frame.get(f)
+        if g is None:
+            boxes, scores = np.zeros((0, 4)), np.zeros(0)
+        else:
+            boxes, scores = g[["x", "y", "x2", "y2"]].to_numpy(), g["score"].to_numpy()
+        status, tp_iou, gt_score = match_frame_ex(boxes, scores, gt["valid_boxes"], gt["ign_boxes"],
+                                                  seq.dontcare.get(f, np.zeros((0, 4))), iou_thr)
+        if len(scores):
+            rows.append(pd.DataFrame({"frame": f, "score": scores, "status": status,
+                                      "iou": tp_iou}))
+        vf = valid_lab[valid_lab["frame"] == f]
+        for k in range(len(gt["valid_ids"])):
+            r = vf.iloc[k]
+            gt_rows.append({"frame": f, "gt_id": int(gt["valid_ids"][k]), "type": r["type"],
+                            "height_px": float(r["y2"] - r["y1"]), "Z": float(r["Z"]),
+                            "occluded": int(r["occluded"]), "truncated": float(r["truncated"]),
+                            "cx": float((r["x1"] + r["x2"]) / 2.0),
+                            "match_score": float(gt_score[k])})
     out = pd.concat(rows, ignore_index=True) if rows else \
         pd.DataFrame(columns=["frame", "score", "status", "iou"])
-    out.attrs["n_gt"] = int(sum(len(seq.frame(group, f)["valid_ids"]) for f in range(seq.n_frames)))
+    out.attrs["n_gt"] = len(gt_rows)
+    out.attrs["gt_table"] = pd.DataFrame(gt_rows)
     return out
 
 

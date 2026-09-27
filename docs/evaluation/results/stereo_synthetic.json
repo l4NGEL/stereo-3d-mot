@@ -1,0 +1,414 @@
+{
+ "tiles_1": {
+  "tiles": 1,
+  "seeds": [
+   42,
+   1,
+   2,
+   3,
+   4
+  ],
+  "mean_over_seeds": {
+   "disparity_rmse_px": 1.2804755226771036,
+   "disparity_bad_2.0": 0.008494443355956125,
+   "density": 0.9889899359809027,
+   "depth_rmse_m": 0.7422144707043966,
+   "depth_abs_rel": 0.012669820301234721,
+   "full_image_bad_2.0_holes_as_error": 0.21552547743055556,
+   "full_image_coverage": 0.7911919487847223
+  },
+  "worst_seed": {
+   "disparity_rmse_px_max": 1.3996686855951945,
+   "disparity_bad_2.0_max": 0.009374766226424225,
+   "density_min": 0.9886760796440972
+  },
+  "per_seed": {
+   "42": {
+    "frames": 30,
+    "disparity_rmse_px": 1.3996686855951945,
+    "disparity_bad_2.0": 0.009374766226424225,
+    "density": 0.98940673828125,
+    "depth_rmse_m": 0.7836080233256022,
+    "depth_abs_rel": 0.013590152623752754,
+    "full_image_bad_2.0_holes_as_error": 0.21589160156249998,
+    "full_image_coverage": 0.7915253906250002,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.490061871210734,
+      "bad2_holes_as_error": 0.01910357017854393,
+      "coverage": 0.9980050638082348
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.7468233863512674,
+      "bad2_holes_as_error": 0.028922077922077925,
+      "coverage": 0.9975844155844155
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.6127698361873627,
+      "bad2_holes_as_error": 0.01656272849362083,
+      "coverage": 0.9987401048272775
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.2922999580701193,
+      "bad2_holes_as_error": 0.01976305543813924,
+      "coverage": 0.9881037165131973
+     }
+    }
+   },
+   "1": {
+    "frames": 30,
+    "disparity_rmse_px": 1.128472340106964,
+    "disparity_bad_2.0": 0.008033372921778978,
+    "density": 0.988790554470486,
+    "depth_rmse_m": 0.7064914087454478,
+    "depth_abs_rel": 0.011820170345405738,
+    "full_image_bad_2.0_holes_as_error": 0.21532020399305557,
+    "full_image_coverage": 0.791032443576389,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.1960344433784487,
+      "bad2_holes_as_error": 0.016742203938247893,
+      "coverage": 0.9966982053961164
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.686841607093811,
+      "bad2_holes_as_error": 0.03464069264069263,
+      "coverage": 0.9899696969696969
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.5945557117462158,
+      "bad2_holes_as_error": 0.015357628267303343,
+      "coverage": 0.9989415242856077
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.0128550767898559,
+      "bad2_holes_as_error": 0.01894104981082494,
+      "coverage": 0.9877444881535459
+     }
+    }
+   },
+   "2": {
+    "frames": 30,
+    "disparity_rmse_px": 1.3927590787410735,
+    "disparity_bad_2.0": 0.008708395165983512,
+    "density": 0.9890648057725695,
+    "depth_rmse_m": 0.7581380645434062,
+    "depth_abs_rel": 0.013099412402758996,
+    "full_image_bad_2.0_holes_as_error": 0.21563433159722228,
+    "full_image_coverage": 0.7912518446180555,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.5766093651453654,
+      "bad2_holes_as_error": 0.02165711095808791,
+      "coverage": 0.9969089451728809
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.4989436348279317,
+      "bad2_holes_as_error": 0.022580086580086582,
+      "coverage": 0.9963636363636363
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.625938336054484,
+      "bad2_holes_as_error": 0.018022069064139872,
+      "coverage": 0.9977115384615385
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.273151598374049,
+      "bad2_holes_as_error": 0.01938532139339429,
+      "coverage": 0.9878772200139727
+     }
+    }
+   },
+   "3": {
+    "frames": 30,
+    "disparity_rmse_px": 1.226434095700582,
+    "disparity_bad_2.0": 0.008105023788669811,
+    "density": 0.9886760796440972,
+    "depth_rmse_m": 0.731134827931722,
+    "depth_abs_rel": 0.012837956007570029,
+    "full_image_bad_2.0_holes_as_error": 0.2154662543402778,
+    "full_image_coverage": 0.7909408637152777,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.512915825843811,
+      "bad2_holes_as_error": 0.021510488252160866,
+      "coverage": 0.9959938199884828
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.7200313210487366,
+      "bad2_holes_as_error": 0.031580086580086576,
+      "coverage": 0.9936320346320345
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.6311423321564992,
+      "bad2_holes_as_error": 0.018228863562883932,
+      "coverage": 0.9977685872565846
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.086867239077886,
+      "bad2_holes_as_error": 0.018809267063240185,
+      "coverage": 0.9875872691860957
+     }
+    }
+   },
+   "4": {
+    "frames": 30,
+    "disparity_rmse_px": 1.2550434132417043,
+    "disparity_bad_2.0": 0.008250658676924094,
+    "density": 0.9890115017361111,
+    "depth_rmse_m": 0.7317000289758047,
+    "depth_abs_rel": 0.012001410126686096,
+    "full_image_bad_2.0_holes_as_error": 0.21531499565972217,
+    "full_image_coverage": 0.7912092013888891,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.165200928846995,
+      "bad2_holes_as_error": 0.016448231325694843,
+      "coverage": 0.996525387214431
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.684548008441925,
+      "bad2_holes_as_error": 0.029852813852813853,
+      "coverage": 0.9945974025974027
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.5964156786600748,
+      "bad2_holes_as_error": 0.01775177510010197,
+      "coverage": 0.9965339134273421
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.166504939397176,
+      "bad2_holes_as_error": 0.01900958959983147,
+      "coverage": 0.9879622543117101
+     }
+    }
+   }
+  }
+ },
+ "tiles_4": {
+  "tiles": 4,
+  "seeds": [
+   42,
+   1,
+   2,
+   3,
+   4
+  ],
+  "mean_over_seeds": {
+   "disparity_rmse_px": 1.2812063916524252,
+   "disparity_bad_2.0": 0.00849415814605561,
+   "density": 0.988979465060764,
+   "depth_rmse_m": 0.742402282555898,
+   "depth_abs_rel": 0.012674872260540723,
+   "full_image_bad_2.0_holes_as_error": 0.2155335503472222,
+   "full_image_coverage": 0.7911835720486112
+  },
+  "worst_seed": {
+   "disparity_rmse_px_max": 1.3995293815930685,
+   "disparity_bad_2.0_max": 0.009372812907741234,
+   "density_min": 0.9886787923177083
+  },
+  "per_seed": {
+   "42": {
+    "frames": 30,
+    "disparity_rmse_px": 1.3995293815930685,
+    "disparity_bad_2.0": 0.009372812907741234,
+    "density": 0.9893994140624999,
+    "depth_rmse_m": 0.7836954911549886,
+    "depth_abs_rel": 0.01359025224422415,
+    "full_image_bad_2.0_holes_as_error": 0.21589583333333331,
+    "full_image_coverage": 0.7915195312500002,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.4900564511617023,
+      "bad2_holes_as_error": 0.019098891815970832,
+      "coverage": 0.998009742170808
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.7468273242314656,
+      "bad2_holes_as_error": 0.028922077922077925,
+      "coverage": 0.9975844155844155
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.6128381311893463,
+      "bad2_holes_as_error": 0.016559523365415704,
+      "coverage": 0.9987465150836876
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.2921801129976909,
+      "bad2_holes_as_error": 0.019769601334178745,
+      "coverage": 0.9880946751794681
+     }
+    }
+   },
+   "1": {
+    "frames": 30,
+    "disparity_rmse_px": 1.1281088769435883,
+    "disparity_bad_2.0": 0.008028161163274206,
+    "density": 0.9887683105468751,
+    "depth_rmse_m": 0.7063872933387756,
+    "depth_abs_rel": 0.011825405340641738,
+    "full_image_bad_2.0_holes_as_error": 0.21533376736111112,
+    "full_image_coverage": 0.7910146484375,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.20043466091156,
+      "bad2_holes_as_error": 0.01679094922673298,
+      "coverage": 0.9967012789715278
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.6861661195755004,
+      "bad2_holes_as_error": 0.034601731601731606,
+      "coverage": 0.98995670995671
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.594557519753774,
+      "bad2_holes_as_error": 0.015364066502524311,
+      "coverage": 0.9989350860503865
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.0118547280629475,
+      "bad2_holes_as_error": 0.01895849435804118,
+      "coverage": 0.9877195252401005
+     }
+    }
+   },
+   "2": {
+    "frames": 30,
+    "disparity_rmse_px": 1.3959649582703908,
+    "disparity_bad_2.0": 0.008718869513498952,
+    "density": 0.9890547688802083,
+    "depth_rmse_m": 0.7589843352635701,
+    "depth_abs_rel": 0.013111808337271214,
+    "full_image_bad_2.0_holes_as_error": 0.21565049913194445,
+    "full_image_coverage": 0.7912438151041667,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.5772716919581096,
+      "bad2_holes_as_error": 0.02165477177680136,
+      "coverage": 0.9969206410793134
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.4989436348279317,
+      "bad2_holes_as_error": 0.022580086580086582,
+      "coverage": 0.9963636363636363
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.6264941036701203,
+      "bad2_holes_as_error": 0.018050915217986022,
+      "coverage": 0.9977083333333332
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.2767254571119944,
+      "bad2_holes_as_error": 0.019407291761496807,
+      "coverage": 0.9878651046712589
+     }
+    }
+   },
+   "3": {
+    "frames": 30,
+    "disparity_rmse_px": 1.226342757542928,
+    "disparity_bad_2.0": 0.008092223229855339,
+    "density": 0.9886787923177083,
+    "depth_rmse_m": 0.7307561834653219,
+    "depth_abs_rel": 0.012830956311275562,
+    "full_image_bad_2.0_holes_as_error": 0.2154539930555556,
+    "full_image_coverage": 0.7909430338541668,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.512915825843811,
+      "bad2_holes_as_error": 0.021510488252160866,
+      "coverage": 0.9959938199884828
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.7196472764015198,
+      "bad2_holes_as_error": 0.03157575757575757,
+      "coverage": 0.9936190476190475
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.6312073906262715,
+      "bad2_holes_as_error": 0.01828335074237111,
+      "coverage": 0.9977173052053024
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.0867424170176188,
+      "bad2_holes_as_error": 0.01878915286249933,
+      "coverage": 0.9875933474347534
+     }
+    }
+   },
+   "4": {
+    "frames": 30,
+    "disparity_rmse_px": 1.25608598391215,
+    "disparity_bad_2.0": 0.00825872391590832,
+    "density": 0.9889960394965277,
+    "depth_rmse_m": 0.7321881095568339,
+    "depth_abs_rel": 0.012015939069290956,
+    "full_image_bad_2.0_holes_as_error": 0.2153336588541667,
+    "full_image_coverage": 0.7911968315972221,
+    "by_gt_depth_m": {
+     "2.5": {
+      "n_per_frame": 13680,
+      "rmse_valid_px": 2.169616425037384,
+      "bad2_holes_as_error": 0.016474307736211065,
+      "coverage": 0.996555215970923
+     },
+     "3.799999952316284": {
+      "n_per_frame": 7700,
+      "rmse_valid_px": 1.6839439233144124,
+      "bad2_holes_as_error": 0.029852813852813853,
+      "coverage": 0.9945800865800865
+     },
+     "6.0": {
+      "n_per_frame": 10397,
+      "rmse_valid_px": 0.5967261811097463,
+      "bad2_holes_as_error": 0.01776780074112761,
+      "coverage": 0.9965339134273421
+     },
+     "12.0": {
+      "n_per_frame": 213983,
+      "rmse_valid_px": 1.1671995083491007,
+      "bad2_holes_as_error": 0.019034029058944173,
+      "coverage": 0.987943235683082
+     }
+    }
+   }
+  }
+ }
+}

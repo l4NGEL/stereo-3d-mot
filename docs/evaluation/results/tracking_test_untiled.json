@@ -1,0 +1,1845 @@
+{
+ "kind": "test",
+ "sequences": [
+  "0001",
+  "0002",
+  "0004",
+  "0007",
+  "0008",
+  "0010",
+  "0012",
+  "0016"
+ ],
+ "n_frames": {
+  "0001": 150,
+  "0002": 150,
+  "0004": 150,
+  "0007": 150,
+  "0008": 150,
+  "0010": 150,
+  "0012": 78,
+  "0016": 150
+ },
+ "systems": {
+  "S*": {
+   "pooled": {
+    "mota": 0.49208791208791214,
+    "idf1": 0.5533968866899964,
+    "precision": 0.8324859512978325,
+    "recall": 0.6837362637362637,
+    "num_objects": 4550,
+    "num_false_positives": 626,
+    "num_misses": 1439,
+    "num_switches": 246,
+    "num_fragmentations": 171,
+    "idsw_rate": 0.05406593406593407,
+    "motp": 0.22989717644246063
+   },
+   "vehicle": {
+    "mota": 0.5187110187110187,
+    "idf1": 0.5911330049261084,
+    "precision": 0.8520066889632107,
+    "recall": 0.7061677061677062,
+    "num_objects": 2886,
+    "num_false_positives": 354,
+    "num_misses": 848,
+    "num_switches": 187,
+    "num_fragmentations": 83,
+    "idsw_rate": 0.0647955647955648,
+    "motp": 0.19869214208431893
+   },
+   "person": {
+    "mota": 0.44591346153846156,
+    "idf1": 0.4872050515121303,
+    "precision": 0.7977695167286245,
+    "recall": 0.6448317307692307,
+    "num_objects": 1664,
+    "num_false_positives": 272,
+    "num_misses": 591,
+    "num_switches": 59,
+    "num_fragmentations": 88,
+    "idsw_rate": 0.03545673076923077,
+    "motp": 0.28916638429138214
+   },
+   "mean_iou_of_matches": 0.7701028235575393,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7279521674140508,
+     "idf1": 0.7029850746268657,
+     "num_objects": 669,
+     "fp": 49,
+     "fn": 47,
+     "idsw": 86
+    },
+    "0002": {
+     "mota": 0.5107758620689655,
+     "idf1": 0.5774647887323944,
+     "num_objects": 464,
+     "fp": 70,
+     "fn": 146,
+     "idsw": 11
+    },
+    "0004": {
+     "mota": 0.625,
+     "idf1": 0.5217391304347826,
+     "num_objects": 392,
+     "fp": 13,
+     "fn": 84,
+     "idsw": 50
+    },
+    "0007": {
+     "mota": 0.6940509915014164,
+     "idf1": 0.7652916073968705,
+     "num_objects": 353,
+     "fp": 44,
+     "fn": 47,
+     "idsw": 17
+    },
+    "0008": {
+     "mota": -0.2124999999999999,
+     "idf1": 0.4105263157894737,
+     "num_objects": 80,
+     "fp": 56,
+     "fn": 26,
+     "idsw": 15
+    },
+    "0010": {
+     "mota": 0.6935483870967742,
+     "idf1": 0.8007518796992481,
+     "num_objects": 310,
+     "fp": 1,
+     "fn": 89,
+     "idsw": 5
+    },
+    "0012": {
+     "mota": 0.22754491017964074,
+     "idf1": 0.3203463203463203,
+     "num_objects": 167,
+     "fp": 12,
+     "fn": 115,
+     "idsw": 2
+    },
+    "0016": {
+     "mota": 0.3730496453900709,
+     "idf1": 0.44659151905528716,
+     "num_objects": 2115,
+     "fp": 381,
+     "fn": 885,
+     "idsw": 60
+    }
+   },
+   "variant": "A5_plain_iou",
+   "emission_E": 0
+  },
+  "F": {
+   "pooled": {
+    "mota": 0.4969230769230769,
+    "idf1": 0.6172868582195007,
+    "precision": 0.8056823947234906,
+    "recall": 0.6980219780219781,
+    "num_objects": 4550,
+    "num_false_positives": 766,
+    "num_misses": 1374,
+    "num_switches": 149,
+    "num_fragmentations": 171,
+    "idsw_rate": 0.03274725274725275,
+    "motp": 0.23027005383061794
+   },
+   "vehicle": {
+    "mota": 0.5436590436590436,
+    "idf1": 0.6320297951582868,
+    "precision": 0.8389694041867954,
+    "recall": 0.7221067221067221,
+    "num_objects": 2886,
+    "num_false_positives": 400,
+    "num_misses": 802,
+    "num_switches": 115,
+    "num_fragmentations": 77,
+    "idsw_rate": 0.039847539847539845,
+    "motp": 0.19913143160260305
+   },
+   "person": {
+    "mota": 0.4158653846153846,
+    "idf1": 0.5919282511210763,
+    "precision": 0.7489711934156379,
+    "recall": 0.65625,
+    "num_objects": 1664,
+    "num_false_positives": 366,
+    "num_misses": 572,
+    "num_switches": 34,
+    "num_fragmentations": 94,
+    "idsw_rate": 0.020432692307692308,
+    "motp": 0.2896957761045952
+   },
+   "mean_iou_of_matches": 0.7697299461693821,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7817638266068759,
+     "idf1": 0.7821561338289963,
+     "num_objects": 669,
+     "fp": 61,
+     "fn": 54,
+     "idsw": 31
+    },
+    "0002": {
+     "mota": 0.4892241379310345,
+     "idf1": 0.5848623853211009,
+     "num_objects": 464,
+     "fp": 78,
+     "fn": 134,
+     "idsw": 25
+    },
+    "0004": {
+     "mota": 0.6938775510204082,
+     "idf1": 0.552,
+     "num_objects": 392,
+     "fp": 27,
+     "fn": 61,
+     "idsw": 32
+    },
+    "0007": {
+     "mota": 0.6968838526912181,
+     "idf1": 0.6759002770083102,
+     "num_objects": 353,
+     "fp": 54,
+     "fn": 38,
+     "idsw": 15
+    },
+    "0008": {
+     "mota": -0.675,
+     "idf1": 0.37344398340248963,
+     "num_objects": 80,
+     "fp": 105,
+     "fn": 24,
+     "idsw": 5
+    },
+    "0010": {
+     "mota": 0.7032258064516129,
+     "idf1": 0.8079710144927537,
+     "num_objects": 310,
+     "fp": 9,
+     "fn": 77,
+     "idsw": 6
+    },
+    "0012": {
+     "mota": 0.16766467065868262,
+     "idf1": 0.3770491803278688,
+     "num_objects": 167,
+     "fp": 24,
+     "fn": 114,
+     "idsw": 1
+    },
+    "0016": {
+     "mota": 0.37872340425531914,
+     "idf1": 0.5708975039830059,
+     "num_objects": 2115,
+     "fp": 408,
+     "fn": 872,
+     "idsw": 34
+    }
+   },
+   "variant": "F_fused",
+   "emission_E": 0
+  },
+  "A1_no_appearance": {
+   "pooled": {
+    "mota": 0.4945054945054945,
+    "idf1": 0.6152939790267468,
+    "precision": 0.8051816103632208,
+    "recall": 0.6967032967032967,
+    "num_objects": 4550,
+    "num_false_positives": 767,
+    "num_misses": 1380,
+    "num_switches": 153,
+    "num_fragmentations": 169,
+    "idsw_rate": 0.03362637362637363,
+    "motp": 0.23005193440708938
+   },
+   "vehicle": {
+    "mota": 0.5412335412335412,
+    "idf1": 0.6313827804696236,
+    "precision": 0.8383064516129032,
+    "recall": 0.7203742203742204,
+    "num_objects": 2886,
+    "num_false_positives": 401,
+    "num_misses": 807,
+    "num_switches": 116,
+    "num_fragmentations": 77,
+    "idsw_rate": 0.040194040194040194,
+    "motp": 0.19897190955603627
+   },
+   "person": {
+    "mota": 0.41346153846153844,
+    "idf1": 0.5876321691765459,
+    "precision": 0.7487989018531228,
+    "recall": 0.6556490384615384,
+    "num_objects": 1664,
+    "num_false_positives": 366,
+    "num_misses": 573,
+    "num_switches": 37,
+    "num_fragmentations": 92,
+    "idsw_rate": 0.022235576923076924,
+    "motp": 0.28927775628182767
+   },
+   "mean_iou_of_matches": 0.7699480655929106,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7847533632286996,
+     "idf1": 0.7830609212481426,
+     "num_objects": 669,
+     "fp": 63,
+     "fn": 55,
+     "idsw": 26
+    },
+    "0002": {
+     "mota": 0.4870689655172413,
+     "idf1": 0.5776754890678941,
+     "num_objects": 464,
+     "fp": 77,
+     "fn": 136,
+     "idsw": 25
+    },
+    "0004": {
+     "mota": 0.6760204081632653,
+     "idf1": 0.5393858477970628,
+     "num_objects": 392,
+     "fp": 27,
+     "fn": 62,
+     "idsw": 38
+    },
+    "0007": {
+     "mota": 0.6940509915014164,
+     "idf1": 0.6907073509015257,
+     "num_objects": 353,
+     "fp": 54,
+     "fn": 39,
+     "idsw": 15
+    },
+    "0008": {
+     "mota": -0.6625000000000001,
+     "idf1": 0.375,
+     "num_objects": 80,
+     "fp": 104,
+     "fn": 24,
+     "idsw": 5
+    },
+    "0010": {
+     "mota": 0.7032258064516129,
+     "idf1": 0.8079710144927537,
+     "num_objects": 310,
+     "fp": 9,
+     "fn": 77,
+     "idsw": 6
+    },
+    "0012": {
+     "mota": 0.16766467065868262,
+     "idf1": 0.3770491803278688,
+     "num_objects": 167,
+     "fp": 24,
+     "fn": 114,
+     "idsw": 1
+    },
+    "0016": {
+     "mota": 0.3763593380614657,
+     "idf1": 0.5671800318640468,
+     "num_objects": 2115,
+     "fp": 409,
+     "fn": 873,
+     "idsw": 37
+    }
+   },
+   "variant": "A1_no_appearance",
+   "emission_E": 0
+  },
+  "A2_no_iou_cost": {
+   "pooled": {
+    "mota": 0.48725274725274725,
+    "idf1": 0.6169083834453484,
+    "precision": 0.8059018061561943,
+    "recall": 0.6962637362637363,
+    "num_objects": 4550,
+    "num_false_positives": 763,
+    "num_misses": 1382,
+    "num_switches": 188,
+    "num_fragmentations": 181,
+    "idsw_rate": 0.04131868131868132,
+    "motp": 0.23027816079152655
+   },
+   "vehicle": {
+    "mota": 0.5301455301455301,
+    "idf1": 0.6109972041006524,
+    "precision": 0.8374344493747479,
+    "recall": 0.7193347193347194,
+    "num_objects": 2886,
+    "num_false_positives": 403,
+    "num_misses": 810,
+    "num_switches": 143,
+    "num_fragmentations": 87,
+    "idsw_rate": 0.04954954954954955,
+    "motp": 0.19903709020297675
+   },
+   "person": {
+    "mota": 0.41286057692307687,
+    "idf1": 0.6270860077021823,
+    "precision": 0.7520661157024794,
+    "recall": 0.65625,
+    "num_objects": 1664,
+    "num_false_positives": 360,
+    "num_misses": 572,
+    "num_switches": 45,
+    "num_fragmentations": 94,
+    "idsw_rate": 0.027043269230769232,
+    "motp": 0.2896705257565718
+   },
+   "mean_iou_of_matches": 0.7697218392084735,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7787742899850523,
+     "idf1": 0.753903345724907,
+     "num_objects": 669,
+     "fp": 61,
+     "fn": 54,
+     "idsw": 33
+    },
+    "0002": {
+     "mota": 0.4331896551724138,
+     "idf1": 0.4454649827784156,
+     "num_objects": 464,
+     "fp": 80,
+     "fn": 137,
+     "idsw": 46
+    },
+    "0004": {
+     "mota": 0.6887755102040816,
+     "idf1": 0.5809906291834003,
+     "num_objects": 392,
+     "fp": 26,
+     "fn": 63,
+     "idsw": 33
+    },
+    "0007": {
+     "mota": 0.6713881019830028,
+     "idf1": 0.6407766990291263,
+     "num_objects": 353,
+     "fp": 55,
+     "fn": 40,
+     "idsw": 21
+    },
+    "0008": {
+     "mota": -0.625,
+     "idf1": 0.4067796610169492,
+     "num_objects": 80,
+     "fp": 100,
+     "fn": 24,
+     "idsw": 6
+    },
+    "0010": {
+     "mota": 0.7032258064516129,
+     "idf1": 0.809437386569873,
+     "num_objects": 310,
+     "fp": 9,
+     "fn": 78,
+     "idsw": 5
+    },
+    "0012": {
+     "mota": 0.16766467065868262,
+     "idf1": 0.3770491803278688,
+     "num_objects": 167,
+     "fp": 24,
+     "fn": 114,
+     "idsw": 1
+    },
+    "0016": {
+     "mota": 0.37446808510638296,
+     "idf1": 0.6107275624004248,
+     "num_objects": 2115,
+     "fp": 408,
+     "fn": 872,
+     "idsw": 43
+    }
+   },
+   "variant": "A2_no_iou_cost",
+   "emission_E": 0
+  },
+  "A3_no_3d_cost": {
+   "pooled": {
+    "mota": 0.4986813186813187,
+    "idf1": 0.6241017787725291,
+    "precision": 0.8065498857578065,
+    "recall": 0.6982417582417583,
+    "num_objects": 4550,
+    "num_false_positives": 762,
+    "num_misses": 1373,
+    "num_switches": 146,
+    "num_fragmentations": 167,
+    "idsw_rate": 0.03208791208791209,
+    "motp": 0.23040653432422117
+   },
+   "vehicle": {
+    "mota": 0.5495495495495495,
+    "idf1": 0.6844560552341855,
+    "precision": 0.8431055398301658,
+    "recall": 0.7224532224532224,
+    "num_objects": 2886,
+    "num_false_positives": 388,
+    "num_misses": 801,
+    "num_switches": 111,
+    "num_fragmentations": 78,
+    "idsw_rate": 0.038461538461538464,
+    "motp": 0.19866252892627276
+   },
+   "person": {
+    "mota": 0.4104567307692307,
+    "idf1": 0.5207667731629393,
+    "precision": 0.7448840381991815,
+    "recall": 0.65625,
+    "num_objects": 1664,
+    "num_false_positives": 374,
+    "num_misses": 572,
+    "num_switches": 35,
+    "num_fragmentations": 89,
+    "idsw_rate": 0.021033653846153848,
+    "motp": 0.29101665452085346
+   },
+   "mean_iou_of_matches": 0.7695934656757788,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7772795216741405,
+     "idf1": 0.8357988165680473,
+     "num_objects": 669,
+     "fp": 59,
+     "fn": 45,
+     "idsw": 45
+    },
+    "0002": {
+     "mota": 0.5280172413793103,
+     "idf1": 0.6121979286536249,
+     "num_objects": 464,
+     "fp": 76,
+     "fn": 135,
+     "idsw": 8
+    },
+    "0004": {
+     "mota": 0.6938775510204082,
+     "idf1": 0.6829268292682927,
+     "num_objects": 392,
+     "fp": 23,
+     "fn": 69,
+     "idsw": 28
+    },
+    "0007": {
+     "mota": 0.7138810198300283,
+     "idf1": 0.7799442896935933,
+     "num_objects": 353,
+     "fp": 49,
+     "fn": 37,
+     "idsw": 15
+    },
+    "0008": {
+     "mota": -0.7625,
+     "idf1": 0.3724696356275304,
+     "num_objects": 80,
+     "fp": 110,
+     "fn": 23,
+     "idsw": 8
+    },
+    "0010": {
+     "mota": 0.6935483870967742,
+     "idf1": 0.8007246376811594,
+     "num_objects": 310,
+     "fp": 10,
+     "fn": 78,
+     "idsw": 7
+    },
+    "0012": {
+     "mota": 0.17365269461077848,
+     "idf1": 0.4344262295081967,
+     "num_objects": 167,
+     "fp": 24,
+     "fn": 114,
+     "idsw": 0
+    },
+    "0016": {
+     "mota": 0.3768321513002364,
+     "idf1": 0.5126028124170867,
+     "num_objects": 2115,
+     "fp": 411,
+     "fn": 872,
+     "idsw": 35
+    }
+   },
+   "variant": "A3_no_3d_cost",
+   "emission_E": 0
+  },
+  "A4_plain_mahalanobis": {
+   "pooled": {
+    "mota": 0.4351648351648352,
+    "idf1": 0.5567209162145871,
+    "precision": 0.8048064085447263,
+    "recall": 0.6624175824175824,
+    "num_objects": 4550,
+    "num_false_positives": 731,
+    "num_misses": 1536,
+    "num_switches": 303,
+    "num_fragmentations": 224,
+    "idsw_rate": 0.0665934065934066,
+    "motp": 0.23324054529418603
+   },
+   "vehicle": {
+    "mota": 0.45218295218295224,
+    "idf1": 0.520431765612953,
+    "precision": 0.8366637706342311,
+    "recall": 0.6673596673596673,
+    "num_objects": 2886,
+    "num_false_positives": 376,
+    "num_misses": 960,
+    "num_switches": 245,
+    "num_fragmentations": 119,
+    "idsw_rate": 0.08489258489258489,
+    "motp": 0.2014624781187976
+   },
+   "person": {
+    "mota": 0.40564903846153844,
+    "idf1": 0.6173157386546508,
+    "precision": 0.753984753984754,
+    "recall": 0.6538461538461539,
+    "num_objects": 1664,
+    "num_false_positives": 355,
+    "num_misses": 576,
+    "num_switches": 58,
+    "num_fragmentations": 105,
+    "idsw_rate": 0.03485576923076923,
+    "motp": 0.28949473406238274
+   },
+   "mean_iou_of_matches": 0.766759454705814,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.7144992526158446,
+     "idf1": 0.6086956521739131,
+     "num_objects": 669,
+     "fp": 52,
+     "fn": 79,
+     "idsw": 60
+    },
+    "0002": {
+     "mota": 0.4030172413793104,
+     "idf1": 0.4958481613285884,
+     "num_objects": 464,
+     "fp": 73,
+     "fn": 158,
+     "idsw": 46
+    },
+    "0004": {
+     "mota": 0.5153061224489797,
+     "idf1": 0.34916201117318435,
+     "num_objects": 392,
+     "fp": 28,
+     "fn": 96,
+     "idsw": 66
+    },
+    "0007": {
+     "mota": 0.6458923512747876,
+     "idf1": 0.648493543758967,
+     "num_objects": 353,
+     "fp": 43,
+     "fn": 52,
+     "idsw": 30
+    },
+    "0008": {
+     "mota": -0.9750000000000001,
+     "idf1": 0.10476190476190476,
+     "num_objects": 80,
+     "fp": 93,
+     "fn": 43,
+     "idsw": 22
+    },
+    "0010": {
+     "mota": 0.5225806451612903,
+     "idf1": 0.6365422396856582,
+     "num_objects": 310,
+     "fp": 8,
+     "fn": 119,
+     "idsw": 21
+    },
+    "0012": {
+     "mota": 0.19161676646706582,
+     "idf1": 0.38016528925619836,
+     "num_objects": 167,
+     "fp": 21,
+     "fn": 113,
+     "idsw": 1
+    },
+    "0016": {
+     "mota": 0.3635933806146572,
+     "idf1": 0.600477833820016,
+     "num_objects": 2115,
+     "fp": 413,
+     "fn": 876,
+     "idsw": 57
+    }
+   },
+   "variant": "A4_plain_mahalanobis",
+   "emission_E": 0
+  },
+  "A7_greedy": {
+   "pooled": {
+    "mota": 0.4945054945054945,
+    "idf1": 0.6121870571563534,
+    "precision": 0.8072996426748341,
+    "recall": 0.6951648351648352,
+    "num_objects": 4550,
+    "num_false_positives": 755,
+    "num_misses": 1387,
+    "num_switches": 158,
+    "num_fragmentations": 175,
+    "idsw_rate": 0.03472527472527472,
+    "motp": 0.23036238979461449
+   },
+   "vehicle": {
+    "mota": 0.5398475398475399,
+    "idf1": 0.6163333956269856,
+    "precision": 0.8421906693711968,
+    "recall": 0.7193347193347194,
+    "num_objects": 2886,
+    "num_false_positives": 389,
+    "num_misses": 810,
+    "num_switches": 129,
+    "num_fragmentations": 87,
+    "idsw_rate": 0.0446985446985447,
+    "motp": 0.19933678966506346
+   },
+   "person": {
+    "mota": 0.4158653846153846,
+    "idf1": 0.6050689765800449,
+    "precision": 0.748107364074329,
+    "recall": 0.6532451923076923,
+    "num_objects": 1664,
+    "num_false_positives": 366,
+    "num_misses": 577,
+    "num_switches": 29,
+    "num_fragmentations": 88,
+    "idsw_rate": 0.017427884615384616,
+    "motp": 0.2896164338322851
+   },
+   "mean_iou_of_matches": 0.7696376102053855,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.772795216741405,
+     "idf1": 0.750373692077728,
+     "num_objects": 669,
+     "fp": 62,
+     "fn": 62,
+     "idsw": 28
+    },
+    "0002": {
+     "mota": 0.49784482758620685,
+     "idf1": 0.5868814729574223,
+     "num_objects": 464,
+     "fp": 74,
+     "fn": 133,
+     "idsw": 26
+    },
+    "0004": {
+     "mota": 0.6785714285714286,
+     "idf1": 0.4946236559139785,
+     "num_objects": 392,
+     "fp": 20,
+     "fn": 60,
+     "idsw": 46
+    },
+    "0007": {
+     "mota": 0.6997167138810199,
+     "idf1": 0.6915629322268326,
+     "num_objects": 353,
+     "fp": 54,
+     "fn": 37,
+     "idsw": 15
+    },
+    "0008": {
+     "mota": -0.675,
+     "idf1": 0.37344398340248963,
+     "num_objects": 80,
+     "fp": 105,
+     "fn": 24,
+     "idsw": 5
+    },
+    "0010": {
+     "mota": 0.6935483870967742,
+     "idf1": 0.7978142076502732,
+     "num_objects": 310,
+     "fp": 9,
+     "fn": 80,
+     "idsw": 6
+    },
+    "0012": {
+     "mota": 0.16167664670658688,
+     "idf1": 0.35390946502057613,
+     "num_objects": 167,
+     "fp": 23,
+     "fn": 114,
+     "idsw": 3
+    },
+    "0016": {
+     "mota": 0.37872340425531914,
+     "idf1": 0.5817601701675087,
+     "num_objects": 2115,
+     "fp": 408,
+     "fn": 877,
+     "idsw": 29
+    }
+   },
+   "variant": "A7_greedy",
+   "emission_E": 0
+  },
+  "S*_E30(shipped iou2d)": {
+   "pooled": {
+    "mota": -0.894065934065934,
+    "idf1": 0.34780334728033474,
+    "precision": 0.3194677089149451,
+    "recall": 0.7545054945054945,
+    "num_objects": 4550,
+    "num_false_positives": 7313,
+    "num_misses": 1117,
+    "num_switches": 188,
+    "num_fragmentations": 126,
+    "idsw_rate": 0.04131868131868132,
+    "motp": 0.2522256990033684
+   },
+   "vehicle": {
+    "mota": -1.1091476091476093,
+    "idf1": 0.34784287230962263,
+    "precision": 0.29391304347826086,
+    "recall": 0.7612612612612613,
+    "num_objects": 2886,
+    "num_false_positives": 5278,
+    "num_misses": 689,
+    "num_switches": 120,
+    "num_fragmentations": 58,
+    "idsw_rate": 0.04158004158004158,
+    "motp": 0.2232094043690138
+   },
+   "person": {
+    "mota": -0.5210336538461537,
+    "idf1": 0.34772036474164136,
+    "precision": 0.3778660959951085,
+    "recall": 0.7427884615384616,
+    "num_objects": 1664,
+    "num_false_positives": 2035,
+    "num_misses": 428,
+    "num_switches": 68,
+    "num_fragmentations": 68,
+    "idsw_rate": 0.040865384615384616,
+    "motp": 0.30380239747559906
+   },
+   "mean_iou_of_matches": 0.7477743009966316,
+   "per_sequence": {
+    "0001": {
+     "mota": -2.2137518684603887,
+     "idf1": 0.3179791976225854,
+     "num_objects": 669,
+     "fp": 2067,
+     "fn": 40,
+     "idsw": 43
+    },
+    "0002": {
+     "mota": -1.2866379310344827,
+     "idf1": 0.2972498537156232,
+     "num_objects": 464,
+     "fp": 915,
+     "fn": 134,
+     "idsw": 12
+    },
+    "0004": {
+     "mota": -1.7346938775510203,
+     "idf1": 0.2424969987995198,
+     "num_objects": 392,
+     "fp": 956,
+     "fn": 74,
+     "idsw": 42
+    },
+    "0007": {
+     "mota": -0.9886685552407932,
+     "idf1": 0.44776119402985076,
+     "num_objects": 353,
+     "fp": 663,
+     "fn": 29,
+     "idsw": 10
+    },
+    "0008": {
+     "mota": -12.4375,
+     "idf1": 0.08453085376162299,
+     "num_objects": 80,
+     "fp": 1046,
+     "fn": 23,
+     "idsw": 6
+    },
+    "0010": {
+     "mota": 0.12580645161290327,
+     "idf1": 0.6124137931034482,
+     "num_objects": 310,
+     "fp": 186,
+     "fn": 81,
+     "idsw": 4
+    },
+    "0012": {
+     "mota": -0.2574850299401197,
+     "idf1": 0.3352272727272727,
+     "num_objects": 167,
+     "fp": 113,
+     "fn": 95,
+     "idsw": 2
+    },
+    "0016": {
+     "mota": 0.017966903073286078,
+     "idf1": 0.4188861985472155,
+     "num_objects": 2115,
+     "fp": 1367,
+     "fn": 641,
+     "idsw": 69
+    }
+   },
+   "variant": "A5_plain_iou",
+   "emission_E": 30
+  },
+  "F_E30(shipped fused)": {
+   "pooled": {
+    "mota": -0.6982417582417582,
+    "idf1": 0.3968386023294509,
+    "precision": 0.3460603605428398,
+    "recall": 0.7509890109890109,
+    "num_objects": 4550,
+    "num_false_positives": 6457,
+    "num_misses": 1133,
+    "num_switches": 137,
+    "num_fragmentations": 119,
+    "idsw_rate": 0.03010989010989011,
+    "motp": 0.2433859462692406
+   },
+   "vehicle": {
+    "mota": -0.9906444906444907,
+    "idf1": 0.36993877147936005,
+    "precision": 0.30939226519337015,
+    "recall": 0.7761607761607762,
+    "num_objects": 2886,
+    "num_false_positives": 5000,
+    "num_misses": 646,
+    "num_switches": 99,
+    "num_fragmentations": 41,
+    "idsw_rate": 0.034303534303534305,
+    "motp": 0.2160891271693636
+   },
+   "person": {
+    "mota": -0.19110576923076916,
+    "idf1": 0.4602140530479293,
+    "precision": 0.44684889901290814,
+    "recall": 0.7073317307692307,
+    "num_objects": 1664,
+    "num_false_positives": 1457,
+    "num_misses": 487,
+    "num_switches": 38,
+    "num_fragmentations": 78,
+    "idsw_rate": 0.02283653846153846,
+    "motp": 0.2953357124406293
+   },
+   "mean_iou_of_matches": 0.7566140537307594,
+   "per_sequence": {
+    "0001": {
+     "mota": -1.71898355754858,
+     "idf1": 0.35251561986188756,
+     "num_objects": 669,
+     "fp": 1750,
+     "fn": 47,
+     "idsw": 22
+    },
+    "0002": {
+     "mota": -1.2155172413793105,
+     "idf1": 0.31659775546367397,
+     "num_objects": 464,
+     "fp": 885,
+     "fn": 120,
+     "idsw": 23
+    },
+    "0004": {
+     "mota": -1.6632653061224492,
+     "idf1": 0.2557726465364121,
+     "num_objects": 392,
+     "fp": 958,
+     "fn": 53,
+     "idsw": 33
+    },
+    "0007": {
+     "mota": -1.048158640226629,
+     "idf1": 0.39855072463768115,
+     "num_objects": 353,
+     "fp": 693,
+     "fn": 19,
+     "idsw": 11
+    },
+    "0008": {
+     "mota": -9.975,
+     "idf1": 0.09504550050556117,
+     "num_objects": 80,
+     "fp": 852,
+     "fn": 23,
+     "idsw": 3
+    },
+    "0010": {
+     "mota": -0.26774193548387104,
+     "idf1": 0.5263157894736842,
+     "num_objects": 310,
+     "fp": 311,
+     "fn": 76,
+     "idsw": 6
+    },
+    "0012": {
+     "mota": -0.27544910179640714,
+     "idf1": 0.40217391304347827,
+     "num_objects": 167,
+     "fp": 123,
+     "fn": 89,
+     "idsw": 1
+    },
+    "0016": {
+     "mota": 0.2297872340425532,
+     "idf1": 0.5538670900430936,
+     "num_objects": 2115,
+     "fp": 885,
+     "fn": 706,
+     "idsw": 38
+    }
+   },
+   "variant": "F_fused",
+   "emission_E": 30
+  },
+  "A4_E30(shipped mahalanobis3d)": {
+   "pooled": {
+    "mota": -1.381098901098901,
+    "idf1": 0.3005948909366616,
+    "precision": 0.26103524928548744,
+    "recall": 0.7226373626373627,
+    "num_objects": 4550,
+    "num_false_positives": 9308,
+    "num_misses": 1262,
+    "num_switches": 264,
+    "num_fragmentations": 158,
+    "idsw_rate": 0.058021978021978025,
+    "motp": 0.2512431256314674
+   },
+   "vehicle": {
+    "mota": -2.042619542619543,
+    "idf1": 0.24266083697688945,
+    "precision": 0.21376738560774036,
+    "recall": 0.7349272349272349,
+    "num_objects": 2886,
+    "num_false_positives": 7801,
+    "num_misses": 765,
+    "num_switches": 215,
+    "num_fragmentations": 72,
+    "idsw_rate": 0.07449757449757449,
+    "motp": 0.22812259807907073
+   },
+   "person": {
+    "mota": -0.23377403846153855,
+    "idf1": 0.47164591977869985,
+    "precision": 0.43642483171278984,
+    "recall": 0.7013221153846154,
+    "num_objects": 1664,
+    "num_false_positives": 1507,
+    "num_misses": 497,
+    "num_switches": 49,
+    "num_fragmentations": 86,
+    "idsw_rate": 0.029447115384615384,
+    "motp": 0.29326423868942225
+   },
+   "mean_iou_of_matches": 0.7487568743685327,
+   "per_sequence": {
+    "0001": {
+     "mota": -2.7698056801195814,
+     "idf1": 0.2269272529858849,
+     "num_objects": 669,
+     "fp": 2408,
+     "fn": 62,
+     "idsw": 52
+    },
+    "0002": {
+     "mota": -1.5452586206896552,
+     "idf1": 0.2572207084468665,
+     "num_objects": 464,
+     "fp": 1024,
+     "fn": 117,
+     "idsw": 40
+    },
+    "0004": {
+     "mota": -3.571428571428571,
+     "idf1": 0.11879507848960542,
+     "num_objects": 392,
+     "fp": 1651,
+     "fn": 78,
+     "idsw": 63
+    },
+    "0007": {
+     "mota": -2.26628895184136,
+     "idf1": 0.29971830985915493,
+     "num_objects": 353,
+     "fp": 1102,
+     "fn": 33,
+     "idsw": 18
+    },
+    "0008": {
+     "mota": -17.4,
+     "idf1": 0.01568627450980392,
+     "num_objects": 80,
+     "fp": 1410,
+     "fn": 40,
+     "idsw": 22
+    },
+    "0010": {
+     "mota": -1.6,
+     "idf1": 0.28498727735368956,
+     "num_objects": 310,
+     "fp": 673,
+     "fn": 114,
+     "idsw": 19
+    },
+    "0012": {
+     "mota": -0.08982035928143706,
+     "idf1": 0.41420118343195267,
+     "num_objects": 167,
+     "fp": 92,
+     "fn": 88,
+     "idsw": 2
+    },
+    "0016": {
+     "mota": 0.18392434988179673,
+     "idf1": 0.5696942446043165,
+     "num_objects": 2115,
+     "fp": 948,
+     "fn": 730,
+     "idsw": 48
+    }
+   },
+   "variant": "A4_plain_mahalanobis",
+   "emission_E": 30
+  },
+  "SORT": {
+   "pooled": {
+    "mota": 0.5507692307692308,
+    "idf1": 0.6238647830474269,
+    "precision": 0.8798105387803434,
+    "recall": 0.6531868131868132,
+    "num_objects": 4550,
+    "num_false_positives": 406,
+    "num_misses": 1578,
+    "num_switches": 60,
+    "num_fragmentations": 112,
+    "idsw_rate": 0.013186813186813187,
+    "motp": 0.26412975639287967
+   },
+   "vehicle": {
+    "mota": 0.56999306999307,
+    "idf1": 0.6504739336492891,
+    "precision": 0.8852157943067034,
+    "recall": 0.668052668052668,
+    "num_objects": 2886,
+    "num_false_positives": 250,
+    "num_misses": 958,
+    "num_switches": 33,
+    "num_fragmentations": 52,
+    "idsw_rate": 0.011434511434511435,
+    "motp": 0.25579928548779923
+   },
+   "person": {
+    "mota": 0.5174278846153846,
+    "idf1": 0.5768156424581006,
+    "precision": 0.87,
+    "recall": 0.6274038461538461,
+    "num_objects": 1664,
+    "num_false_positives": 156,
+    "num_misses": 620,
+    "num_switches": 27,
+    "num_fragmentations": 60,
+    "idsw_rate": 0.01622596153846154,
+    "motp": 0.2795139976811891
+   },
+   "mean_iou_of_matches": 0.7358702436071203,
+   "per_sequence": {
+    "0001": {
+     "mota": 0.8579970104633782,
+     "idf1": 0.90727969348659,
+     "num_objects": 669,
+     "fp": 30,
+     "fn": 63,
+     "idsw": 2
+    },
+    "0002": {
+     "mota": 0.5818965517241379,
+     "idf1": 0.6422250316055625,
+     "num_objects": 464,
+     "fp": 24,
+     "fn": 161,
+     "idsw": 9
+    },
+    "0004": {
+     "mota": 0.6887755102040816,
+     "idf1": 0.5801749271137027,
+     "num_objects": 392,
+     "fp": 9,
+     "fn": 107,
+     "idsw": 6
+    },
+    "0007": {
+     "mota": 0.6968838526912181,
+     "idf1": 0.7895545314900153,
+     "num_objects": 353,
+     "fp": 24,
+     "fn": 79,
+     "idsw": 4
+    },
+    "0008": {
+     "mota": 0.5375,
+     "idf1": 0.7131782945736435,
+     "num_objects": 80,
+     "fp": 3,
+     "fn": 34,
+     "idsw": 0
+    },
+    "0010": {
+     "mota": 0.6967741935483871,
+     "idf1": 0.8178438661710037,
+     "num_objects": 310,
+     "fp": 5,
+     "fn": 87,
+     "idsw": 2
+    },
+    "0012": {
+     "mota": 0.17365269461077848,
+     "idf1": 0.25217391304347825,
+     "num_objects": 167,
+     "fp": 15,
+     "fn": 119,
+     "idsw": 4
+    },
+    "0016": {
+     "mota": 0.40567375886524826,
+     "idf1": 0.4869371873262924,
+     "num_objects": 2115,
+     "fp": 296,
+     "fn": 928,
+     "idsw": 33
+    }
+   },
+   "variant": "SORT(score>=0.25)",
+   "emission_E": 0
+  }
+ },
+ "legacy": {
+  "mahalanobis3d": {
+   "as_shipped_all_confirmed": {
+    "num_objects": 7114,
+    "num_misses": 2891,
+    "num_false_positives": 13391,
+    "num_switches": 257,
+    "num_fragmentations": 141,
+    "mota": -1.3248524037109926,
+    "motp": 0.8909877502115794,
+    "idf1": 0.27911679068262696,
+    "precision": 0.2397524696264335,
+    "recall": 0.5936182175991004,
+    "per_sequence": {
+     "0001": {
+      "mota": -2.1994069681245367,
+      "idf1": 0.1985220020154518,
+      "num_false_positives": 3750,
+      "num_misses": 494,
+      "num_switches": 72,
+      "num_objects": 1349
+     },
+     "0002": {
+      "mota": -1.8682505399568035,
+      "idf1": 0.12650416538105522,
+      "num_false_positives": 2015,
+      "num_misses": 626,
+      "num_switches": 15,
+      "num_objects": 926
+     },
+     "0004": {
+      "mota": -3.0486111111111107,
+      "idf1": 0.10273972602739725,
+      "num_false_positives": 2014,
+      "num_misses": 246,
+      "num_switches": 72,
+      "num_objects": 576
+     },
+     "0007": {
+      "mota": -1.3144104803493448,
+      "idf1": 0.2912698412698413,
+      "num_false_positives": 1351,
+      "num_misses": 205,
+      "num_switches": 34,
+      "num_objects": 687
+     },
+     "0008": {
+      "mota": -5.9222222222222225,
+      "idf1": 0.02380038387715931,
+      "num_false_positives": 2170,
+      "num_misses": 285,
+      "num_switches": 37,
+      "num_objects": 360
+     },
+     "0010": {
+      "mota": -1.7404426559356136,
+      "idf1": 0.18790369935408102,
+      "num_false_positives": 1028,
+      "num_misses": 319,
+      "num_switches": 15,
+      "num_objects": 497
+     },
+     "0012": {
+      "mota": -1.0160642570281126,
+      "idf1": 0.27520435967302453,
+      "num_false_positives": 368,
+      "num_misses": 132,
+      "num_switches": 2,
+      "num_objects": 249
+     },
+     "0016": {
+      "mota": 0.4781376518218623,
+      "idf1": 0.7309443674519897,
+      "num_false_positives": 695,
+      "num_misses": 584,
+      "num_switches": 10,
+      "num_objects": 2470
+     }
+    }
+   },
+   "updated_tracks_only": {
+    "num_objects": 7114,
+    "num_misses": 3508,
+    "num_false_positives": 1189,
+    "num_switches": 296,
+    "mota": 0.2981445037953332,
+    "idf1": 0.4876983793769418,
+    "precision": 0.7520333680917622,
+    "recall": 0.5068878268203543
+   }
+  },
+  "iou2d": {
+   "as_shipped_all_confirmed": {
+    "num_objects": 7114,
+    "num_misses": 2915,
+    "num_false_positives": 10187,
+    "num_switches": 154,
+    "num_fragmentations": 88,
+    "mota": -0.8633680067472589,
+    "motp": 0.8949600022727776,
+    "idf1": 0.31888372093023254,
+    "precision": 0.2918809954122063,
+    "recall": 0.5902445881360697,
+    "per_sequence": {
+     "0001": {
+      "mota": -1.3661971830985915,
+      "idf1": 0.31367731367731366,
+      "num_false_positives": 2673,
+      "num_misses": 487,
+      "num_switches": 32,
+      "num_objects": 1349
+     },
+     "0002": {
+      "mota": -1.3369330453563717,
+      "idf1": 0.1782608695652174,
+      "num_false_positives": 1526,
+      "num_misses": 618,
+      "num_switches": 20,
+      "num_objects": 926
+     },
+     "0004": {
+      "mota": -2.3854166666666665,
+      "idf1": 0.15556441962504985,
+      "num_false_positives": 1632,
+      "num_misses": 277,
+      "num_switches": 41,
+      "num_objects": 576
+     },
+     "0007": {
+      "mota": -0.9767103347889374,
+      "idf1": 0.31647940074906367,
+      "num_false_positives": 1052,
+      "num_misses": 290,
+      "num_switches": 16,
+      "num_objects": 687
+     },
+     "0008": {
+      "mota": -3.675,
+      "idf1": 0.07447973713033954,
+      "num_false_positives": 1391,
+      "num_misses": 285,
+      "num_switches": 7,
+      "num_objects": 360
+     },
+     "0010": {
+      "mota": -0.41649899396378265,
+      "idf1": 0.37089618456078083,
+      "num_false_positives": 418,
+      "num_misses": 285,
+      "num_switches": 1,
+      "num_objects": 497
+     },
+     "0012": {
+      "mota": -1.0481927710843375,
+      "idf1": 0.18345864661654135,
+      "num_false_positives": 338,
+      "num_misses": 171,
+      "num_switches": 1,
+      "num_objects": 249
+     },
+     "0016": {
+      "mota": 0.31376518218623484,
+      "idf1": 0.5522788203753352,
+      "num_false_positives": 1157,
+      "num_misses": 502,
+      "num_switches": 36,
+      "num_objects": 2470
+     }
+    }
+   },
+   "updated_tracks_only": {
+    "num_objects": 7114,
+    "num_misses": 3803,
+    "num_false_positives": 1559,
+    "num_switches": 217,
+    "mota": 0.2157717177396683,
+    "idf1": 0.44292389853137515,
+    "precision": 0.679876796714579,
+    "recall": 0.4654202980039359
+   }
+  },
+  "fused": {
+   "as_shipped_all_confirmed": {
+    "num_objects": 7114,
+    "num_misses": 3044,
+    "num_false_positives": 9419,
+    "num_switches": 119,
+    "num_fragmentations": 95,
+    "mota": -0.768625245993815,
+    "motp": 0.9346330676270218,
+    "idf1": 0.3528612338009028,
+    "precision": 0.3017273333827563,
+    "recall": 0.57211132977228,
+    "per_sequence": {
+     "0001": {
+      "mota": -1.2201630837657524,
+      "idf1": 0.29771328056288476,
+      "num_false_positives": 2406,
+      "num_misses": 556,
+      "num_switches": 33,
+      "num_objects": 1349
+     },
+     "0002": {
+      "mota": -1.4503239740820733,
+      "idf1": 0.18382861091914304,
+      "num_false_positives": 1649,
+      "num_misses": 607,
+      "num_switches": 13,
+      "num_objects": 926
+     },
+     "0004": {
+      "mota": -2.0347222222222223,
+      "idf1": 0.16924398625429554,
+      "num_false_positives": 1445,
+      "num_misses": 269,
+      "num_switches": 34,
+      "num_objects": 576
+     },
+     "0007": {
+      "mota": -0.9810771470160116,
+      "idf1": 0.3014842300556586,
+      "num_false_positives": 1062,
+      "num_misses": 280,
+      "num_switches": 19,
+      "num_objects": 687
+     },
+     "0008": {
+      "mota": -3.572222222222222,
+      "idf1": 0.06655386350817823,
+      "num_false_positives": 1346,
+      "num_misses": 293,
+      "num_switches": 7,
+      "num_objects": 360
+     },
+     "0010": {
+      "mota": -0.6820925553319919,
+      "idf1": 0.32986389111289033,
+      "num_false_positives": 545,
+      "num_misses": 290,
+      "num_switches": 1,
+      "num_objects": 497
+     },
+     "0012": {
+      "mota": -0.6586345381526104,
+      "idf1": 0.31962025316455694,
+      "num_false_positives": 273,
+      "num_misses": 139,
+      "num_switches": 1,
+      "num_objects": 249
+     },
+     "0016": {
+      "mota": 0.4680161943319838,
+      "idf1": 0.7182958391399562,
+      "num_false_positives": 693,
+      "num_misses": 610,
+      "num_switches": 11,
+      "num_objects": 2470
+     }
+    }
+   },
+   "updated_tracks_only": {
+    "num_objects": 7114,
+    "num_misses": 3593,
+    "num_false_positives": 1653,
+    "num_switches": 135,
+    "mota": 0.24360416080967107,
+    "idf1": 0.5071614583333334,
+    "precision": 0.6805179744878237,
+    "recall": 0.494939555805454
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "metric": "mota",
+   "diff": -0.05868131868131865,
+   "lo": -0.13008066935863874,
+   "hi": -0.02399894594822502,
+   "excludes_zero": true,
+   "wins_a": 1,
+   "wins_b": 7,
+   "n_seq": 8,
+   "a": "S*",
+   "b": "SORT",
+   "why": "dev-selected system vs the depth-free baseline (TR-5)"
+  },
+  {
+   "metric": "idf1",
+   "diff": -0.07046789635743045,
+   "lo": -0.14120414665320616,
+   "hi": -0.02829050424140074,
+   "excludes_zero": true,
+   "wins_a": 1,
+   "wins_b": 7,
+   "n_seq": 8,
+   "a": "S*",
+   "b": "SORT",
+   "why": "dev-selected system vs the depth-free baseline (TR-5)"
+  },
+  {
+   "metric": "mota",
+   "diff": -0.05384615384615388,
+   "lo": -0.1553233006912443,
+   "hi": -0.014428539635297912,
+   "excludes_zero": true,
+   "wins_a": 2,
+   "wins_b": 5,
+   "n_seq": 8,
+   "a": "F",
+   "b": "SORT",
+   "why": "fused system vs the baseline"
+  },
+  {
+   "metric": "idf1",
+   "diff": -0.006577924827926185,
+   "lo": -0.11513141154099515,
+   "hi": 0.05787644796277994,
+   "excludes_zero": false,
+   "wins_a": 2,
+   "wins_b": 6,
+   "n_seq": 8,
+   "a": "F",
+   "b": "SORT",
+   "why": "fused system vs the baseline"
+  },
+  {
+   "metric": "mota",
+   "diff": -0.11560439560439562,
+   "lo": -0.2948977932803578,
+   "hi": -0.06910678777829579,
+   "excludes_zero": true,
+   "wins_a": 1,
+   "wins_b": 7,
+   "n_seq": 8,
+   "a": "A4_plain_mahalanobis",
+   "b": "SORT",
+   "why": "3D Mahalanobis vs the baseline"
+  },
+  {
+   "metric": "idf1",
+   "diff": -0.0671438668328398,
+   "lo": -0.2708675319923681,
+   "hi": 0.055675081237311845,
+   "excludes_zero": false,
+   "wins_a": 2,
+   "wins_b": 6,
+   "n_seq": 8,
+   "a": "A4_plain_mahalanobis",
+   "b": "SORT",
+   "why": "3D Mahalanobis vs the baseline"
+  },
+  {
+   "metric": "mota",
+   "diff": 0.004835164835164774,
+   "lo": -0.03630935885994339,
+   "hi": 0.02688452508264507,
+   "excludes_zero": false,
+   "wins_a": 5,
+   "wins_b": 3,
+   "n_seq": 8,
+   "a": "F",
+   "b": "S*",
+   "why": "fusion of 3D+IoU+appearance vs the selected plain IoU"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.06388997152950426,
+   "lo": -0.020330873559998956,
+   "hi": 0.10458287626660144,
+   "excludes_zero": false,
+   "wins_a": 6,
+   "wins_b": 2,
+   "n_seq": 8,
+   "a": "F",
+   "b": "S*",
+   "why": "fusion of 3D+IoU+appearance vs the selected plain IoU"
+  },
+  {
+   "metric": "mota",
+   "diff": 0.002417582417582387,
+   "lo": -0.001442319217928578,
+   "hi": 0.006837070005407345,
+   "excludes_zero": false,
+   "wins_a": 4,
+   "wins_b": 2,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A1_no_appearance",
+   "why": "appearance cue"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.001992879192753927,
+   "lo": -0.004569144655718294,
+   "hi": 0.006349001462177304,
+   "excludes_zero": false,
+   "wins_a": 3,
+   "wins_b": 3,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A1_no_appearance",
+   "why": "appearance cue"
+  },
+  {
+   "metric": "mota",
+   "diff": 0.009670329670329658,
+   "lo": 0.0006757104973308842,
+   "hi": 0.024673373055733427,
+   "excludes_zero": true,
+   "wins_a": 5,
+   "wins_b": 1,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A2_no_iou_cost",
+   "why": "IoU term of the fused cost"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.00037847477415231534,
+   "lo": -0.030363667835611497,
+   "hi": 0.05365769257162734,
+   "excludes_zero": false,
+   "wins_a": 3,
+   "wins_b": 4,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A2_no_iou_cost",
+   "why": "IoU term of the fused cost"
+  },
+  {
+   "metric": "mota",
+   "diff": -0.0017582417582417964,
+   "lo": -0.01286880918260292,
+   "hi": 0.008395689653012016,
+   "excludes_zero": false,
+   "wins_a": 4,
+   "wins_b": 3,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A3_no_3d_cost",
+   "why": "3D term of the fused cost"
+  },
+  {
+   "metric": "idf1",
+   "diff": -0.0068149205530284584,
+   "lo": -0.08060217344199672,
+   "hi": 0.03757030929888774,
+   "excludes_zero": false,
+   "wins_a": 3,
+   "wins_b": 5,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A3_no_3d_cost",
+   "why": "3D term of the fused cost"
+  },
+  {
+   "metric": "mota",
+   "diff": 0.002417582417582387,
+   "lo": -0.0013998364734009838,
+   "hi": 0.009806285935262778,
+   "excludes_zero": false,
+   "wins_a": 4,
+   "wins_b": 2,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A7_greedy",
+   "why": "Hungarian vs greedy assignment"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.005099801063147336,
+   "lo": -0.00799659311588224,
+   "hi": 0.031956720682026034,
+   "excludes_zero": false,
+   "wins_a": 4,
+   "wins_b": 3,
+   "n_seq": 8,
+   "a": "F",
+   "b": "A7_greedy",
+   "why": "Hungarian vs greedy assignment"
+  },
+  {
+   "metric": "mota",
+   "diff": -0.056923076923076965,
+   "lo": -0.1718816881652013,
+   "hi": -0.024525948547801865,
+   "excludes_zero": true,
+   "wins_a": 0,
+   "wins_b": 8,
+   "n_seq": 8,
+   "a": "A4_plain_mahalanobis",
+   "b": "S*",
+   "why": "3D Mahalanobis vs 2D IoU association"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.003324029524590655,
+   "lo": -0.15889012849862308,
+   "hi": 0.0965736783943615,
+   "excludes_zero": false,
+   "wins_a": 2,
+   "wins_b": 6,
+   "n_seq": 8,
+   "a": "A4_plain_mahalanobis",
+   "b": "S*",
+   "why": "3D Mahalanobis vs 2D IoU association"
+  },
+  {
+   "metric": "mota",
+   "diff": 1.3861538461538463,
+   "lo": 0.6662717136409256,
+   "hi": 3.0684765620226564,
+   "excludes_zero": true,
+   "wins_a": 8,
+   "wins_b": 0,
+   "n_seq": 8,
+   "a": "S*",
+   "b": "S*_E30(shipped iou2d)",
+   "why": "emission E=0 vs shipped E=30"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.20559353940966169,
+   "lo": 0.09083076542767192,
+   "hi": 0.361873839882953,
+   "excludes_zero": true,
+   "wins_a": 7,
+   "wins_b": 1,
+   "n_seq": 8,
+   "a": "S*",
+   "b": "S*_E30(shipped iou2d)",
+   "why": "emission E=0 vs shipped E=30"
+  },
+  {
+   "metric": "mota",
+   "diff": 1.1951648351648352,
+   "lo": 0.5110226390763194,
+   "hi": 2.753789478884453,
+   "excludes_zero": true,
+   "wins_a": 8,
+   "wins_b": 0,
+   "n_seq": 8,
+   "a": "F",
+   "b": "F_E30(shipped fused)",
+   "why": "emission E=0 vs shipped E=30 (fused)"
+  },
+  {
+   "metric": "idf1",
+   "diff": 0.2204482558900498,
+   "lo": 0.10019123854896461,
+   "hi": 0.3696728117325931,
+   "excludes_zero": true,
+   "wins_a": 7,
+   "wins_b": 1,
+   "n_seq": 8,
+   "a": "F",
+   "b": "F_E30(shipped fused)",
+   "why": "emission E=0 vs shipped E=30 (fused)"
+  }
+ ],
+ "ci95_pooled": {
+  "S*": {
+   "mota": {
+    "metric": "mota",
+    "value": 0.49208791208791214,
+    "lo": 0.391220926637605,
+    "hi": 0.6453537175911969,
+    "n_seq": 8
+   },
+   "idf1": {
+    "metric": "idf1",
+    "value": 0.5533968866899964,
+    "lo": 0.47169630522906897,
+    "hi": 0.6850313553511228,
+    "n_seq": 8
+   }
+  },
+  "F": {
+   "mota": {
+    "metric": "mota",
+    "value": 0.4969230769230769,
+    "lo": 0.3784830696212756,
+    "hi": 0.6676658231811384,
+    "n_seq": 8
+   },
+   "idf1": {
+    "metric": "idf1",
+    "value": 0.6172868582195007,
+    "lo": 0.5607427427458681,
+    "hi": 0.7017898349475944,
+    "n_seq": 8
+   }
+  },
+  "SORT": {
+   "mota": {
+    "metric": "mota",
+    "value": 0.5507692307692308,
+    "lo": 0.43520605575472116,
+    "hi": 0.7410293656848588,
+    "n_seq": 8
+   },
+   "idf1": {
+    "metric": "idf1",
+    "value": 0.6238647830474269,
+    "lo": 0.5119081641202189,
+    "hi": 0.8052366565961732,
+    "n_seq": 8
+   }
+  }
+ }
+}

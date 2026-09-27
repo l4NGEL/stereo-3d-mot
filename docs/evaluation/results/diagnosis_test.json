@@ -1,0 +1,385 @@
+{
+ "kind": "test",
+ "sequences": [
+  "0001",
+  "0002",
+  "0004",
+  "0007",
+  "0008",
+  "0010",
+  "0012",
+  "0016"
+ ],
+ "legacy_variant": "A4_plain_mahalanobis",
+ "selected_variant": "A5_plain_iou",
+ "legacy_fp_breakdown": {
+  "total": 13418,
+  "categories": {
+   "ghost_coasting": 12066,
+   "two_wheeler_class": 43,
+   "in_dontcare": 229,
+   "on_ignored_or_neutral_label": 278,
+   "overlaps_valid_label_3d_gate_rejected": 440,
+   "too_small": 73,
+   "residual": 289
+  },
+  "shares": {
+   "ghost_coasting": 0.8992398270979282,
+   "two_wheeler_class": 0.003204650469518557,
+   "in_dontcare": 0.017066626919063944,
+   "on_ignored_or_neutral_label": 0.020718437919212997,
+   "overlaps_valid_label_3d_gate_rejected": 0.032791772246236396,
+   "too_small": 0.005440453122671039,
+   "residual": 0.02153823222536891
+  },
+  "per_sequence": {
+   "0001": {
+    "total_fp": 3777,
+    "ghost_coasting": 3460,
+    "two_wheeler_class": 0,
+    "in_dontcare": 136,
+    "on_ignored_or_neutral_label": 71,
+    "overlaps_valid_label_3d_gate_rejected": 72,
+    "too_small": 8,
+    "residual": 30
+   },
+   "0002": {
+    "total_fp": 2015,
+    "ghost_coasting": 1706,
+    "two_wheeler_class": 1,
+    "in_dontcare": 32,
+    "on_ignored_or_neutral_label": 52,
+    "overlaps_valid_label_3d_gate_rejected": 147,
+    "too_small": 29,
+    "residual": 48
+   },
+   "0004": {
+    "total_fp": 2014,
+    "ghost_coasting": 1905,
+    "two_wheeler_class": 0,
+    "in_dontcare": 5,
+    "on_ignored_or_neutral_label": 23,
+    "overlaps_valid_label_3d_gate_rejected": 63,
+    "too_small": 8,
+    "residual": 10
+   },
+   "0007": {
+    "total_fp": 1350,
+    "ghost_coasting": 1181,
+    "two_wheeler_class": 0,
+    "in_dontcare": 17,
+    "on_ignored_or_neutral_label": 47,
+    "overlaps_valid_label_3d_gate_rejected": 82,
+    "too_small": 6,
+    "residual": 17
+   },
+   "0008": {
+    "total_fp": 2170,
+    "ghost_coasting": 2005,
+    "two_wheeler_class": 0,
+    "in_dontcare": 11,
+    "on_ignored_or_neutral_label": 50,
+    "overlaps_valid_label_3d_gate_rejected": 8,
+    "too_small": 3,
+    "residual": 93
+   },
+   "0010": {
+    "total_fp": 1028,
+    "ghost_coasting": 970,
+    "two_wheeler_class": 0,
+    "in_dontcare": 0,
+    "on_ignored_or_neutral_label": 19,
+    "overlaps_valid_label_3d_gate_rejected": 26,
+    "too_small": 5,
+    "residual": 8
+   },
+   "0012": {
+    "total_fp": 368,
+    "ghost_coasting": 296,
+    "two_wheeler_class": 30,
+    "in_dontcare": 15,
+    "on_ignored_or_neutral_label": 15,
+    "overlaps_valid_label_3d_gate_rejected": 8,
+    "too_small": 0,
+    "residual": 4
+   },
+   "0016": {
+    "total_fp": 696,
+    "ghost_coasting": 543,
+    "two_wheeler_class": 12,
+    "in_dontcare": 13,
+    "on_ignored_or_neutral_label": 1,
+    "overlaps_valid_label_3d_gate_rejected": 34,
+    "too_small": 14,
+    "residual": 79
+   }
+  }
+ },
+ "H_ghost": {
+  "legacy_E30": {
+   "mota": -1.3287883047511948,
+   "idf1": 0.2788123611391638,
+   "num_objects": 7114,
+   "num_false_positives": 13418,
+   "num_misses": 2891,
+   "num_switches": 258,
+   "precision": 0.23938552236267785,
+   "recall": 0.5936182175991004
+  },
+  "legacy_E0": {
+   "mota": 0.2975822322181614,
+   "idf1": 0.4877844009738897,
+   "num_objects": 7114,
+   "num_false_positives": 1191,
+   "num_misses": 3508,
+   "num_switches": 298,
+   "precision": 0.7517198248905566,
+   "recall": 0.5068878268203543
+  },
+  "fp_drop_pct": 91.12386346698464
+ },
+ "H_scope": {
+  "E=30": {
+   "rules_on": {
+    "mota": -1.3881318681318682,
+    "idf1": 0.30001746318179173,
+    "num_objects": 4550,
+    "num_false_positives": 9341,
+    "num_misses": 1262,
+    "num_switches": 263,
+    "precision": 0.2603531554359015,
+    "recall": 0.7226373626373627
+   },
+   "rules_off": {
+    "mota": -1.470411082668273,
+    "idf1": 0.24585955614441868,
+    "num_objects": 6641,
+    "num_false_positives": 13446,
+    "num_misses": 2576,
+    "num_switches": 384,
+    "precision": 0.23213979784135685,
+    "recall": 0.6121066104502334
+   },
+   "fp_drop_pct": 30.529525509445186
+  },
+  "E=0": {
+   "rules_on": {
+    "mota": 0.4347252747252748,
+    "idf1": 0.5564798071127185,
+    "num_objects": 4550,
+    "num_false_positives": 731,
+    "num_misses": 1536,
+    "num_switches": 305,
+    "precision": 0.8048064085447263,
+    "recall": 0.6624175824175824
+   },
+   "rules_off": {
+    "mota": 0.306730914018973,
+    "idf1": 0.46042912416461484,
+    "num_objects": 6641,
+    "num_false_positives": 1126,
+    "num_misses": 3036,
+    "num_switches": 442,
+    "precision": 0.761995349820334,
+    "recall": 0.5428399337449179
+   },
+   "fp_drop_pct": 35.07992895204263
+  }
+ },
+ "H_bias": {
+  "n_pairs": 1960,
+  "median_signed_depth_err_m": 0.061083,
+  "mean_signed_depth_err_m": 0.34845649591836736,
+  "legacy_recall": {
+   "gate_2m": 0.5936182175991004,
+   "gate_4m": 0.6894855215068878
+  },
+  "recall_gain_points": 9.586730390778742
+ },
+ "K2D_fn_stages_selected_system": {
+  "total": 1439,
+  "by_stage": {
+   "below_score_threshold": 703,
+   "tracker_lost_or_unconfirmed": 347,
+   "poor_localization": 230,
+   "no_detection": 130,
+   "no_depth": 26,
+   "wrong_or_excluded_class": 3
+  },
+  "by_sequence": {
+   "0001": {
+    "below_score_threshold": 19,
+    "tracker_lost_or_unconfirmed": 13,
+    "poor_localization": 9,
+    "no_depth": 5,
+    "no_detection": 1
+   },
+   "0002": {
+    "below_score_threshold": 83,
+    "tracker_lost_or_unconfirmed": 24,
+    "poor_localization": 21,
+    "no_detection": 11,
+    "no_depth": 6,
+    "wrong_or_excluded_class": 1
+   },
+   "0004": {
+    "tracker_lost_or_unconfirmed": 50,
+    "below_score_threshold": 19,
+    "poor_localization": 14,
+    "no_depth": 1
+   },
+   "0007": {
+    "tracker_lost_or_unconfirmed": 23,
+    "below_score_threshold": 15,
+    "poor_localization": 7,
+    "no_depth": 2
+   },
+   "0008": {
+    "below_score_threshold": 16,
+    "tracker_lost_or_unconfirmed": 5,
+    "no_detection": 5
+   },
+   "0010": {
+    "below_score_threshold": 42,
+    "tracker_lost_or_unconfirmed": 25,
+    "no_detection": 15,
+    "poor_localization": 7
+   },
+   "0012": {
+    "below_score_threshold": 85,
+    "no_detection": 14,
+    "tracker_lost_or_unconfirmed": 8,
+    "poor_localization": 8
+   },
+   "0016": {
+    "below_score_threshold": 424,
+    "tracker_lost_or_unconfirmed": 199,
+    "poor_localization": 164,
+    "no_detection": 84,
+    "no_depth": 12,
+    "wrong_or_excluded_class": 2
+   }
+  },
+  "no_depth_left_margin": 25,
+  "no_depth_total": 26
+ },
+ "legacy_fn_breakdown": {
+  "total": 2891,
+  "by_category": {
+   "fails_moderate_filter": 1380,
+   "evaluable": 1218,
+   "not_evaluated_type": 293
+  },
+  "by_category_reason": {
+   "evaluable/3d_gate_rejected": 396,
+   "evaluable/below_score_threshold": 463,
+   "evaluable/no_depth": 13,
+   "evaluable/no_detection": 79,
+   "evaluable/poor_localization": 77,
+   "evaluable/tracker_lost_or_unconfirmed": 189,
+   "evaluable/wrong_or_excluded_class": 1,
+   "fails_moderate_filter/occluded=2": 459,
+   "fails_moderate_filter/occluded=3": 84,
+   "fails_moderate_filter/small(<25px)": 760,
+   "fails_moderate_filter/truncated>0.3": 77,
+   "not_evaluated_type/Cyclist": 180,
+   "not_evaluated_type/Misc": 64,
+   "not_evaluated_type/Tram": 49
+  },
+  "by_sequence": {
+   "0001": {
+    "evaluable/3d_gate_rejected": 80,
+    "evaluable/below_score_threshold": 16,
+    "evaluable/no_depth": 4,
+    "evaluable/no_detection": 1,
+    "evaluable/poor_localization": 6,
+    "evaluable/tracker_lost_or_unconfirmed": 12,
+    "fails_moderate_filter/occluded=2": 269,
+    "fails_moderate_filter/occluded=3": 41,
+    "fails_moderate_filter/small(<25px)": 46,
+    "fails_moderate_filter/truncated>0.3": 15,
+    "not_evaluated_type/Misc": 3
+   },
+   "0002": {
+    "evaluable/3d_gate_rejected": 115,
+    "evaluable/below_score_threshold": 68,
+    "evaluable/no_depth": 6,
+    "evaluable/no_detection": 7,
+    "evaluable/poor_localization": 13,
+    "evaluable/tracker_lost_or_unconfirmed": 18,
+    "evaluable/wrong_or_excluded_class": 1,
+    "fails_moderate_filter/occluded=2": 8,
+    "fails_moderate_filter/small(<25px)": 309,
+    "fails_moderate_filter/truncated>0.3": 16,
+    "not_evaluated_type/Cyclist": 52,
+    "not_evaluated_type/Misc": 13
+   },
+   "0004": {
+    "evaluable/3d_gate_rejected": 37,
+    "evaluable/below_score_threshold": 13,
+    "evaluable/no_depth": 1,
+    "evaluable/poor_localization": 9,
+    "evaluable/tracker_lost_or_unconfirmed": 42,
+    "fails_moderate_filter/occluded=2": 38,
+    "fails_moderate_filter/occluded=3": 3,
+    "fails_moderate_filter/small(<25px)": 30,
+    "fails_moderate_filter/truncated>0.3": 18,
+    "not_evaluated_type/Cyclist": 6,
+    "not_evaluated_type/Tram": 49
+   },
+   "0007": {
+    "evaluable/3d_gate_rejected": 31,
+    "evaluable/below_score_threshold": 12,
+    "evaluable/no_depth": 2,
+    "evaluable/poor_localization": 3,
+    "evaluable/tracker_lost_or_unconfirmed": 19,
+    "fails_moderate_filter/occluded=2": 66,
+    "fails_moderate_filter/small(<25px)": 45,
+    "fails_moderate_filter/truncated>0.3": 5,
+    "not_evaluated_type/Misc": 23
+   },
+   "0008": {
+    "evaluable/3d_gate_rejected": 8,
+    "evaluable/below_score_threshold": 10,
+    "evaluable/no_detection": 3,
+    "evaluable/tracker_lost_or_unconfirmed": 21,
+    "fails_moderate_filter/occluded=2": 5,
+    "fails_moderate_filter/occluded=3": 39,
+    "fails_moderate_filter/small(<25px)": 195,
+    "fails_moderate_filter/truncated>0.3": 2,
+    "not_evaluated_type/Misc": 2
+   },
+   "0010": {
+    "evaluable/3d_gate_rejected": 26,
+    "evaluable/below_score_threshold": 41,
+    "evaluable/no_detection": 15,
+    "evaluable/poor_localization": 7,
+    "evaluable/tracker_lost_or_unconfirmed": 52,
+    "fails_moderate_filter/occluded=2": 6,
+    "fails_moderate_filter/occluded=3": 1,
+    "fails_moderate_filter/small(<25px)": 113,
+    "fails_moderate_filter/truncated>0.3": 21,
+    "not_evaluated_type/Cyclist": 14,
+    "not_evaluated_type/Misc": 23
+   },
+   "0012": {
+    "evaluable/3d_gate_rejected": 8,
+    "evaluable/below_score_threshold": 72,
+    "evaluable/no_detection": 14,
+    "evaluable/tracker_lost_or_unconfirmed": 6,
+    "fails_moderate_filter/occluded=2": 8,
+    "fails_moderate_filter/small(<25px)": 22,
+    "not_evaluated_type/Cyclist": 2
+   },
+   "0016": {
+    "evaluable/3d_gate_rejected": 91,
+    "evaluable/below_score_threshold": 231,
+    "evaluable/no_detection": 39,
+    "evaluable/poor_localization": 39,
+    "evaluable/tracker_lost_or_unconfirmed": 19,
+    "fails_moderate_filter/occluded=2": 59,
+    "not_evaluated_type/Cyclist": 106
+   }
+  }
+ }
+}

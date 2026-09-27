@@ -115,8 +115,12 @@ int main(int argc, char** argv) {
     std::vector<double> scales;
 
     int frame_index = 0;
-    while (const auto frame = source->next()) {
-        if (max_frames > 0 && frame_index >= max_frames)
+    // The limit is checked *before* next(): reading one frame past --frames would
+    // throw on a partially downloaded sequence (times.txt/poses cover the whole
+    // sequence, the image folders only its first N frames).
+    while (max_frames <= 0 || frame_index < max_frames) {
+        const auto frame = source->next();
+        if (!frame)
             break;
 
         const VoFrameResult r = vo.processFrame(frame->left, frame->right);

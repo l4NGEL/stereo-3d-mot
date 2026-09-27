@@ -1,0 +1,1 @@
+{"files_compared": 24, "files_different": 0, "command": "scripts/eval/run_all.sh --score-only", "wall_time_s": 530, "note": "results/ backed up, the whole Python scoring stage re-run from the dumps, diff -r reported no difference"}

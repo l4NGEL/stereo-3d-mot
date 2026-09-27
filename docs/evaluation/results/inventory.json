@@ -1,0 +1,108 @@
+{
+ "git_head": "e8f6613d626c700bb3e6b2db18daff2a166b210a",
+ "git_branch": "main",
+ "files": {
+  "models/yolov8n.onnx": "542ab2cb76e6f9ca24c870e0a4480c50abc91154ca6be4e05f461c1edbcc9c69",
+  "configs/kitti.yaml": "f88b85500479f92057a1f9be10ac5c66f21743dfd6e34757ba4213f080443e57",
+  "configs/kitti_tiled.yaml": "65c4f2970171f4ed4c4b4e27ac00948b84a092792da3609929a59a06ede06742",
+  "configs/default.yaml": "f2e3d425808dff205a8d581f695e3d18a32e4b5d1db79cd23326078a71958f24",
+  "configs/eval/variants_dev.txt": "4b8f0dc43858a52abc8265a54cbb3db600b8a72ac3fee2843360f488b5d8678c",
+  "configs/eval/variants_test.txt": "14575a79f213a4da22df0a21e164cc5c16c75c46093d2343da0ffc8b6fc8dc76",
+  "docs/evaluation/PROTOCOL.md": "0709b0d59dad936ef57aa3c5d45602b7e30aef235a368958d7c17767756ac9ac",
+  "scripts/export_yolov8.py": "f681736a53e80117eb6babb64383d4c7cf2b40ab4f50cfd3dd1de9c25d2c4ca1"
+ },
+ "model_bytes": 12851086,
+ "model_onnx": {
+  "producer": "pytorch",
+  "producer_version": "2.13.0",
+  "opset": [
+   12
+  ],
+  "input": [
+   [
+    "images",
+    [
+     1,
+     3,
+     640,
+     640
+    ]
+   ]
+  ],
+  "output": [
+   [
+    "output0",
+    [
+     1,
+     84,
+     8400
+    ]
+   ]
+  ],
+  "metadata": {
+   "description": "Ultralytics YOLOv8n model trained on coco.yaml",
+   "author": "Ultralytics",
+   "date": "2026-09-10T10:36:19.972220",
+   "version": "8.4.9",
+   "license": "AGPL-3.0 License (https://ultralytics.com/license)",
+   "docs": "https://docs.ultralytics.com",
+   "stride": "32",
+   "task": "detect",
+   "batch": "1",
+   "imgsz": "[640, 640]",
+   "names": "{0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'be",
+   "args": "{'batch': 1, 'half': False, 'dynamic': False, 'simplify': True, 'opset': 12, 'nms': False}",
+   "channels": "3",
+   "end2end": "False"
+  }
+ },
+ "datasets": {
+  "kitti_tracking_dev_and_test": {
+   "files": 3184,
+   "bytes": 2602512255,
+   "manifest_sha256": "a1708e777e5fa9cd1e5d8be23f40483e8670f62ee3cd7344d76a24d29cc176d9"
+  },
+  "kitti_odometry": {
+   "files": 5597,
+   "bytes": 1461024003,
+   "manifest_sha256": "b1afb1694ffffbcc80e7532f070c49b9ab77a96cd7ce4a90def740fb41cabd85"
+  },
+  "kitti_stereo2015": {
+   "files": 1000,
+   "bytes": 404922735,
+   "manifest_sha256": "eb7c1134597949e314026a8a26406628657a972d243afd923371cf76a15b0c58"
+  }
+ },
+ "host": {
+  "os": "Windows-10-10.0.19045-SP0",
+  "python": "3.10.8",
+  "machine": "AMD64",
+  "cpu": "Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz / 8C 16T",
+  "ram_gb": "31,9",
+  "gpu": "NVIDIA GeForce RTX 2080, 592.82, 8192 MiB",
+  "docker": "29.1.3"
+ },
+ "host_python_packages": {
+  "numpy": "2.2.6",
+  "scipy": "1.15.3",
+  "pandas": "2.3.3",
+  "motmetrics": "1.4.0",
+  "cv2": "5.0.0",
+  "onnx": "1.22.0",
+  "onnxruntime": "1.23.2"
+ },
+ "container": [
+  "ubuntu=22.04",
+  "opencv=4.5.4",
+  "gcc=11.4.0",
+  "cmake=cmake version 3.22.1",
+  "ort=libonnxruntime.so.1"
+ ],
+ "image_ids": [
+  "stereo-3d-mot:deps-ros2 8ebc163c9b4b",
+  "stereo-3d-mot:dev a79e08f091e4",
+  "stereo-3d-mot:deps-onnx-gpu 1b4d3dfe8818",
+  "stereo-3d-mot:deps-onnx 893e2a3e45f1",
+  "stereo-3d-mot:deps 95847694a7d6"
+ ]
+}

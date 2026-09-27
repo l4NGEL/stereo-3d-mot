@@ -1,0 +1,235 @@
+{
+ "kind": "dev",
+ "sequences": [
+  "0000",
+  "0003",
+  "0017"
+ ],
+ "legacy_variant": "mahalanobis3d_s0.25_h3",
+ "selected_variant": "iou2d_s0.25_h3",
+ "legacy_fp_breakdown": {
+  "total": 4209,
+  "categories": {
+   "ghost_coasting": 3076,
+   "two_wheeler_class": 415,
+   "in_dontcare": 243,
+   "on_ignored_or_neutral_label": 94,
+   "overlaps_valid_label_3d_gate_rejected": 146,
+   "too_small": 8,
+   "residual": 227
+  },
+  "shares": {
+   "ghost_coasting": 0.7308149204086481,
+   "two_wheeler_class": 0.09859824186267523,
+   "in_dontcare": 0.05773342836778332,
+   "on_ignored_or_neutral_label": 0.022333095747208362,
+   "overlaps_valid_label_3d_gate_rejected": 0.03468757424566405,
+   "too_small": 0.001900688999762414,
+   "residual": 0.053932050368258495
+  },
+  "per_sequence": {
+   "0000": {
+    "total_fp": 2195,
+    "ghost_coasting": 1705,
+    "two_wheeler_class": 159,
+    "in_dontcare": 160,
+    "on_ignored_or_neutral_label": 58,
+    "overlaps_valid_label_3d_gate_rejected": 47,
+    "too_small": 7,
+    "residual": 59
+   },
+   "0003": {
+    "total_fp": 866,
+    "ghost_coasting": 714,
+    "two_wheeler_class": 0,
+    "in_dontcare": 22,
+    "on_ignored_or_neutral_label": 32,
+    "overlaps_valid_label_3d_gate_rejected": 85,
+    "too_small": 1,
+    "residual": 12
+   },
+   "0017": {
+    "total_fp": 1148,
+    "ghost_coasting": 657,
+    "two_wheeler_class": 256,
+    "in_dontcare": 61,
+    "on_ignored_or_neutral_label": 4,
+    "overlaps_valid_label_3d_gate_rejected": 14,
+    "too_small": 0,
+    "residual": 156
+   }
+  }
+ },
+ "H_ghost": {
+  "legacy_E30": {
+   "mota": -1.405650857719475,
+   "idf1": 0.29874542603240983,
+   "num_objects": 1982,
+   "num_false_positives": 4209,
+   "num_misses": 521,
+   "num_switches": 38,
+   "precision": 0.25767195767195766,
+   "recall": 0.7371342078708375
+  },
+  "legacy_E0": {
+   "mota": 0.08425832492431884,
+   "idf1": 0.4486796785304248,
+   "num_objects": 1982,
+   "num_false_positives": 1081,
+   "num_misses": 690,
+   "num_switches": 44,
+   "precision": 0.5444584913611462,
+   "recall": 0.6518668012108981
+  },
+  "fp_drop_pct": 74.31693989071037
+ },
+ "H_scope": {
+  "E=30": {
+   "rules_on": {
+    "mota": -0.9701726844583987,
+    "idf1": 0.37591084440634376,
+    "num_objects": 1274,
+    "num_false_positives": 2293,
+    "num_misses": 175,
+    "num_switches": 42,
+    "precision": 0.32399764150943394,
+    "recall": 0.8626373626373627
+   },
+   "rules_off": {
+    "mota": -1.2304574406485234,
+    "idf1": 0.30754979157017137,
+    "num_objects": 1727,
+    "num_false_positives": 3397,
+    "num_misses": 374,
+    "num_switches": 81,
+    "precision": 0.2848421052631579,
+    "recall": 0.7834394904458599
+   },
+   "fp_drop_pct": 32.49926405652046
+  },
+  "E=0": {
+   "rules_on": {
+    "mota": 0.5015698587127159,
+    "idf1": 0.6160714285714286,
+    "num_objects": 1274,
+    "num_false_positives": 365,
+    "num_misses": 225,
+    "num_switches": 45,
+    "precision": 0.7418670438472419,
+    "recall": 0.8233908948194663
+   },
+   "rules_off": {
+    "mota": 0.2646207295888825,
+    "idf1": 0.49741777656972,
+    "num_objects": 1727,
+    "num_false_positives": 708,
+    "num_misses": 483,
+    "num_switches": 79,
+    "precision": 0.6372950819672131,
+    "recall": 0.7203242617255357
+   },
+   "fp_drop_pct": 48.44632768361582
+  }
+ },
+ "H_bias": {
+  "n_pairs": 475,
+  "median_signed_depth_err_m": -0.8782040000000002,
+  "mean_signed_depth_err_m": -0.530931985263158,
+  "legacy_recall": {
+   "gate_2m": 0.7371342078708375,
+   "gate_4m": 0.8340060544904138
+  },
+  "recall_gain_points": 9.687184661957627
+ },
+ "K2D_fn_stages_selected_system": {
+  "total": 231,
+  "by_stage": {
+   "below_score_threshold": 84,
+   "tracker_lost_or_unconfirmed": 60,
+   "poor_localization": 42,
+   "no_depth": 31,
+   "no_detection": 12,
+   "wrong_or_excluded_class": 2
+  },
+  "by_sequence": {
+   "0000": {
+    "tracker_lost_or_unconfirmed": 20,
+    "below_score_threshold": 12,
+    "poor_localization": 10,
+    "wrong_or_excluded_class": 1
+   },
+   "0003": {
+    "no_depth": 25,
+    "below_score_threshold": 13,
+    "tracker_lost_or_unconfirmed": 5,
+    "poor_localization": 4
+   },
+   "0017": {
+    "below_score_threshold": 59,
+    "tracker_lost_or_unconfirmed": 35,
+    "poor_localization": 28,
+    "no_detection": 12,
+    "no_depth": 6,
+    "wrong_or_excluded_class": 1
+   }
+  },
+  "no_depth_left_margin": 25,
+  "no_depth_total": 31
+ },
+ "legacy_fn_breakdown": {
+  "total": 521,
+  "by_category": {
+   "evaluable": 228,
+   "fails_moderate_filter": 228,
+   "not_evaluated_type": 65
+  },
+  "by_category_reason": {
+   "evaluable/3d_gate_rejected": 118,
+   "evaluable/below_score_threshold": 38,
+   "evaluable/no_depth": 25,
+   "evaluable/no_detection": 9,
+   "evaluable/poor_localization": 11,
+   "evaluable/tracker_lost_or_unconfirmed": 26,
+   "evaluable/wrong_or_excluded_class": 1,
+   "fails_moderate_filter/occluded=2": 112,
+   "fails_moderate_filter/occluded=3": 25,
+   "fails_moderate_filter/small(<25px)": 66,
+   "fails_moderate_filter/truncated>0.3": 25,
+   "not_evaluated_type/Cyclist": 65
+  },
+  "by_sequence": {
+   "0000": {
+    "evaluable/3d_gate_rejected": 14,
+    "evaluable/below_score_threshold": 2,
+    "evaluable/poor_localization": 1,
+    "evaluable/tracker_lost_or_unconfirmed": 8,
+    "evaluable/wrong_or_excluded_class": 1,
+    "fails_moderate_filter/occluded=2": 83,
+    "fails_moderate_filter/truncated>0.3": 10,
+    "not_evaluated_type/Cyclist": 2
+   },
+   "0003": {
+    "evaluable/3d_gate_rejected": 84,
+    "evaluable/below_score_threshold": 3,
+    "evaluable/no_depth": 23,
+    "evaluable/poor_localization": 3,
+    "evaluable/tracker_lost_or_unconfirmed": 5,
+    "fails_moderate_filter/occluded=2": 8,
+    "fails_moderate_filter/occluded=3": 25,
+    "fails_moderate_filter/small(<25px)": 66,
+    "fails_moderate_filter/truncated>0.3": 14
+   },
+   "0017": {
+    "evaluable/3d_gate_rejected": 20,
+    "evaluable/below_score_threshold": 33,
+    "evaluable/no_depth": 2,
+    "evaluable/no_detection": 9,
+    "evaluable/poor_localization": 7,
+    "evaluable/tracker_lost_or_unconfirmed": 13,
+    "fails_moderate_filter/occluded=2": 21,
+    "fails_moderate_filter/truncated>0.3": 1,
+    "not_evaluated_type/Cyclist": 63
+   }
+  }
+ }
+}

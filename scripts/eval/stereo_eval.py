@@ -48,34 +48,65 @@ def full_image(est: np.ndarray, gt: np.ndarray, bad=(1.0, 2.0, 4.0), valid_min: 
     return res
 
 
-def d1(est: np.ndarray, gt: np.ndarray, fx_baseline: float | None = None) -> dict:
-    """KITTI stereo 2015. `gt` in pixels, <= 0 where there is no ground truth."""
+BINS = ((0, 10), (10, 20), (20, 40), (40, np.inf))
+
+
+def d1_counts(est: np.ndarray, gt: np.ndarray, fx_baseline: float | None = None) -> dict:
+    """Raw pixel counts for KITTI stereo 2015 D1. `gt` in pixels, <= 0 where there is none.
+    Counts (not ratios) so that images can be pooled exactly, as the KITTI benchmark does."""
     gt_ok = np.isfinite(gt) & (gt > 0)
-    ev = _est_valid(est)
+    ev = (np.isfinite(est) & (est != INVALID))
     err = np.abs(est - gt)
     bad_px = (err > 3.0) & (err / np.where(gt > 0, gt, 1.0) > 0.05)
-    n = max(int(gt_ok.sum()), 1)
     both = gt_ok & ev
-    res = {
-        "n_gt": int(gt_ok.sum()),
-        "density": float(both.sum() / n),
-        "d1_all_holes_as_error": float((gt_ok & (~ev | bad_px)).sum() / n),
-        "d1_valid_only": float((both & bad_px).sum() / max(int(both.sum()), 1)),
-        "epe_valid_only": float(err[both].mean()) if both.any() else float("nan"),
-    }
+    c = {"n_gt": int(gt_ok.sum()), "n_valid": int(both.sum()),
+         "n_d1_bad_holes_as_error": int((gt_ok & (~ev | bad_px)).sum()),
+         "n_d1_bad_valid_only": int((both & bad_px).sum()),
+         "sum_epe_valid": float(err[both].sum())}
     for t in (1.0, 2.0, 3.0, 5.0):
-        res[f"bad_{t:g}px_holes_as_error"] = float((gt_ok & (~ev | (err > t))).sum() / n)
+        c[f"n_bad_{t:g}px_holes_as_error"] = int((gt_ok & (~ev | (err > t))).sum())
     if fx_baseline is not None:
         depth = np.where(gt_ok, fx_baseline / np.where(gt > 0, gt, 1.0), np.inf)
-        for lo, hi in ((0, 10), (10, 20), (20, 40), (40, np.inf)):
+        for lo, hi in BINS:
             m = gt_ok & (depth >= lo) & (depth < hi)
-            key = f"{lo}-{hi if np.isfinite(hi) else 'inf'}m"
-            res.setdefault("by_depth", {})[key] = {
-                "n_gt": int(m.sum()),
-                "d1_holes_as_error": float((m & (~ev | bad_px)).sum() / max(int(m.sum()), 1)),
-                "density": float((m & ev).sum() / max(int(m.sum()), 1)),
-            }
+            key = f"bin_{lo}-{hi if np.isfinite(hi) else 'inf'}m"
+            c[f"{key}_n_gt"] = int(m.sum())
+            c[f"{key}_n_bad"] = int((m & (~ev | bad_px)).sum())
+            c[f"{key}_n_valid"] = int((m & ev).sum())
+    return c
+
+
+def d1_from_counts(c: dict) -> dict:
+    n, v = max(c["n_gt"], 1), max(c["n_valid"], 1)
+    res = {"n_gt": c["n_gt"], "density": c["n_valid"] / n,
+           "d1_all_holes_as_error": c["n_d1_bad_holes_as_error"] / n,
+           "d1_valid_only": c["n_d1_bad_valid_only"] / v,
+           "epe_valid_only": c["sum_epe_valid"] / v}
+    for t in (1.0, 2.0, 3.0, 5.0):
+        res[f"bad_{t:g}px_holes_as_error"] = c[f"n_bad_{t:g}px_holes_as_error"] / n
+    bins = {}
+    for lo, hi in BINS:
+        key = f"bin_{lo}-{hi if np.isfinite(hi) else 'inf'}m"
+        if f"{key}_n_gt" in c:
+            g = max(c[f"{key}_n_gt"], 1)
+            bins[key[4:]] = {"n_gt": c[f"{key}_n_gt"], "d1_holes_as_error": c[f"{key}_n_bad"] / g,
+                             "density": c[f"{key}_n_valid"] / g}
+    if bins:
+        res["by_depth"] = bins
     return res
+
+
+def d1(est: np.ndarray, gt: np.ndarray, fx_baseline: float | None = None) -> dict:
+    """KITTI stereo 2015 D1 for one image (|d - d_gt| > 3 px and > 5 % of d_gt)."""
+    return d1_from_counts(d1_counts(est, gt, fx_baseline))
+
+
+def pool_counts(rows: list[dict]) -> dict:
+    out: dict = {}
+    for r in rows:
+        for k, v in r.items():
+            out[k] = out.get(k, 0) + v
+    return out
 
 
 def read_kitti_disp_png(path: str) -> np.ndarray:

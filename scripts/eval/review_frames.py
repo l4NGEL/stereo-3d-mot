@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
+import diagnose as X            # noqa: E402
 import mot_eval as M            # noqa: E402
 import protocol as P            # noqa: E402
 from bundle import load_bundle  # noqa: E402
@@ -96,6 +97,8 @@ def draw_frame(b, variant, frame, out_path, kitti_root):
             cv2.putText(img, f"MISS {g['type'][:3]}{int(g['track_id'])}", (int(p1[0]), max(int(p1[1]) - 3, 10)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
 
+    real_labels = b.labels[b.labels["type"] != "DontCare"]
+    cat_by_group = {g: P.gt_categories(real_labels, g) for g in P.GROUPS}
     items = []
     for _, t in live.iterrows():
         p1, p2 = (int(t["x"]), int(t["y"])), (int(t["x"] + t["w"]), int(t["y"] + t["h"]))
@@ -110,7 +113,9 @@ def draw_frame(b, variant, frame, out_path, kitti_root):
         cv2.putText(img, str(n), (p1[0] + 2, p1[1] + 14), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
         rows.append({"seq": b.seq, "frame": frame, "item": n, "kind": "FP_detection", "cls": int(t["cls"]),
                      "x": round(t["x"], 1), "y": round(t["y"], 1), "w": round(t["w"], 1), "h": round(t["h"], 1),
-                     "Z": round(t["Z"], 1), "label": "", "note": ""})
+                     "Z": round(t["Z"], 1),
+                     "auto_category": X.classify_legacy_fp(t, frame, b.labels, real_labels, cat_by_group),
+                     "label": "", "note": ""})
         crops.append((n, t))
     matched_live = live[~live["id"].isin(fp_ids)]
     for _, t in matched_live.iterrows():

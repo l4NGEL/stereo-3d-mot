@@ -287,6 +287,18 @@ next one slots into an interface that already exists.
       this and are named rather than left vague, but weren't attempted here
       -- correctly out of scope for "does naively enabling CUDA EP help"
       rather than a gap quietly left unstated.
+    - **Correction (independent evaluation, 2026-09-26; see
+      `docs/evaluation/REPORT.md` §8).** The "no speedup" conclusion above
+      averaged over every frame, and the first CUDA `detect` call takes ~2.3 s
+      (context + cuDNN initialisation): the mean over all 154 frames is 36.8 ms
+      even though steady state is 10-12 ms. Measured after a 10-frame warm-up,
+      CUDA detection is 12-17 ms (median) against ~52 ms on the CPU, and the whole
+      pipeline runs at 6.6-7.8 FPS against 5.5 FPS for the CPU control in the
+      same image. Still far from 20 FPS (stereo ~90 ms + decode ~25 ms), and
+      the GPU was thermally hot / at times shared, so the tail is noisy.
+      "Bit-identical detections" is also better stated as numerically
+      equivalent: max score difference 3e-6, box difference <= 1.1e-3 px, same
+      detections.
 - [x] **Memory/allocation audit -- conclusion, not a TODO.** The
       profiling above already answers this: `depth`, `promote3d+appearance`
       and `track` are a combined <2 ms/frame, so there's no meaningful
@@ -388,6 +400,14 @@ next one slots into an interface that already exists.
       physically sane, not that this is a competitive SLAM system --
       bundle adjustment / loop closure would be the natural next layer, not
       attempted here (out of scope for "does the core geometry work").
+    - **Correction (independent evaluation, 2026-09-26; see
+      `docs/evaluation/REPORT.md` §7).** "ATE roughly 4-5% of the path" is
+      ATE (after a rigid alignment) over path length (394 m, i.e. 4.0%); it is
+      not the standard KITTI translation error. The devkit-style segment metric
+      (100-400 m segments) is t_rel 14.0% on sequence 04 and 13.8% pooled over
+      five held-out sequences (3.4%-19.7% each), r_rel 0.08 deg/m; the
+      ORB/essential-matrix/stereo-scale geometry runs and is sane, but the
+      <= 5% accuracy target is not met.
 - [x] Touches the VI-SLAM / camera-pose requirements named in the
       project's original ASELSAN-facing scope.
 

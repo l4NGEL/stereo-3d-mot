@@ -1,0 +1,226 @@
+[
+ {
+  "id": "SP-1",
+  "criterion": "end-to-end >= 20 FPS incl. decode (each of 3 repetitions)",
+  "measured": "5.84 FPS (reps [5.63, 6.0, 5.92])",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "SP-2",
+  "criterion": "p95 latency <= 50 ms (each repetition)",
+  "measured": "p95 205.0 ms (median 165.8)",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "SP-3",
+  "criterion": "compute-only (no decode) >= 20 FPS",
+  "measured": "6.87 FPS",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "DE-1",
+  "criterion": "Vehicle precision >= 0.80 and recall >= 0.70 (IoU 0.5, moderate, score >= 0.25)",
+  "measured": "P 0.788 [0.772,0.802], R 0.761",
+  "verdict": "KALDI",
+  "note": "recall passes; precision misses"
+ },
+ {
+  "id": "DE-2",
+  "criterion": "Vehicle AP50 (R40) >= 0.56",
+  "measured": "0.798 (all-point 0.812)",
+  "verdict": "GEÇTÝ",
+  "note": ""
+ },
+ {
+  "id": "DE-3",
+  "criterion": "Person precision >= 0.75 and recall >= 0.50; AP50 (R40) >= 0.375",
+  "measured": "P 0.709, R 0.679, AP50 0.652",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "DE-4",
+  "criterion": "COCO mAP",
+  "measured": "not measured in this project",
+  "verdict": "ÖLÇÜLEMEDÝ",
+  "note": "only KITTI-protocol numbers are claimed; Ultralytics' published COCO mAP is not a KITTI number"
+ },
+ {
+  "id": "TR-1",
+  "criterion": "minimum: pooled P-K2D MOTA > 0 (dev-selected system, held-out)",
+  "measured": "MOTA +0.492",
+  "verdict": "GEÇTÝ",
+  "note": ""
+ },
+ {
+  "id": "TR-2",
+  "criterion": "target: Vehicle MOTA >= 0.50 and IDF1 >= 0.60",
+  "measured": "MOTA 0.519, IDF1 0.591",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "TR-3",
+  "criterion": "target: Person MOTA >= 0.30 and IDF1 >= 0.50",
+  "measured": "MOTA 0.446, IDF1 0.487",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "TR-4",
+  "criterion": "IDSW <= 2 % of GT objects (pooled)",
+  "measured": "246/4550 = 5.41 %",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "TR-5",
+  "criterion": "beats SORT-2D on pooled MOTA and IDF1, bootstrap interval excluding 0",
+  "measured": "MOTA -0.059 [-0.129,-0.026], IDF1 -0.070 [-0.147,-0.032]",
+  "verdict": "KALDI",
+  "note": "S* is significantly WORSE than the depth-free baseline"
+ },
+ {
+  "id": "TR-6",
+  "criterion": "harness reproduces published legacy counts; independent counter == py-motmetrics",
+  "measured": "legacy regression PASS; counters 347 inputs, 0 disagreements",
+  "verdict": "GEÇTÝ",
+  "note": ""
+ },
+ {
+  "id": "TR-7a",
+  "criterion": "claim: 3D Mahalanobis association beats plain 2D IoU (A4 vs S*)",
+  "measured": "MOTA -0.057 [-0.160,-0.023]; IDF1 +0.003 [-0.152,+0.099]",
+  "verdict": "KALDI",
+  "note": "contradicted on MOTA"
+ },
+ {
+  "id": "TR-7b",
+  "criterion": "claim: fusion (3D+IoU+appearance) beats the selected plain IoU (F vs S*)",
+  "measured": "MOTA +0.005 [-0.040,+0.033]; IDF1 +0.067 [-0.026,+0.106]",
+  "verdict": "KANITLANMADI",
+  "note": "inside the noise"
+ },
+ {
+  "id": "TR-7c",
+  "criterion": "claim: the appearance cue helps (F vs A1)",
+  "measured": "MOTA +0.003 [+0.000,+0.007]; IDF1 +0.005 [-0.002,+0.013]",
+  "verdict": "KANITLANMADI",
+  "note": "inside the noise"
+ },
+ {
+  "id": "TR-7d",
+  "criterion": "claim: the IoU term of the fused cost helps (F vs A2)",
+  "measured": "MOTA +0.010 [+0.001,+0.028]; IDF1 +0.004 [-0.031,+0.068]",
+  "verdict": "GEÇTÝ",
+  "note": "demonstrated on MOTA only"
+ },
+ {
+  "id": "TR-7e",
+  "criterion": "claim: the 3D term of the fused cost helps (F vs A3)",
+  "measured": "MOTA -0.002 [-0.016,+0.008]; IDF1 -0.003 [-0.079,+0.037]",
+  "verdict": "KANITLANMADI",
+  "note": "inside the noise"
+ },
+ {
+  "id": "TR-7f",
+  "criterion": "claim: Hungarian beats greedy assignment (F vs A7)",
+  "measured": "MOTA +0.003 [-0.002,+0.010]; IDF1 +0.009 [-0.008,+0.040]",
+  "verdict": "KANITLANMADI",
+  "note": "inside the noise"
+ },
+ {
+  "id": "TR-7g",
+  "criterion": "claim: emitting only updated tracks (E=0) beats the shipped E=30 (S*)",
+  "measured": "MOTA +1.387 [+0.645,+2.982]; IDF1 +0.206 [+0.090,+0.364]",
+  "verdict": "GEÇTÝ",
+  "note": "demonstrated on MOTA AND IDF1"
+ },
+ {
+  "id": "TR-7h",
+  "criterion": "claim: tiled stereo does not change tracking accuracy (A9)",
+  "measured": "max abs change in MOTA 0.0070 and in IDF1 0.0035 over 11 systems; bit-identical for 4",
+  "verdict": "GEÇTÝ",
+  "note": "practically identical, not bit-identical, on held-out data"
+ },
+ {
+  "id": "VO-1",
+  "criterion": "t_rel <= 5 % (minimum) / <= 2.5 % (target), 100-400 m segments, held-out pooled",
+  "measured": "13.78 % (421 segments)",
+  "verdict": "KALDI",
+  "note": "target tier not met"
+ },
+ {
+  "id": "VO-2",
+  "criterion": "r_rel <= 0.03 deg/m (minimum) / <= 0.015 (target)",
+  "measured": "0.0796 deg/m",
+  "verdict": "KALDI",
+  "note": "target tier not met"
+ },
+ {
+  "id": "VO-3",
+  "criterion": ">= 95 % of frames tracked on every held-out sequence",
+  "measured": "min 98.2 %",
+  "verdict": "GEÇTÝ",
+  "note": "{\"test_tiled_00\": 99.6, \"test_tiled_06\": 99.2, \"test_tiled_07\": 99.4, \"test_tiled_08\": 98.2, \"test_tiled_10\": 99.0}"
+ },
+ {
+  "id": "VO-4",
+  "criterion": "no held-out sequence with t_rel > 10 %",
+  "measured": "worst 19.69 % {\"test_tiled_00\": 19.36, \"test_tiled_06\": 18.07, \"test_tiled_07\": 3.36, \"test_tiled_08\": 8.26, \"test_tiled_10\": 19.69}",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "ST-1",
+  "criterion": "synthetic (5 seeds x 30 frames, project ROI): bad-2.0 <= 2 %, RMSE <= 1.5 px, density >= 95 %",
+  "measured": "bad-2.0 0.85 %, RMSE 1.281 px (worst seed 1.400), density 98.90 %",
+  "verdict": "GEÇTÝ",
+  "note": "regression gate on a benign scene; low evidential value"
+ },
+ {
+  "id": "ST-2",
+  "criterion": "KITTI Stereo 2015 D1-all (holes = errors) <= 25 % and better than the BM baseline",
+  "measured": "SGBM(4 tiles) 20.37 % (valid-only 5.24 %, density 84.0 %); BM 62.90 %",
+  "verdict": "GEÇTÝ",
+  "note": "BM baseline is weak by construction (density only 39 %)"
+ },
+ {
+  "id": "ST-3",
+  "criterion": "Vehicle 5-30 m: RMSE(detection depth - label front-surface depth) <= 1.0 m (the tracker's configured sigma)",
+  "measured": "RMSE 1.50 m (median signed +1.11 m, n=1515); vs cuboid centre RMSE 1.16 m",
+  "verdict": "KALDI",
+  "note": ""
+ },
+ {
+  "id": "ST-4",
+  "criterion": "|D1-all(4 tiles) - D1-all(untiled)| <= 0.5 pp",
+  "measured": "0.108 pp",
+  "verdict": "GEÇTÝ",
+  "note": ""
+ },
+ {
+  "id": "IN-1",
+  "criterion": "every headline number regenerates from one documented command",
+  "measured": "scripts/eval/run_all.sh --score-only re-run from the dumps: 24 result files, 0 differ",
+  "verdict": "GEÇTÝ",
+  "note": "scoring stage re-executed; dump stage regenerated for dev (legacy regression) and checked for determinism on one sequence, not re-run end-to-end for every sequence"
+ },
+ {
+  "id": "IN-2",
+  "criterion": "two identical runs give bit-identical dumps",
+  "measured": "dets + 8 tracker dumps of sequence 0012 identical (byte compare)",
+  "verdict": "GEÇTÝ",
+  "note": "checked on one held-out sequence (78 frames) under load"
+ },
+ {
+  "id": "IN-3",
+  "criterion": "no leakage: unmodified pretrained detector; selection on dev only",
+  "measured": "model metadata: 'Ultralytics YOLOv8n model trained on coco.yaml'; selection committed before held-out frontend",
+  "verdict": "GEÇTÝ",
+  "note": "dev-influenced choices are declared in INVENTORY.md"
+ }
+]
