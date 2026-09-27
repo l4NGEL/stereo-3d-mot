@@ -375,6 +375,38 @@ Follow-up work after this report shipped, fixing root causes the report identifi
 
 Commands: `scripts/eval/run_phase1_ghost_fix.py` (writes `results/phase1_ghost_fix.json`); the fixed-binary logs are `out/eval/raw/cpp_benchmark_kitti_fixed/*.txt` (old logs at `out/eval/raw/cpp_benchmark_kitti/*.txt` untouched). Hardware/data: identical to §11/`INVENTORY.md` (same dumps, same detections, no new download).
 
+### Phase 2 (2026-09-27) — does depth-gated association do better than "always" or "never"?
+
+**Question.** §5.3 already showed plain 3D Mahalanobis association loses to plain 2D IoU and to SORT. Object-level depth error (§3) is ≈0.87 m at 5–15 m, growing to ≈4.78 m at 30–50 m — trusting the same Mahalanobis gate at every range is exactly the mismatch that predicts. `AssociationMethod::kRangeGated3D` (`include/s3m/tracking/tracker.hpp`, `src/tracking/tracker.cpp`) makes the choice explicit and testable: a candidate detection at or below `range_gate_max_m` is scored/gated exactly as `kMahalanobis3D` would; beyond it, exactly as `kIou2D` would — a per-pair switch, not a blend (unlike `kFusedAppearance`). Two new tests (`Tracker.RangeGated3DUsesMahalanobisWithinRange`, `Tracker.RangeGated3DFallsBackToIoUBeyondRange`) reuse the existing hand-verified depth-vs-IoU scenario to exercise both branches; 128/128 C++ tests pass (126 + 2 new, 1 expected skip), clang-format clean.
+
+**Selection (dev only, rule fixed before looking):** maximise pooled dev P-K2D MOTA at `E=0`, `score=0.25`, `min_hits=3` (fcde488's own dev-selected values, held fixed so only the range gate varies); ties within 0.005 broken toward the *smaller* gate. Swept `range_gate_max_m ∈ {10, 15, 20, 25, 30, 40, ∞}` m on the 3 dev sequences:
+
+| range_gate_max_m | 10 | 15 | 20 | 25 | 30 | 40 | ∞ (≡ plain Mahalanobis) |
+|---|---|---|---|---|---|---|---|
+| dev pooled MOTA | **0.516** | 0.514 | 0.493 | 0.500 | 0.505 | 0.509 | 0.502 |
+| dev pooled IDF1 | 0.584 | 0.595 | 0.589 | 0.576 | 0.582 | 0.621 | 0.616 |
+
+The sweep is flat (MOTA within 0.024 of each other across the whole range) — dev data gives at best weak evidence for any particular threshold. **Chosen: `range_gate_max_m = 10`** (`results/phase2_range_gate_selection.json`), applied once to held-out data (`configs/eval/variants_range_gate_test.txt`, `results/phase2_range_gate_measurement.json`):
+
+| Held-out, P-K2D pooled | MOTA | IDF1 | FP | FN | IDSW |
+|---|---|---|---|---|---|
+| Range-gated 3D (R=10 m) | +0.500 | 0.599 | 648 | 1447 | 180 |
+| Plain IoU-2D (`S*`, fixed) | +0.492 | 0.553 | 626 | 1439 | 246 |
+| Plain 3D Mahalanobis (`A4`, fixed) | +0.435 | 0.556 | 731 | 1536 | 305 |
+| SORT-2D (baseline) | +0.551 | 0.624 | 406 | 1578 | 60 |
+
+Paired bootstrap (10,000 resamples over the 8 held-out sequences):
+
+| Comparison | ΔMOTA, 95% CI | ΔIDF1, 95% CI | Reading |
+|---|---|---|---|
+| Range-gated vs plain 3D Mahalanobis | **+0.065 [+0.026, +0.162]**, excludes 0, wins 7/8 | +0.043 [−0.060, +0.215], noise | **demonstrated**: gating where depth is trusted beats trusting it everywhere |
+| Range-gated vs plain IoU-2D | +0.008 [−0.023, +0.050], noise | +0.046 [−0.014, +0.097], noise | **not demonstrated**: no evidence it beats doing without depth at all |
+| Range-gated vs SORT | **−0.051 [−0.116, −0.027]**, excludes 0 | **−0.024 [−0.077, −0.001]**, excludes 0 | **still significantly worse** than the depth-free baseline |
+
+**Honest reading, per the two things that could have gone either way:** depth-gated association is a real, demonstrated improvement over the *naive* use of depth this project shipped — but there is no evidence it beats simply not using depth for association at all, and it does not close the gap to SORT. Depth is not presented as a default improvement here because the data does not support that claim; §5.3's finding stands: on this evidence, the stereo/3D machinery does not earn the tracking accuracy it costs (§5.5's cost table). The one place depth demonstrably helps is the metric 3D position itself, not 2D-IoU-scored identity — a question this evaluation's protocol does not measure and future work on that would need a different metric.
+
+Commands: `scripts/eval/run_phase2_range_gate_selection.py` (dev selection), `scripts/eval/run_phase2_measure.py` (single held-out measurement). Same hardware/data as §11.
+
 <!-- APPENDIX-BEGIN -->
 ## Appendix A — per-sequence tracking results and localisation quality
 

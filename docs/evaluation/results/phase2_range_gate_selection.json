@@ -1,0 +1,87 @@
+{
+ "rule": "max pooled dev K2D MOTA (E=0); ties within 0.005 -> smallest range_gate_max_m",
+ "grid": [
+  {
+   "variant": "range_gate_10",
+   "range_gate_max_m": 10,
+   "mota": 0.5164835164835164,
+   "idf1": 0.5844645550527904,
+   "fp": 336,
+   "fn": 232,
+   "idsw": 48,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_15",
+   "range_gate_max_m": 15,
+   "mota": 0.5141287284144427,
+   "idf1": 0.5950413223140496,
+   "fp": 341,
+   "fn": 227,
+   "idsw": 51,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_20",
+   "range_gate_max_m": 20,
+   "mota": 0.49293563579277866,
+   "idf1": 0.5885863483774711,
+   "fp": 358,
+   "fn": 225,
+   "idsw": 63,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_25",
+   "range_gate_max_m": 25,
+   "mota": 0.5,
+   "idf1": 0.5758028379387603,
+   "fp": 357,
+   "fn": 227,
+   "idsw": 53,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_30",
+   "range_gate_max_m": 30,
+   "mota": 0.5047095761381475,
+   "idf1": 0.5821841222512113,
+   "fp": 359,
+   "fn": 224,
+   "idsw": 48,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_40",
+   "range_gate_max_m": 40,
+   "mota": 0.5094191522762952,
+   "idf1": 0.6207666542612579,
+   "fp": 363,
+   "fn": 224,
+   "idsw": 38,
+   "num_objects": 1274
+  },
+  {
+   "variant": "range_gate_unlimited",
+   "range_gate_max_m": 1000000000.0,
+   "mota": 0.5015698587127159,
+   "idf1": 0.6160714285714286,
+   "fp": 365,
+   "fn": 225,
+   "idsw": 45,
+   "num_objects": 1274
+  }
+ ],
+ "best_mota": 0.5164835164835164,
+ "n_tied": 2,
+ "chosen": {
+  "variant": "range_gate_10",
+  "range_gate_max_m": 10,
+  "mota": 0.5164835164835164,
+  "idf1": 0.5844645550527904,
+  "fp": 336,
+  "fn": 232,
+  "idsw": 48,
+  "num_objects": 1274
+ }
+}

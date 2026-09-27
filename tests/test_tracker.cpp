@@ -232,6 +232,70 @@ TEST(Tracker, DepthSeparatesOccludingBoxesIou2DGetsItWrong) {
     }
 }
 
+// Phase 2 (docs/evaluation/REPORT.md, remediation log): kRangeGated3D picks
+// Mahalanobis or IoU per PAIR based on the candidate's range, not a blend.
+// Reuses DepthSeparatesOccludingBoxes' exact scenario above (near_depth = 2 m
+// settles track A, far_depth = 8 m settles track B, the disambiguating
+// detection sits at far_box's screen position but near_box's true depth) so
+// the two association outcomes ("follow depth" vs "follow screen overlap")
+// are the same hand-verified ground truth already established for
+// kMahalanobis3D/kIou2D -- this only proves kRangeGated3D reaches the SAME
+// conclusion as whichever of the two its range puts it in the branch of.
+TEST(Tracker, RangeGated3DUsesMahalanobisWithinRange) {
+    const cv::Rect2f near_box(280, 200, 40, 40);
+    const cv::Rect2f far_box(300, 205, 40, 40);
+    const double near_depth = 2.0;
+    const double far_depth = 8.0;
+
+    TrackerParams p = basicParams(AssociationMethod::kRangeGated3D);
+    p.min_hits = 1;
+    p.range_gate_max_m = 20.0;  // both 2 m and 8 m detections are "confident"
+    Tracker tracker(p);
+
+    int id_near = -1;
+    int id_far = -1;
+    for (int f = 0; f < 3; ++f) {
+        const TrackerUpdateResult r = tracker.update(
+            {makeDetection(near_box, near_depth), makeDetection(far_box, far_depth)});
+        id_near = r.detection_track_id[0];
+        id_far = r.detection_track_id[1];
+    }
+    ASSERT_NE(id_near, id_far);
+
+    const Detection3D ambiguous =
+        makeDetection(far_box, near_depth);  // far_box's screen position, near's depth
+    const TrackerUpdateResult r = tracker.update({ambiguous});
+    EXPECT_EQ(r.detection_track_id[0], id_near)
+        << "within range_gate_max_m, kRangeGated3D should follow depth like kMahalanobis3D";
+}
+
+TEST(Tracker, RangeGated3DFallsBackToIoUBeyondRange) {
+    const cv::Rect2f near_box(280, 200, 40, 40);
+    const cv::Rect2f far_box(300, 205, 40, 40);
+    const double near_depth = 2.0;
+    const double far_depth = 8.0;
+
+    TrackerParams p = basicParams(AssociationMethod::kRangeGated3D);
+    p.min_hits = 1;
+    p.range_gate_max_m = 1.0;  // both 2 m and 8 m detections are "unconfident" -> IoU fallback
+    Tracker tracker(p);
+
+    int id_near = -1;
+    int id_far = -1;
+    for (int f = 0; f < 3; ++f) {
+        const TrackerUpdateResult r = tracker.update(
+            {makeDetection(near_box, near_depth), makeDetection(far_box, far_depth)});
+        id_near = r.detection_track_id[0];
+        id_far = r.detection_track_id[1];
+    }
+    ASSERT_NE(id_near, id_far);
+
+    const Detection3D ambiguous = makeDetection(far_box, near_depth);  // IoU = 1 against far_box
+    const TrackerUpdateResult r = tracker.update({ambiguous});
+    EXPECT_EQ(r.detection_track_id[0], id_far)
+        << "beyond range_gate_max_m, kRangeGated3D should follow screen overlap like kIou2D";
+}
+
 // Phase 5: fusing in appearance recovers an identity that Mahalanobis alone
 // gets wrong. Two tracks settle at close depths with the SAME box throughout
 // (so IoU never discriminates between them) -- one red at 2.00 m, one blue at
@@ -349,4 +413,10 @@ TEST(TrackerParams, FromConfigMapsAssociationString) {
     EXPECT_DOUBLE_EQ(fused.fused_weight_3d, 0.4);
     EXPECT_DOUBLE_EQ(fused.fused_weight_iou, 0.1);
     EXPECT_DOUBLE_EQ(fused.fused_weight_appearance, 0.5);
+
+    tp.association = "range_gated";
+    tp.range_gate_max_m = 25.0;
+    const TrackerParams gated = TrackerParams::fromConfig(tp);
+    EXPECT_EQ(gated.association, AssociationMethod::kRangeGated3D);
+    EXPECT_DOUBLE_EQ(gated.range_gate_max_m, 25.0);
 }

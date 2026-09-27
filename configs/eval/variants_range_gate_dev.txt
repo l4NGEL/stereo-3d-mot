@@ -1,0 +1,11 @@
+# Phase 2 (docs/evaluation/REPORT.md remediation log): confidence-gate sweep for
+# kRangeGated3D, dev sequences only (0000, 0003, 0017). score/min_hits held fixed at
+# the values already selected in fcde488's dev-selection (0.25 / 3) so this isolates
+# the range-gate's own effect rather than re-opening every hyperparameter.
+range_gate_10 assoc=range_gated score=0.25 min_hits=3 range_gate=10
+range_gate_15 assoc=range_gated score=0.25 min_hits=3 range_gate=15
+range_gate_20 assoc=range_gated score=0.25 min_hits=3 range_gate=20
+range_gate_25 assoc=range_gated score=0.25 min_hits=3 range_gate=25
+range_gate_30 assoc=range_gated score=0.25 min_hits=3 range_gate=30
+range_gate_40 assoc=range_gated score=0.25 min_hits=3 range_gate=40
+range_gate_unlimited assoc=range_gated score=0.25 min_hits=3 range_gate=1000000

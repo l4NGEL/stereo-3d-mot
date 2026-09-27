@@ -409,3 +409,18 @@ policy `E=0` before the freeze — the dev-selection grid (§4) swept `E` as one
 `main` now actually behaves the way those systems were already being credited for; the pre-fix behavior (`E=30`,
 every confirmed track including coasting ones) is preserved as historical data (`out/eval/raw/cpp_benchmark_kitti/`,
 `docs/evaluation/results/tracking_{dev,test}.json`'s `*_E30` rows) but is no longer reproducible by building `main`.
+
+### 2026-09-27 — Phase 2 remediation: confidence-gated depth association (new AssociationMethod, dev-selected, single held-out measurement)
+
+Added `AssociationMethod::kRangeGated3D` (`include/s3m/tracking/tracker.hpp`, `src/tracking/tracker.cpp`,
+`TrackerParams::range_gate_max_m`, `TrackingParams::range_gate_max_m`) -- a per-pair switch between
+Mahalanobis (within range) and IoU (beyond it), motivated by REPORT.md SS3's range-dependent depth error.
+Selection rule fixed BEFORE running the dev sweep: maximise pooled dev P-K2D MOTA at E=0/score=0.25/
+min_hits=3 (fcde488's own dev-selected values), ties within 0.005 -> smaller range_gate_max_m; swept
+{10,15,20,25,30,40,inf} m on the 3 dev sequences only, chose 10 m, then measured that ONE configuration
+on held-out data exactly once (`scripts/eval/run_phase2_range_gate_selection.py`,
+`scripts/eval/run_phase2_measure.py`). No held-out data was used to choose the threshold or to compare
+alternative thresholds. Result and its honest reading in REPORT.md's remediation log: a real, demonstrated
+improvement over plain 3D Mahalanobis, but not over plain 2D IoU, and still significantly worse than SORT.
+This is a new AssociationMethod, not a change to kMahalanobis3D/kIou2D/kFusedAppearance or to any held-out
+sequence, seed, matching rule, or SS7 threshold; no existing acceptance-table number is affected.

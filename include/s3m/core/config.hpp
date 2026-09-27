@@ -64,9 +64,11 @@ struct TrackingParams {
 
     /// "mahalanobis3d" (depth-aware; recommended), "iou2d" (image-plane only,
     /// no stereo depth used at all -- kept as the classic baseline to compare
-    /// against), or "fused" (Mahalanobis + IoU + appearance, weighted --
-    /// see fused_weight_* below). See docs/roadmap.md for why 3D disambiguates
-    /// what 2D can't, and Phase 5 for why/when fusing in appearance helps.
+    /// against), "fused" (Mahalanobis + IoU + appearance, weighted -- see
+    /// fused_weight_* below), or "range_gated" (Mahalanobis within
+    /// range_gate_max_m, IoU beyond it -- see docs/evaluation/REPORT.md
+    /// "Phase 2"). See docs/roadmap.md for why 3D disambiguates what 2D
+    /// can't, and Phase 5 for why/when fusing in appearance helps.
     std::string association = "mahalanobis3d";
     double gating_chi2 = 7.815;  ///< mahalanobis3d: chi-square(3 dof, 95%) gate
     double iou_gate = 0.3;       ///< iou2d: minimum IoU to allow a match
@@ -77,6 +79,11 @@ struct TrackingParams {
     double fused_weight_3d = 0.5;
     double fused_weight_iou = 0.2;
     double fused_weight_appearance = 0.3;
+
+    /// range_gated: a detection at or below this range [m] is associated by
+    /// Mahalanobis distance, beyond it by IoU. Default is effectively
+    /// unlimited (no gating).
+    double range_gate_max_m = 1e9;
 };
 
 /// Aggregated pipeline configuration.

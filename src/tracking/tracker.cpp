@@ -24,15 +24,17 @@ TrackerParams TrackerParams::fromConfig(const TrackingParams& tp) {
     p.measurement_noise = tp.measurement_noise;
     p.max_age = tp.max_age;
     p.min_hits = tp.min_hits;
-    p.association = (tp.association == "iou2d")   ? AssociationMethod::kIou2D
-                    : (tp.association == "fused") ? AssociationMethod::kFusedAppearance
-                                                  : AssociationMethod::kMahalanobis3D;
+    p.association = (tp.association == "iou2d")         ? AssociationMethod::kIou2D
+                    : (tp.association == "fused")       ? AssociationMethod::kFusedAppearance
+                    : (tp.association == "range_gated") ? AssociationMethod::kRangeGated3D
+                                                        : AssociationMethod::kMahalanobis3D;
     p.gating_chi2 = tp.gating_chi2;
     p.iou_gate = tp.iou_gate;
     p.use_hungarian = tp.use_hungarian;
     p.fused_weight_3d = tp.fused_weight_3d;
     p.fused_weight_iou = tp.fused_weight_iou;
     p.fused_weight_appearance = tp.fused_weight_appearance;
+    p.range_gate_max_m = tp.range_gate_max_m;
     return p;
 }
 
@@ -48,6 +50,13 @@ double Tracker::gate() const {
         return params_.gating_chi2;
     if (params_.association == AssociationMethod::kIou2D)
         return 1.0 - params_.iou_gate;
+    if (params_.association == AssociationMethod::kRangeGated3D) {
+        // Every feasible pair's cost is already normalised to [0, 1] --
+        // mahal_sq / gating_chi2 for in-range pairs (clamped, though feasible
+        // ones never reach the clamp -- see buildCostMatrix), 1 - iou for
+        // out-of-range ones -- so one shared gate works for both branches.
+        return 1.0;
+    }
     // kFusedAppearance: feasibility is decided per-pair in buildCostMatrix (the
     // union of the two geometric gates), so the solver's own gate just needs
     // to not reject those. The max any single cost can reach is the sum of
@@ -75,6 +84,21 @@ std::vector<std::vector<double>> Tracker::buildCostMatrix(
                 cost[i][k] = t.gatingDistanceSq(d.position);
             } else if (params_.association == AssociationMethod::kIou2D) {
                 cost[i][k] = 1.0 - iou(t.lastBox(), d.box);
+            } else if (params_.association == AssociationMethod::kRangeGated3D) {
+                // Per-pair choice, not a blend: within range, exactly
+                // kMahalanobis3D's cost/gate (normalised so it shares a scale
+                // with the fallback); beyond it, exactly kIou2D's.
+                if (d.position.z <= params_.range_gate_max_m) {
+                    const double mahal_sq = t.gatingDistanceSq(d.position);
+                    if (mahal_sq > params_.gating_chi2)
+                        continue;  // +inf, same feasibility rule as kMahalanobis3D
+                    cost[i][k] = std::min(mahal_sq / params_.gating_chi2, 1.0);
+                } else {
+                    const double iou_val = iou(t.lastBox(), d.box);
+                    if (iou_val < params_.iou_gate)
+                        continue;  // +inf, same feasibility rule as kIou2D
+                    cost[i][k] = 1.0 - iou_val;
+                }
             } else {
                 const double mahal_sq = t.gatingDistanceSq(d.position);
                 const double iou_val = iou(t.lastBox(), d.box);

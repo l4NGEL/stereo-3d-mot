@@ -1,0 +1,3 @@
+# Phase 2: the SINGLE range-gate configuration selected on dev only
+# (docs/evaluation/results/phase2_range_gate_selection.json), measured ONCE on held-out.
+range_gate_10 assoc=range_gated score=0.25 min_hits=3 range_gate=10

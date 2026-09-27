@@ -108,6 +108,7 @@ Config Config::load(const std::string& path) {
     readScalar(tr, "fused_weight_3d", cfg.tracking.fused_weight_3d);
     readScalar(tr, "fused_weight_iou", cfg.tracking.fused_weight_iou);
     readScalar(tr, "fused_weight_appearance", cfg.tracking.fused_weight_appearance);
+    readScalar(tr, "range_gate_max_m", cfg.tracking.range_gate_max_m);
 
     return cfg;
 }

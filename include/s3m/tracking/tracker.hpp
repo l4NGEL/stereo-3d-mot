@@ -35,6 +35,23 @@ enum class AssociationMethod {
     /// descriptor (or a track that hasn't matched one yet) falls back to a
     /// neutral 0.5 appearance cost rather than being excluded.
     kFusedAppearance,
+    /// Per-pair choice between kMahalanobis3D and kIou2D based on a simple,
+    /// inference-time-available confidence signal: the candidate detection's
+    /// own stereo-triangulated range. `docs/evaluation/REPORT.md` SS3 measured
+    /// depth error growing sharply with range (Vehicle RMSE 0.87 m at 5-15 m
+    /// vs 4.78 m at 30-50 m) -- trusting the Mahalanobis distance equally at
+    /// every range is exactly the mismatch that predicts. A pair with
+    /// `detection.position.z <= TrackerParams::range_gate_max_m` is scored
+    /// (and gated) by squared Mahalanobis distance, normalised to
+    /// `[0, gating_chi2] -> [0, 1]`, exactly as kMahalanobis3D would; a pair
+    /// beyond that range is scored (and gated) by `1 - IoU`, exactly as
+    /// kIou2D would. This is a genuinely different cost/gate PER PAIR, not a
+    /// blend -- unlike kFusedAppearance, a pair never gets a mix of both
+    /// cues. `range_gate_max_m`'s default (effectively unlimited) makes this
+    /// method behave exactly like kMahalanobis3D unless a caller explicitly
+    /// tightens it; the value used for evaluation is selected on dev data
+    /// only, see docs/evaluation/REPORT.md SS "Phase 2".
+    kRangeGated3D,
 };
 
 struct TrackerParams {
@@ -55,6 +72,16 @@ struct TrackerParams {
     double fused_weight_3d = 0.5;
     double fused_weight_iou = 0.2;
     double fused_weight_appearance = 0.3;
+
+    /// kRangeGated3D: a candidate detection with `position.z` at or below
+    /// this is scored/gated as kMahalanobis3D would; beyond it, as kIou2D
+    /// would. Default is effectively "always confident" (no gating): every
+    /// pair falls in the Mahalanobis branch, uniformly rescaled by
+    /// `1/gating_chi2` (a positive constant for every feasible pair), which
+    /// cannot change which assignment the solver picks -- so kRangeGated3D
+    /// produces the identical associations (not identical raw cost values,
+    /// which are rescaled) as kMahalanobis3D until a caller tightens this.
+    double range_gate_max_m = 1e9;
 
     static TrackerParams fromConfig(const TrackingParams& tp);
 };

@@ -65,6 +65,7 @@ void printHelp() {
                  "  --variants <file>    tracker variants, one per line: name key=value ...\n"
                  "                       keys: assoc score min_hits max_age w3d wiou wapp\n"
                  "                       hungarian meas_noise proc_noise gate_chi2 iou_gate\n"
+                 "                       range_gate (range_gated association only, metres)\n"
                  "                       (default: the three as-shipped associations)\n"
                  "  --threads N          cv::setNumThreads(N) and ORT intra-op threads\n"
                  "  --cuda               CUDA execution provider (GPU image only)\n"
@@ -97,6 +98,8 @@ AssociationMethod parseAssociation(const std::string& s) {
         return AssociationMethod::kIou2D;
     if (s == "fused")
         return AssociationMethod::kFusedAppearance;
+    if (s == "range_gated")
+        return AssociationMethod::kRangeGated3D;
     throw std::runtime_error("unknown association '" + s + "'");
 }
 
@@ -138,6 +141,8 @@ Variant parseVariantLine(const std::string& line, const TrackerParams& base, flo
             v.params.gating_chi2 = std::stod(val);
         else if (key == "iou_gate")
             v.params.iou_gate = std::stod(val);
+        else if (key == "range_gate")
+            v.params.range_gate_max_m = std::stod(val);
         else
             throw std::runtime_error("variant '" + v.name + "': unknown key '" + key + "'");
     }
