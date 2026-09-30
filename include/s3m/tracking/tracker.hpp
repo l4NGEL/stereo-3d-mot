@@ -52,6 +52,37 @@ enum class AssociationMethod {
     /// tightens it; the value used for evaluation is selected on dev data
     /// only, see docs/evaluation/REPORT.md SS "Phase 2".
     kRangeGated3D,
+    /// Two association passes per frame, so a track that has lost its object
+    /// can never compete with one that is still following its own (the
+    /// mechanism docs/evaluation/IDSW_REPORT.md measured behind most of the
+    /// kIou2D identity switches).
+    ///   Stage 1: tracks with `time_since_update <= stage1_max_tsu` ("active";
+    ///            confirmed or tentative) against every usable detection, by
+    ///            1 - IoU(predictedBox, detection box), gated by `iou_gate`.
+    ///            Its matches are final.
+    ///   Stage 2: the remaining tracks ("lost") against the detections stage 1
+    ///            left over, scored by `lost_cost`.
+    /// Lifecycle (confirmation at `min_hits`, deletion past `max_age`, birth
+    /// from any detection neither stage took) is exactly the other methods'.
+    kTwoStage,
+};
+
+/// kTwoStage's stage-2 (lost-track) cost.
+enum class LostTrackCost {
+    /// Same cost and gate as stage 1 (predicted-box IoU): the only difference
+    /// from a single pass is the priority of active tracks.
+    kIouPredicted,
+    /// Both the 3D Mahalanobis gate (`lost_gating_chi2`) AND the appearance
+    /// gate (`lost_max_appearance`, Bhattacharyya) must admit the pair -- an
+    /// intersection, stricter than either cue alone. A pair with a missing
+    /// appearance descriptor on either side, or a non-finite Mahalanobis
+    /// distance, is infeasible (never a neutral fallback). Among feasible
+    /// pairs the cost is the mean of the two gate-normalised terms,
+    /// 0.5 * d2 / lost_gating_chi2 + 0.5 * app / lost_max_appearance, so each
+    /// cue is on the scale of its own gate rather than its raw units.
+    kAppearanceMahalanobis,
+    /// Lost tracks are never matched again (they only age out).
+    kNone,
 };
 
 struct TrackerParams {
@@ -83,7 +114,43 @@ struct TrackerParams {
     /// which are rescaled) as kMahalanobis3D until a caller tightens this.
     double range_gate_max_m = 1e9;
 
+    /// kIou2D only: score IoU against the track's predictedBox() instead of
+    /// its last observed box. Default false = the evaluated baseline.
+    bool iou_use_predicted_box = false;
+
+    /// kTwoStage parameters (see AssociationMethod::kTwoStage / LostTrackCost).
+    int stage1_max_tsu = 0;
+    LostTrackCost lost_cost = LostTrackCost::kAppearanceMahalanobis;
+    double lost_gating_chi2 = 7.815;
+    double lost_max_appearance = 0.5;
+
+    /// SORT's reporting rule (Track::setReconfirmAfterMiss): after a miss a
+    /// track is unconfirmed -- so not emittable -- until `min_hits` consecutive
+    /// matches. Default false = the evaluated baseline.
+    bool reconfirm_after_miss = false;
+
+    /// Fill TrackerUpdateResult::diagnostics (costs off by default: every
+    /// candidate pair's IoU / Mahalanobis / appearance is computed twice).
+    bool collect_diagnostics = false;
+
     static TrackerParams fromConfig(const TrackingParams& tp);
+};
+
+/// One (track, detection) pair as the tracker saw it this frame, for offline
+/// error analysis. Recorded for every class-compatible pair with any image
+/// overlap (last or predicted box) and for every pair actually matched.
+struct AssociationDiagnostic {
+    int track_id = -1;
+    int detection_index = -1;  ///< index into update()'s `detections`
+    int tsu_before = 0;        ///< time_since_update when associating (after predict)
+    bool confirmed_before = false;
+    double iou_last = 0.0;        ///< IoU with the last observed box
+    double iou_predicted = 0.0;   ///< IoU with predictedBox()
+    double mahalanobis_sq = 0.0;  ///< squared 3D Mahalanobis distance
+    double appearance = -1.0;     ///< Bhattacharyya distance, -1 if a descriptor is missing
+    /// 0 = candidate not matched, 1 = matched in the (only or first) pass,
+    /// 2 = matched in kTwoStage's lost-track pass.
+    int matched_stage = 0;
 };
 
 /// Result of one Tracker::update() call.
@@ -94,6 +161,8 @@ struct TrackerUpdateResult {
     /// track it birthed), or -1 for a detection that was unusable
     /// (`!Detection3D::valid`) and therefore never touched the tracker.
     std::vector<int> detection_track_id;
+    /// Only filled when TrackerParams::collect_diagnostics is set.
+    std::vector<AssociationDiagnostic> diagnostics;
 };
 
 /// Whether a track's CURRENT state is fit to hand a consumer (an evaluator, a
@@ -140,6 +209,12 @@ class Tracker {
     double gate() const;
     std::vector<std::vector<double>> buildCostMatrix(
         const std::vector<int>& usable_dets, const std::vector<Detection3D>& detections) const;
+    /// kTwoStage: fills track_to_det (per tracks_ index, -1 = unmatched) and
+    /// stage_of_track (1 or 2).
+    void associateTwoStage(const std::vector<int>& usable,
+                           const std::vector<Detection3D>& detections,
+                           std::vector<int>& track_to_det, std::vector<int>& stage_of_track) const;
+    double lostPairCost(const Track& t, const Detection3D& d) const;
 
     TrackerParams params_;
     std::vector<Track> tracks_;

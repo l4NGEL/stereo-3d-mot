@@ -77,15 +77,18 @@ class _KalmanBox:
 
 
 def sort_track(dets: pd.DataFrame, n_frames: int, max_age: int = 1, min_hits: int = 3,
-               iou_threshold: float = 0.3) -> pd.DataFrame:
+               iou_threshold: float = 0.3, return_internal: bool = False):
     """Run SORT over one sequence's detections (columns frame, cls, score, x, y, w, h).
 
     Returns rows in the tracker-dump schema (mot_eval.emission_hypotheses input) with
-    confirmed = 1 and tsu = 0, i.e. exactly SORT's own reporting rule; 3D fields are 0."""
+    confirmed = 1 and tsu = 0, i.e. exactly SORT's own reporting rule; 3D fields are 0.
+    With `return_internal`, also returns every live tracker after each frame (frame, id,
+    tsu, age), reported or not -- for error analysis only; scoring never uses it."""
     _KalmanBox.count = 0
     trackers: list[_KalmanBox] = []
     by_frame = {int(f): g for f, g in dets.groupby("frame")}
     out = []
+    internal = []
     for f in range(n_frames):
         g = by_frame.get(f)
         if g is None:
@@ -123,6 +126,11 @@ def sort_track(dets: pd.DataFrame, n_frames: int, max_age: int = 1, min_hits: in
                 out.append([f, trk.id, trk.cls, b[0], b[1], b[2] - b[0], b[3] - b[1],
                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, 0, trk.hits, trk.age])
         trackers = [t for t in trackers if t.time_since_update <= max_age]
+        if return_internal:
+            internal.extend([f, t.id, t.time_since_update, t.age] for t in trackers)
     cols = ["frame", "id", "cls", "x", "y", "w", "h", "X", "Y", "Z", "vx", "vy", "vz",
             "confirmed", "tsu", "hits", "age"]
+    if return_internal:
+        return (pd.DataFrame(out, columns=cols),
+                pd.DataFrame(internal, columns=["frame", "id", "tsu", "age"]))
     return pd.DataFrame(out, columns=cols)

@@ -1,0 +1,291 @@
+sys,seq,grp,frame,gt,h_old,h_new,gap,cls,sub,tsu_new_prev,tsu_old_at_f,h_new_born,h_new_prev_other_gt,h_new_prev_same_gt,gap_scored_missed,gap_filtered,gap_absent,gap_max_occ,gap_no_det,gap_below_score,gap_no_depth,gap_usable
+R0_age1,0000,Vehicle,16,3,12,19,6,C,new identity,0,,14,False,False,5.0,0.0,0.0,1.0,0.0,3.0,0.0,2.0
+R0_age1,0000,Vehicle,37,0,4,35,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age1,0000,Vehicle,43,3,19,39,16,C,new identity,0,,38,False,False,11.0,4.0,0.0,2.0,2.0,6.0,0.0,3.0
+R0_age1,0000,Vehicle,55,0,35,43,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age1,0000,Vehicle,95,0,43,83,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age1,0000,Vehicle,106,0,83,127,6,C,new identity,0,,104,False,False,1.0,4.0,0.0,2.0,0.0,0.0,0.0,1.0
+R0_age1,0000,Vehicle,134,0,127,138,1,A,lost track took over,1,1.0,109,False,False,,,,,,,,
+R0_age1,0000,Vehicle,134,9,136,186,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age1,0000,Vehicle,138,0,138,189,3,C,new identity,0,,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age1,0003,Vehicle,14,2,2,4,5,C,new identity,0,,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age1,0003,Vehicle,96,1,8,24,7,C,new identity,0,,93,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R0_age1,0003,Vehicle,117,1,24,31,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R0_age1,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age1,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age1,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age1,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age1,0017,Person,29,1,1,15,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age1,0017,Person,30,4,15,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age1,0017,Person,31,1,15,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age1,0017,Person,31,4,1,15,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age1,0017,Person,37,5,7,26,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R0_age1,0017,Person,43,6,10,29,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age1,0017,Person,45,4,15,32,7,C,new identity,0,,43,False,False,6.0,0.0,0.0,1.0,0.0,0.0,0.0,6.0
+R0_age1,0017,Person,46,5,26,34,9,C,new identity,0,,44,False,False,6.0,2.0,0.0,2.0,2.0,0.0,0.0,4.0
+R0_age1,0017,Person,49,8,18,37,16,C,new identity,0,,47,False,False,11.0,4.0,0.0,2.0,1.0,3.0,3.0,4.0
+R0_age1,0017,Person,50,7,11,39,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R0_age1,0017,Person,74,8,37,57,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R0_age2,0000,Vehicle,16,3,12,19,6,C,new identity,0,,14,False,False,5.0,0.0,0.0,1.0,0.0,3.0,0.0,2.0
+R0_age2,0000,Vehicle,37,0,4,33,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age2,0000,Vehicle,43,3,19,37,13,C,new identity,0,,38,False,False,8.0,4.0,0.0,2.0,2.0,4.0,0.0,2.0
+R0_age2,0000,Vehicle,55,0,33,41,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age2,0000,Vehicle,95,0,41,80,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age2,0000,Vehicle,134,9,129,173,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age2,0000,Vehicle,135,0,80,138,1,A,lost track took over,2,1.0,113,False,False,,,,,,,,
+R0_age2,0000,Vehicle,138,0,138,176,3,C,new identity,0,,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age2,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age2,0003,Vehicle,96,1,7,22,7,C,new identity,0,,93,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R0_age2,0003,Vehicle,117,1,22,28,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R0_age2,0003,Vehicle,124,7,29,31,3,C,new identity,0,2.0,122,False,False,2.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0
+R0_age2,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age2,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age2,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age2,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age2,0017,Person,29,1,1,15,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age2,0017,Person,30,4,15,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age2,0017,Person,31,1,15,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age2,0017,Person,31,4,1,15,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age2,0017,Person,37,5,7,25,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R0_age2,0017,Person,43,6,10,27,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age2,0017,Person,46,5,25,31,9,C,new identity,0,,44,False,False,6.0,2.0,0.0,2.0,2.0,0.0,0.0,4.0
+R0_age2,0017,Person,48,8,17,32,15,C,new identity,0,,44,False,False,10.0,4.0,0.0,2.0,1.0,3.0,3.0,3.0
+R0_age2,0017,Person,50,7,11,35,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R0_age2,0017,Person,74,8,32,51,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R0_age3,0000,Vehicle,37,0,4,30,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age3,0000,Vehicle,55,0,30,37,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age3,0000,Vehicle,95,0,37,73,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age3,0000,Vehicle,134,0,73,95,1,A,lost track took over,1,1.0,102,False,False,,,,,,,,
+R0_age3,0000,Vehicle,134,9,110,150,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age3,0000,Vehicle,138,0,95,153,3,C,new identity,0,0.0,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age3,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age3,0003,Vehicle,117,1,7,24,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R0_age3,0003,Vehicle,124,7,25,27,3,C,new identity,0,2.0,122,False,False,2.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0
+R0_age3,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age3,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age3,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age3,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age3,0017,Person,29,1,1,15,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age3,0017,Person,30,4,15,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age3,0017,Person,31,1,15,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age3,0017,Person,31,4,1,15,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age3,0017,Person,37,5,7,22,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R0_age3,0017,Person,43,6,10,25,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age3,0017,Person,48,8,13,28,15,C,new identity,0,,44,False,False,10.0,4.0,0.0,2.0,1.0,3.0,3.0,3.0
+R0_age3,0017,Person,50,7,11,31,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R0_age3,0017,Person,74,8,28,47,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R0_age5,0000,Vehicle,37,0,4,29,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age5,0000,Vehicle,55,0,29,35,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age5,0000,Vehicle,95,0,35,71,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age5,0000,Vehicle,134,0,71,92,1,A,lost track took over,1,1.0,102,False,False,,,,,,,,
+R0_age5,0000,Vehicle,134,9,107,146,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age5,0000,Vehicle,138,0,92,150,3,C,new identity,0,0.0,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age5,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age5,0003,Vehicle,124,7,23,24,3,B,existing track,0,2.0,118,False,False,2.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0
+R0_age5,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age5,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age5,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age5,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age5,0017,Person,29,1,1,15,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age5,0017,Person,30,4,15,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age5,0017,Person,31,1,15,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age5,0017,Person,31,4,1,15,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age5,0017,Person,43,6,10,23,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age5,0017,Person,50,7,11,28,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R0_age5,0017,Person,74,8,13,43,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R0_age10,0000,Vehicle,37,0,4,28,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age10,0000,Vehicle,55,0,28,35,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age10,0000,Vehicle,95,0,35,71,26,C,new identity,0,10.0,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age10,0000,Vehicle,134,0,71,93,1,A,lost track took over,1,1.0,102,False,False,,,,,,,,
+R0_age10,0000,Vehicle,134,9,108,119,8,B,existing track,0,6.0,115,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age10,0000,Vehicle,138,0,93,147,3,C,new identity,0,0.0,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age10,0000,Vehicle,152,13,144,162,4,C,new identity,0,1.0,149,False,False,0.0,3.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age10,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age10,0003,Vehicle,124,7,23,24,3,B,existing track,0,2.0,118,False,False,2.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0
+R0_age10,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age10,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age10,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age10,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age10,0017,Person,29,1,1,15,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age10,0017,Person,30,4,15,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age10,0017,Person,31,1,15,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age10,0017,Person,31,4,1,15,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age10,0017,Person,43,6,10,21,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age10,0017,Person,50,7,11,26,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R0_age10,0017,Person,74,8,13,41,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R0_age30,0000,Vehicle,37,0,4,28,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R0_age30,0000,Vehicle,55,0,28,35,11,B,existing track,0,11.0,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age30,0000,Vehicle,95,0,35,69,26,C,new identity,0,10.0,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R0_age30,0000,Vehicle,134,0,69,91,1,A,lost track took over,1,1.0,102,False,False,,,,,,,,
+R0_age30,0000,Vehicle,134,9,106,117,8,B,existing track,0,6.0,115,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R0_age30,0000,Vehicle,138,0,91,143,3,C,new identity,0,0.0,136,False,False,2.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0
+R0_age30,0000,Vehicle,152,0,143,145,2,B,existing track,12,2.0,138,False,False,1.0,0.0,0.0,1.0,0.0,1.0,0.0,0.0
+R0_age30,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R0_age30,0003,Vehicle,124,7,23,24,3,B,existing track,0,2.0,118,False,False,2.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0
+R0_age30,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R0_age30,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R0_age30,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R0_age30,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R0_age30,0017,Person,29,1,1,14,1,A,lost track took over,1,1.0,17,True,False,,,,,,,,
+R0_age30,0017,Person,30,4,14,1,3,B,existing track,1,1.0,0,True,False,0.0,2.0,0.0,2.0,0.0,0.0,0.0,0.0
+R0_age30,0017,Person,31,1,14,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0
+R0_age30,0017,Person,31,4,1,14,1,A,lost track took over,1,0.0,17,True,True,,,,,,,,
+R0_age30,0017,Person,43,6,10,20,31,C,new identity,1,,39,False,False,19.0,11.0,0.0,2.0,7.0,10.0,1.0,1.0
+R0_age30,0017,Person,49,7,11,18,22,C,new identity,0,22.0,28,False,False,8.0,13.0,0.0,2.0,0.0,6.0,1.0,1.0
+R1_age1,0000,Vehicle,16,3,12,19,6,C,new identity,0,,14,False,False,5.0,0.0,0.0,1.0,0.0,3.0,0.0,2.0
+R1_age1,0000,Vehicle,37,0,4,35,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age1,0000,Vehicle,43,3,19,39,16,C,new identity,0,,38,False,False,11.0,4.0,0.0,2.0,2.0,6.0,0.0,3.0
+R1_age1,0000,Vehicle,55,0,35,43,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age1,0000,Vehicle,95,0,43,83,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age1,0000,Vehicle,106,0,83,127,6,C,new identity,0,,104,False,False,1.0,4.0,0.0,2.0,0.0,0.0,0.0,1.0
+R1_age1,0000,Vehicle,134,9,136,186,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age1,0000,Vehicle,138,0,127,189,5,C,new identity,0,,136,False,False,4.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0
+R1_age1,0003,Vehicle,14,2,2,4,5,C,new identity,0,,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age1,0003,Vehicle,97,1,8,24,8,C,new identity,0,,93,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+R1_age1,0003,Vehicle,117,1,24,31,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R1_age1,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age1,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age1,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age1,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age1,0017,Person,37,5,7,26,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R1_age1,0017,Person,45,4,15,32,7,C,new identity,0,,43,False,False,6.0,0.0,0.0,1.0,0.0,0.0,0.0,6.0
+R1_age1,0017,Person,46,5,26,34,9,C,new identity,0,,44,False,False,6.0,2.0,0.0,2.0,2.0,0.0,0.0,4.0
+R1_age1,0017,Person,48,6,10,29,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age1,0017,Person,49,8,18,37,16,C,new identity,0,,47,False,False,11.0,4.0,0.0,2.0,1.0,3.0,3.0,4.0
+R1_age1,0017,Person,50,7,11,39,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R1_age1,0017,Person,74,8,37,57,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R1_age2,0000,Vehicle,16,3,12,19,6,C,new identity,0,,14,False,False,5.0,0.0,0.0,1.0,0.0,3.0,0.0,2.0
+R1_age2,0000,Vehicle,37,0,4,33,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age2,0000,Vehicle,43,3,19,37,16,C,new identity,0,,38,False,False,11.0,4.0,0.0,2.0,2.0,6.0,0.0,3.0
+R1_age2,0000,Vehicle,55,0,33,41,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age2,0000,Vehicle,95,0,41,80,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age2,0000,Vehicle,134,9,129,173,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age2,0000,Vehicle,138,0,80,176,4,C,new identity,0,,136,False,False,3.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0
+R1_age2,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age2,0003,Vehicle,97,1,7,22,8,C,new identity,0,,93,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+R1_age2,0003,Vehicle,117,1,22,28,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R1_age2,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age2,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age2,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age2,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age2,0017,Person,37,5,7,25,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R1_age2,0017,Person,46,5,25,31,9,C,new identity,0,,44,False,False,6.0,2.0,0.0,2.0,2.0,0.0,0.0,4.0
+R1_age2,0017,Person,48,6,10,27,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age2,0017,Person,49,8,17,32,16,C,new identity,0,,44,False,False,11.0,4.0,0.0,2.0,1.0,3.0,3.0,4.0
+R1_age2,0017,Person,50,7,11,35,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R1_age2,0017,Person,74,8,32,51,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R1_age3,0000,Vehicle,37,0,4,30,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age3,0000,Vehicle,55,0,30,37,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age3,0000,Vehicle,95,0,37,73,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age3,0000,Vehicle,134,9,110,150,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age3,0000,Vehicle,138,0,73,153,5,C,new identity,0,1.0,136,False,False,4.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0
+R1_age3,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age3,0003,Vehicle,117,1,7,24,7,C,new identity,0,,115,False,False,6.0,0.0,0.0,0.0,0.0,4.0,0.0,2.0
+R1_age3,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age3,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age3,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age3,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age3,0017,Person,37,5,7,22,8,C,new identity,0,,35,False,False,5.0,2.0,0.0,2.0,2.0,1.0,0.0,2.0
+R1_age3,0017,Person,48,6,10,25,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age3,0017,Person,49,8,13,28,16,C,new identity,0,,44,False,False,11.0,4.0,0.0,2.0,1.0,3.0,3.0,4.0
+R1_age3,0017,Person,50,7,11,31,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R1_age3,0017,Person,74,8,28,47,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R1_age5,0000,Vehicle,37,0,4,29,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age5,0000,Vehicle,55,0,29,35,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age5,0000,Vehicle,95,0,35,71,26,C,new identity,0,,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age5,0000,Vehicle,134,9,107,146,8,C,new identity,0,,132,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age5,0000,Vehicle,138,0,71,150,5,C,new identity,0,1.0,136,False,False,4.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0
+R1_age5,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age5,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age5,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age5,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age5,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age5,0017,Person,48,6,10,23,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age5,0017,Person,50,7,11,28,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R1_age5,0017,Person,74,8,13,43,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R1_age10,0000,Vehicle,37,0,4,28,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age10,0000,Vehicle,55,0,28,35,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age10,0000,Vehicle,95,0,35,71,26,C,new identity,0,10.0,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age10,0000,Vehicle,134,9,108,119,8,B,existing track,0,6.0,115,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age10,0000,Vehicle,138,0,71,147,5,C,new identity,0,1.0,136,False,False,4.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0
+R1_age10,0000,Vehicle,152,13,144,162,4,C,new identity,0,1.0,149,False,False,0.0,3.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age10,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age10,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age10,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age10,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age10,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age10,0017,Person,48,6,10,21,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age10,0017,Person,50,7,11,26,23,C,new identity,0,,48,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+R1_age10,0017,Person,74,8,13,41,16,C,new identity,0,,72,False,False,6.0,9.0,0.0,2.0,1.0,3.0,0.0,2.0
+R1_age30,0000,Vehicle,37,0,4,28,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+R1_age30,0000,Vehicle,55,0,28,35,11,B,existing track,0,11.0,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+R1_age30,0000,Vehicle,95,0,35,69,26,C,new identity,0,10.0,86,False,False,0.0,25.0,0.0,3.0,0.0,0.0,0.0,0.0
+R1_age30,0000,Vehicle,134,9,106,117,8,B,existing track,0,6.0,115,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+R1_age30,0000,Vehicle,138,0,69,143,5,C,new identity,0,1.0,136,False,False,4.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0
+R1_age30,0003,Vehicle,14,2,2,4,5,C,new identity,0,0.0,12,False,False,2.0,2.0,0.0,2.0,0.0,0.0,0.0,2.0
+R1_age30,0017,Person,24,0,3,1,2,B,existing track,0,0.0,0,True,False,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0
+R1_age30,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+R1_age30,0017,Person,27,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+R1_age30,0017,Person,27,1,3,1,2,B,existing track,0,0.0,0,True,True,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+R1_age30,0017,Person,48,6,10,20,36,C,new identity,0,,39,False,False,24.0,11.0,0.0,2.0,7.0,11.0,1.0,5.0
+R1_age30,0017,Person,50,7,11,18,23,C,new identity,0,23.0,28,False,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0
+SORT,0000,Vehicle,17,3,15,22,7,C,new identity,0,,14,False,False,6.0,0.0,0.0,1.0,0.0,3.0,0.0,3.0
+SORT,0000,Vehicle,37,0,4,39,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+SORT,0000,Vehicle,47,3,22,43,20,C,new identity,0,,38,False,False,15.0,4.0,0.0,2.0,3.0,6.0,0.0,6.0
+SORT,0000,Vehicle,55,0,39,47,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+SORT,0000,Vehicle,107,0,47,132,7,C,new identity,0,,104,False,False,2.0,4.0,0.0,2.0,0.0,0.0,0.0,2.0
+SORT,0000,Vehicle,135,9,142,194,9,C,new identity,0,,132,False,False,2.0,6.0,0.0,2.0,0.0,1.0,0.0,1.0
+SORT,0000,Vehicle,139,0,132,198,6,C,new identity,0,,136,False,False,5.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0
+SORT,0003,Vehicle,15,2,2,5,6,C,new identity,0,,12,False,False,3.0,2.0,0.0,2.0,0.0,0.0,0.0,3.0
+SORT,0003,Vehicle,40,0,1,17,4,C,new identity,0,,37,False,False,3.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0
+SORT,0003,Vehicle,97,1,9,36,8,C,new identity,0,,93,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+SORT,0003,Vehicle,118,1,36,44,8,C,new identity,0,,115,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+SORT,0017,Person,24,0,3,1,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT,0017,Person,26,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT,0017,Person,26,1,3,1,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT,0017,Person,28,0,3,15,1,D,swap with active track,0,1.0,17,True,False,,,,,,,,
+SORT,0017,Person,31,0,15,3,3,B,existing track,0,0.0,0,True,True,2.0,0.0,0.0,1.0,0.0,0.0,0.0,2.0
+SORT,0017,Person,46,4,15,34,8,C,new identity,0,,43,False,False,7.0,0.0,0.0,1.0,0.0,0.0,0.0,7.0
+SORT,0017,Person,46,5,7,33,17,C,new identity,0,,42,False,False,12.0,4.0,0.0,2.0,4.0,1.0,0.0,7.0
+SORT,0017,Person,47,8,18,36,14,C,new identity,0,,44,False,False,9.0,4.0,0.0,2.0,1.0,3.0,3.0,2.0
+SORT,0017,Person,51,7,11,39,24,C,new identity,0,,48,False,False,10.0,13.0,0.0,2.0,0.0,6.0,1.0,3.0
+SORT,0017,Person,75,8,36,57,17,C,new identity,0,,72,False,False,7.0,9.0,0.0,2.0,1.0,3.0,0.0,3.0
+SORT_valid,0000,Vehicle,17,3,12,19,7,C,new identity,0,,14,False,False,6.0,0.0,0.0,1.0,0.0,3.0,0.0,3.0
+SORT_valid,0000,Vehicle,37,0,4,35,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+SORT_valid,0000,Vehicle,47,3,19,39,20,C,new identity,0,,38,False,False,15.0,4.0,0.0,2.0,3.0,6.0,0.0,6.0
+SORT_valid,0000,Vehicle,55,0,35,43,11,B,existing track,0,,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+SORT_valid,0000,Vehicle,107,0,43,126,7,C,new identity,0,,104,False,False,2.0,4.0,0.0,2.0,0.0,0.0,0.0,2.0
+SORT_valid,0000,Vehicle,135,9,135,185,9,C,new identity,0,,132,False,False,2.0,6.0,0.0,2.0,0.0,1.0,0.0,1.0
+SORT_valid,0000,Vehicle,139,0,126,189,6,C,new identity,0,,136,False,False,5.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0
+SORT_valid,0003,Vehicle,15,2,2,4,6,C,new identity,0,,12,False,False,3.0,2.0,0.0,2.0,0.0,0.0,0.0,3.0
+SORT_valid,0003,Vehicle,40,0,1,11,4,C,new identity,0,,37,False,False,3.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0
+SORT_valid,0003,Vehicle,97,1,8,25,8,C,new identity,0,,93,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+SORT_valid,0003,Vehicle,118,1,25,32,8,C,new identity,0,,115,False,False,7.0,0.0,0.0,0.0,0.0,4.0,0.0,3.0
+SORT_valid,0017,Person,24,0,3,1,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT_valid,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT_valid,0017,Person,26,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT_valid,0017,Person,26,1,3,1,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT_valid,0017,Person,28,0,3,15,1,D,swap with active track,0,1.0,17,True,False,,,,,,,,
+SORT_valid,0017,Person,31,0,15,3,3,B,existing track,0,0.0,0,True,True,2.0,0.0,0.0,1.0,0.0,0.0,0.0,2.0
+SORT_valid,0017,Person,46,4,15,32,8,C,new identity,0,,43,False,False,7.0,0.0,0.0,1.0,0.0,0.0,0.0,7.0
+SORT_valid,0017,Person,47,5,7,34,18,C,new identity,0,,44,False,False,13.0,4.0,0.0,2.0,4.0,1.0,0.0,8.0
+SORT_valid,0017,Person,50,8,18,37,17,C,new identity,0,,47,False,False,12.0,4.0,0.0,2.0,1.0,3.0,3.0,5.0
+SORT_valid,0017,Person,51,7,11,39,24,C,new identity,0,,48,False,False,10.0,13.0,0.0,2.0,0.0,6.0,1.0,3.0
+SORT_valid,0017,Person,75,8,37,57,17,C,new identity,0,,72,False,False,7.0,9.0,0.0,2.0,1.0,3.0,0.0,3.0
+SORT_age30,0000,Vehicle,37,0,4,31,1,D,swap with active track,0,1.0,34,False,False,,,,,,,,
+SORT_age30,0000,Vehicle,55,0,31,38,11,B,existing track,0,11.0,41,False,False,0.0,10.0,0.0,2.0,0.0,0.0,0.0,0.0
+SORT_age30,0000,Vehicle,129,7,71,139,4,C,new identity,0,0.0,126,False,False,3.0,0.0,0.0,1.0,0.0,0.0,0.0,3.0
+SORT_age30,0000,Vehicle,134,9,110,136,8,B,existing track,0,6.0,124,False,False,1.0,6.0,0.0,2.0,0.0,1.0,0.0,0.0
+SORT_age30,0000,Vehicle,139,0,38,150,6,C,new identity,0,0.0,136,False,False,5.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0
+SORT_age30,0003,Vehicle,15,2,2,5,6,C,new identity,0,0.0,12,False,False,3.0,2.0,0.0,2.0,0.0,0.0,0.0,3.0
+SORT_age30,0003,Vehicle,40,0,1,13,4,C,new identity,0,4.0,37,False,False,3.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0
+SORT_age30,0003,Vehicle,98,1,8,28,9,C,new identity,0,5.0,95,False,False,8.0,0.0,0.0,0.0,0.0,4.0,0.0,4.0
+SORT_age30,0017,Person,24,0,3,1,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT_age30,0017,Person,24,1,1,3,1,D,swap with active track,0,0.0,0,True,False,,,,,,,,
+SORT_age30,0017,Person,26,0,1,3,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT_age30,0017,Person,26,1,3,1,1,D,swap with active track,0,0.0,0,True,True,,,,,,,,
+SORT_age30,0017,Person,28,0,3,14,1,D,swap with active track,0,1.0,17,True,False,,,,,,,,
+SORT_age30,0017,Person,31,0,14,3,3,B,existing track,0,0.0,0,True,True,2.0,0.0,0.0,1.0,0.0,0.0,0.0,2.0
+SORT_age30,0017,Person,46,5,7,23,9,C,new identity,0,4.0,42,False,False,6.0,2.0,0.0,2.0,2.0,0.0,0.0,4.0
+SORT_age30,0017,Person,50,7,11,7,23,B,existing track,0,23.0,8,True,False,9.0,13.0,0.0,2.0,0.0,6.0,1.0,2.0

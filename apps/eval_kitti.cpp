@@ -64,6 +64,9 @@ void printHelp() {
                  "  --score-floor S      detector score floor for the dump (default 0.01)\n"
                  "  --variants <file>    tracker variants, one per line: name key=value ...\n"
                  "                       keys: assoc score min_hits max_age w3d wiou wapp\n"
+                 "                       iou_pred stage1_tsu lost_cost lost_chi2 lost_app ...\n"
+                 "  --diag               also write assoc_<variant>.txt (per-pair association\n"
+                 "                       diagnostics; see AssociationDiagnostic)\n"
                  "                       hungarian meas_noise proc_noise gate_chi2 iou_gate\n"
                  "                       range_gate (range_gated association only, metres)\n"
                  "                       (default: the three as-shipped associations)\n"
@@ -100,6 +103,8 @@ AssociationMethod parseAssociation(const std::string& s) {
         return AssociationMethod::kFusedAppearance;
     if (s == "range_gated")
         return AssociationMethod::kRangeGated3D;
+    if (s == "two_stage")
+        return AssociationMethod::kTwoStage;
     throw std::runtime_error("unknown association '" + s + "'");
 }
 
@@ -143,6 +148,24 @@ Variant parseVariantLine(const std::string& line, const TrackerParams& base, flo
             v.params.iou_gate = std::stod(val);
         else if (key == "range_gate")
             v.params.range_gate_max_m = std::stod(val);
+        else if (key == "iou_pred")
+            v.params.iou_use_predicted_box = std::stoi(val) != 0;
+        else if (key == "stage1_tsu")
+            v.params.stage1_max_tsu = std::stoi(val);
+        else if (key == "lost_cost")
+            v.params.lost_cost =
+                val == "iou"    ? LostTrackCost::kIouPredicted
+                : val == "none" ? LostTrackCost::kNone
+                : val == "app_mahal"
+                    ? LostTrackCost::kAppearanceMahalanobis
+                    : throw std::runtime_error("variant '" + v.name + "': unknown lost_cost '" +
+                                               val + "'");
+        else if (key == "lost_chi2")
+            v.params.lost_gating_chi2 = std::stod(val);
+        else if (key == "lost_app")
+            v.params.lost_max_appearance = std::stod(val);
+        else if (key == "reconfirm")
+            v.params.reconfirm_after_miss = std::stoi(val) != 0;
         else
             throw std::runtime_error("variant '" + v.name + "': unknown key '" + key + "'");
     }
@@ -279,21 +302,40 @@ void writeFrontendTiming(const std::string& path, const std::vector<FrameTiming>
 }
 
 void runVariant(const Variant& v, const std::vector<FrameDets>& frames, const std::string& dir,
-                std::ofstream& track_timing) {
-    Tracker tracker(v.params);
+                std::ofstream& track_timing, bool diag) {
+    TrackerParams params = v.params;
+    params.collect_diagnostics = diag;
+    Tracker tracker(params);
     std::ofstream f(dir + "/tracks_" + v.name + ".txt");
     f << "# frame id cls x y w h X Y Z vx vy vz confirmed tsu hits age\n"
       << std::fixed << std::setprecision(6);
+    std::ofstream a;
+    if (diag) {
+        // det = row index within this frame's dets.txt lines (all detections >= floor)
+        a.open(dir + "/assoc_" + v.name + ".txt");
+        a << "# frame track_id det tsu_before confirmed_before iou_last iou_pred mahal_sq app "
+             "stage\n"
+          << std::fixed << std::setprecision(6);
+    }
     for (std::size_t i = 0; i < frames.size(); ++i) {
         std::vector<Detection3D> usable;
+        std::vector<int> dump_index;  // usable[k] is dets.txt row dump_index[k] of frame i
         usable.reserve(frames[i].dets.size());
-        for (const Detection3D& d : frames[i].dets) {
-            if (d.score >= v.min_score)
-                usable.push_back(d);
+        for (std::size_t j = 0; j < frames[i].dets.size(); ++j) {
+            if (frames[i].dets[j].score >= v.min_score) {
+                usable.push_back(frames[i].dets[j]);
+                dump_index.push_back(static_cast<int>(j));
+            }
         }
         Stopwatch sw;
         const TrackerUpdateResult r = tracker.update(usable);
         track_timing << v.name << ',' << i << ',' << sw.elapsedMs() << '\n';
+        for (const AssociationDiagnostic& g : r.diagnostics) {
+            a << i << ' ' << g.track_id << ' '
+              << dump_index[static_cast<std::size_t>(g.detection_index)] << ' ' << g.tsu_before
+              << ' ' << (g.confirmed_before ? 1 : 0) << ' ' << g.iou_last << ' ' << g.iou_predicted
+              << ' ' << g.mahalanobis_sq << ' ' << g.appearance << ' ' << g.matched_stage << '\n';
+        }
         for (const TrackState& t : r.tracks) {
             f << i << ' ' << t.id << ' ' << t.class_id << ' ' << t.box.x << ' ' << t.box.y << ' '
               << t.box.width << ' ' << t.box.height << ' ' << t.position.x << ' ' << t.position.y
@@ -349,7 +391,7 @@ int main(int argc, char** argv) {
     std::ofstream track_timing(dir + "/track_timing.csv");
     track_timing << "variant,frame,track_ms\n" << std::fixed << std::setprecision(4);
     for (const Variant& v : variants)
-        runVariant(v, frames, dir, track_timing);
+        runVariant(v, frames, dir, track_timing, args.has("diag"));
 
     std::cout << "sequence " << args.get("sequence") << ": " << frames.size() << " frames, "
               << variants.size() << " variant(s) -> " << dir << "\n";

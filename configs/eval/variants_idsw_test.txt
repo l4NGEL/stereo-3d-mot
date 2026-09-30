@@ -1,0 +1,7 @@
+# docs/evaluation/IDSW_PLAN.md -- held-out: fixed variants + the D2 selected on dev (results/idsw/dev_selection.json)
+A_iou_last assoc=iou2d score=0.25 min_hits=3
+B_iou_last_age1 assoc=iou2d score=0.25 min_hits=3 max_age=1
+C_iou_pred assoc=iou2d score=0.25 min_hits=3 iou_pred=1
+D0_two_stage_none assoc=two_stage score=0.25 min_hits=3 lost_cost=none
+D1_two_stage_iou assoc=two_stage score=0.25 min_hits=3 lost_cost=iou
+D2_chi11.345_app0.5 assoc=two_stage score=0.25 min_hits=3 lost_cost=app_mahal lost_chi2=11.345 lost_app=0.5

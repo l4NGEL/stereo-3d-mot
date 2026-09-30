@@ -1,0 +1,13 @@
+# docs/evaluation/IDSW_PLAN.md round 2 -- dev grid
+R0_age1 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=1
+R0_age2 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=2
+R0_age3 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=3
+R0_age5 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=5
+R0_age10 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=10
+R0_age30 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=30
+R1_age1 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=1
+R1_age2 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=2
+R1_age3 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=3
+R1_age5 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=5
+R1_age10 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=10
+R1_age30 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=30

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <opencv2/core.hpp>
 
 namespace s3m {
 
@@ -54,5 +55,17 @@ class KalmanFilter {
 ///   accel_std   : process noise as white acceleration [m/s^2]
 ///   meas_std    : position measurement noise [m]
 KalmanFilter makeConstantVelocity3D(double dt, double accel_std, double meas_std);
+
+/// Image-plane constant-velocity box filter, one step = one frame.
+///   state       = [cx, cy, w, h, vcx, vcy, vw, vh]   (pixels, pixels/frame)
+///   measurement = [cx, cy, w, h]
+/// Noise constants follow the SORT reference implementation (Bewley et al.,
+/// 2016 -- the same constants scripts/eval/sort_baseline.py uses), carried over
+/// to a [cx, cy, w, h] parameterisation: R = diag(1, 1, 10, 10), P0 = 10 on the
+/// box and 10000 on its velocity, Q = 1 on the box and 0.01 on its velocity.
+/// They are declared, not tuned. Deliberately independent of stereo depth: the
+/// 3D filter's projection would inherit the ~1.5 m object-depth error measured
+/// in docs/evaluation/REPORT.md §3.
+KalmanFilter makeConstantVelocityBox2D(const cv::Rect2f& initial_box);
 
 }  // namespace s3m

@@ -556,3 +556,10 @@ Every one of `fcde488`'s 32 frozen criteria, its original measurement and verdic
 **Localisation quality** (held-out, pooled over both classes and all sequences): mean IoU of the matched pairs under P-K2D — S* 0.770, F 0.770, SORT 0.736, A4_plain_mahalanobis 0.767. Under P-LEGACY the mean 3D distance of matched pairs (MOTP) is mahalanobis3d 0.891 m, iou2d 0.894 m, fused 0.938 m — that distance includes the label-centre-versus-visible-surface offset discussed in §3 and §6, so it is a localisation *plus* protocol number, not a depth-error estimate (§3 has that).
 
 <!-- APPENDIX-END -->
+
+## 16. Follow-up (2026-09-30): what the identity switches are
+
+Separate report, not a change to §§1–15: [`IDSW_REPORT.md`](IDSW_REPORT.md) (plan: [`IDSW_PLAN.md`](IDSW_PLAN.md)). 148 of S\*'s
+246 held-out switches are a lost track whose frozen last box out-scores the active track for its detection. IoU against a
+predicted box (variant C, dev-selected) gives IDF1 0.553 → 0.644 and IDSW 246 → 84 at unchanged recall. That is still not
+demonstrably better than SORT, and the shipped configuration is unchanged.

@@ -1,0 +1,5 @@
+# IDSW_PLAN.md round 2 -- held-out: selected (R0_age30 == C) + factor contrasts
+R0_age1 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=1
+R0_age30 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=0 max_age=30
+R1_age1 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=1
+R1_age30 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 reconfirm=1 max_age=30

@@ -109,6 +109,12 @@ Config Config::load(const std::string& path) {
     readScalar(tr, "fused_weight_iou", cfg.tracking.fused_weight_iou);
     readScalar(tr, "fused_weight_appearance", cfg.tracking.fused_weight_appearance);
     readScalar(tr, "range_gate_max_m", cfg.tracking.range_gate_max_m);
+    readBool(tr, "iou_use_predicted_box", cfg.tracking.iou_use_predicted_box);
+    readScalar(tr, "stage1_max_tsu", cfg.tracking.stage1_max_tsu);
+    readScalar(tr, "lost_cost", cfg.tracking.lost_cost);
+    readScalar(tr, "lost_gating_chi2", cfg.tracking.lost_gating_chi2);
+    readScalar(tr, "lost_max_appearance", cfg.tracking.lost_max_appearance);
+    readBool(tr, "reconfirm_after_miss", cfg.tracking.reconfirm_after_miss);
 
     return cfg;
 }

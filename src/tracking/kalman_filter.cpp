@@ -81,4 +81,38 @@ KalmanFilter makeConstantVelocity3D(double dt, double accel_std, double meas_std
     return kf;
 }
 
+KalmanFilter makeConstantVelocityBox2D(const cv::Rect2f& initial_box) {
+    KalmanFilter kf(8, 4);
+
+    KalmanFilter::Mat f = KalmanFilter::Mat::Identity(8, 8);
+    for (int i = 0; i < 4; ++i)
+        f(i, i + 4) = 1.0;  // one step = one frame
+    kf.F = f;
+
+    KalmanFilter::Mat h = KalmanFilter::Mat::Zero(4, 8);
+    for (int i = 0; i < 4; ++i)
+        h(i, i) = 1.0;
+    kf.H = h;
+
+    KalmanFilter::Mat r = KalmanFilter::Mat::Identity(4, 4);
+    r(2, 2) = r(3, 3) = 10.0;
+    kf.R = r;
+
+    KalmanFilter::Mat q = KalmanFilter::Mat::Identity(8, 8);
+    for (int i = 4; i < 8; ++i)
+        q(i, i) = 0.01;
+    kf.Q = q;
+
+    KalmanFilter::Vec x0 = KalmanFilter::Vec::Zero(8);
+    x0(0) = static_cast<double>(initial_box.x) + initial_box.width / 2.0;
+    x0(1) = static_cast<double>(initial_box.y) + initial_box.height / 2.0;
+    x0(2) = static_cast<double>(initial_box.width);
+    x0(3) = static_cast<double>(initial_box.height);
+    KalmanFilter::Mat p0 = KalmanFilter::Mat::Identity(8, 8) * 10.0;
+    for (int i = 4; i < 8; ++i)
+        p0(i, i) *= 1000.0;
+    kf.init(x0, p0);
+    return kf;
+}
+
 }  // namespace s3m

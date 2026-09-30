@@ -84,6 +84,20 @@ struct TrackingParams {
     /// Mahalanobis distance, beyond it by IoU. Default is effectively
     /// unlimited (no gating).
     double range_gate_max_m = 1e9;
+
+    /// iou2d: IoU against the track's predicted 2D box instead of its last
+    /// observed one (off = the evaluated baseline).
+    bool iou_use_predicted_box = false;
+    /// two_stage (see AssociationMethod::kTwoStage): tracks missed for at most
+    /// this many frames are "active" (stage 1); lost-track cost is "app_mahal"
+    /// (appearance AND Mahalanobis gates), "iou" (predicted-box IoU) or "none".
+    int stage1_max_tsu = 0;
+    std::string lost_cost = "app_mahal";
+    double lost_gating_chi2 = 7.815;
+    double lost_max_appearance = 0.5;
+    /// SORT's reporting rule: a miss revokes confirmation until min_hits
+    /// consecutive matches (off = the evaluated baseline).
+    bool reconfirm_after_miss = false;
 };
 
 /// Aggregated pipeline configuration.
