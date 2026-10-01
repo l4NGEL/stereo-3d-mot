@@ -156,8 +156,17 @@ class PerceptionNode : public rclcpp::Node {
         RCLCPP_WARN(get_logger(), "built without S3M_WITH_ONNX -- detections/tracks will be empty");
 #endif
 
-        TrackerParams tp;
-        tracker_ = Tracker(tp);
+        // Tracker defaults = configs/kitti_recommended.yaml (docs/evaluation/IDSW_REPORT.md §10):
+        // IoU against the predicted 2D box, filtered box published. "mahalanobis3d" etc. remain
+        // selectable for comparison.
+        TrackingParams tcfg;
+        tcfg.association = declare_parameter("tracker_association", std::string("iou2d"));
+        tcfg.iou_use_predicted_box = declare_parameter("tracker_predicted_box", true);
+        tcfg.report_filtered_box = declare_parameter("tracker_filtered_box", true);
+        tcfg.measurement_noise = declare_parameter("tracker_measurement_noise", 1.0);
+        tcfg.min_hits = static_cast<int>(declare_parameter("tracker_min_hits", 3));
+        tcfg.max_age = static_cast<int>(declare_parameter("tracker_max_age", 30));
+        tracker_ = Tracker(TrackerParams::fromConfig(tcfg));
 
         detections_pub_ = create_publisher<vision_msgs::msg::Detection3DArray>(
             "/perception/detections", rclcpp::QoS(10));

@@ -55,3 +55,13 @@ tracking:
   fused_weight_3d: 0.5
   fused_weight_iou: 0.2
   fused_weight_appearance: 0.3
+  # Options added by the ID-switch follow-up (docs/evaluation/IDSW_REPORT.md), written out
+  # explicitly at their OLD behaviour: evaluation variants inherit this file, so it must keep
+  # reproducing the published numbers. The recommended tracker is configs/kitti_recommended.yaml.
+  iou_use_predicted_box: 0
+  report_filtered_box: 0
+  reconfirm_after_miss: 0
+  sort_box_model: 0
+  iou_max_total_assignment: 0
+  box_coast_frames: 0
+  sort_warmup: 0
