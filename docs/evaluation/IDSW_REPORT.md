@@ -242,3 +242,51 @@ Differences between C and SORT that were never isolated:
 - The box that is reported: SORT reports its filtered box, C the detection box.
 - SORT's first-`min_hits`-frames birth exception.
 - The 3D-state machinery the project's tracker still carries.
+
+## 10. Round 4: wider dev, targeted fixes, and a fresh test set
+
+Pre-registered in [`IDSW_PLAN.md`](IDSW_PLAN.md) round 4, before the new sequences were downloaded. The code, the dev
+selection and the test variant list were committed (`4ba9657`) before any test sequence was scored.
+- **Dev:** 11 sequences, the old dev plus the former held-out.
+- **Test:** the 10 KITTI tracking training sequences never used before (0005, 0006, 0009, 0011, 0013, 0014, 0015,
+  0018, 0019, 0020), first 150 frames, 5,593 GT object-frames. Scored once.
+
+On all 11 dev sequences, `Woff00` is byte-identical to C and A to the published S\*.
+
+**Dev selection** (16 variants): **`Woff10`** = C + report the box filter's estimate instead of the raw detection box
+(IDF1 0.662 → 0.668, IDSW 103 → 98, MOTA 0.534 → 0.545). Negative result: stopping a lost track's box after k frames
+(`box_coast`) brings the frozen-box switches straight back (k = 1: 232 IDSW, k = 3: 153, k = 5: 119 vs 103). SORT's
+warm-up rule raises recall slightly but adds IDSW.
+
+**Fresh test** (10 sequences, paired bootstrap over sequences, 10,000 draws):
+
+| | IDF1 | MOTA | IDSW | Frag | Recall | Precision |
+|---|---|---|---|---|---|---|
+| A (old S\*) | 0.661 | 0.518 | 214 | 167 | 0.712 | 0.820 |
+| C (predicted box) | 0.707 | 0.544 | 121 | 171 | 0.718 | 0.825 |
+| `Woff10` (dev-selected) | 0.706 | 0.546 | 115 | 151 | 0.718 | 0.826 |
+| SORT | 0.715 | 0.569 | 65 | 94 | 0.690 | 0.864 |
+| SORT, max_age 30 (diagnostic) | 0.699 | 0.552 | 73 | 105 | 0.675 | 0.860 |
+
+| Comparison | ΔIDF1 | ΔMOTA | ΔIDSW rate | ΔRecall |
+|---|---|---|---|---|
+| **C − A** | **+0.046 [+0.018, +0.075]** 8/2 | **+0.027 [+0.012, +0.047]** 9/1 | **−0.017 [−0.027, −0.008]** | +0.006 [+0.001, +0.011] |
+| `Woff10` − C | −0.001 (noise) | +0.001 (noise) | −0.001 [−0.002, −0.000] (never worse, 4 better) | −0.001 (noise) |
+| C − SORT | −0.008 [−0.045, +0.043] | −0.025 [−0.057, +0.005] | **+0.010 [+0.001, +0.021]** 8/1 | +0.028 [−0.002, +0.056] |
+| `Woff10` − SORT | −0.009 (noise) | −0.024 (noise) | **+0.009 [+0.001, +0.020]** | +0.027 [+0.000, +0.053] |
+
+**What replicates on data never used before:**
+- **The fix holds.** Predicted-box IoU beats the old S\* on IDF1, MOTA, IDSW and recall, all with intervals excluding 0.
+  IDSW drops from 214 to 121, and class A from 106 to 42.
+- **Reporting the filtered box changes almost nothing** (6 fewer IDSW, no IDF1 effect).
+- **Against SORT the tracker is level on IDF1 and MOTA** (both inside the noise) but still has about twice the identity
+  switches (115–121 vs 65; the difference excludes 0, worse on 8 of 9 sequences that differ). The largest share is still
+  class A (37 vs 0) and B (30 vs 17); 0013 alone has 31 vs 6.
+- **The held-out-only round-2 finding does not replicate:** SORT with max_age 30 is *worse* than SORT here (0.699 vs
+  0.715). That finding was split-specific, as §9 suspected.
+
+**Status.** All 21 KITTI tracking training sequences have now been used. The recommended configuration is C, or
+`Woff10`, which is equivalent in practice: `assoc=iou2d`, `iou_use_predicted_box`, optionally `report_filtered_box`,
+max_age 30, E = 0. It is a demonstrated improvement over the previous tracker. Matching SORT's switch count is still
+open. The remaining cause is lost tracks winning detections even with a predicted box (class A). Any further change
+needs evaluation data outside KITTI training (for example MOT17), because nothing clean remains here.

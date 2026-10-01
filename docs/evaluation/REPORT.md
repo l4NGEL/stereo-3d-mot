@@ -563,3 +563,7 @@ Separate report, not a change to §§1–15: [`IDSW_REPORT.md`](IDSW_REPORT.md) 
 246 held-out switches are a lost track whose frozen last box out-scores the active track for its detection. IoU against a
 predicted box (variant C, dev-selected) gives IDF1 0.553 → 0.644 and IDSW 246 → 84 at unchanged recall. That is still not
 demonstrably better than SORT, and the shipped configuration is unchanged.
+
+**Update (2026-10-01).** Round 4 of the follow-up re-tested on the 10 KITTI tracking sequences never used before
+([`IDSW_REPORT.md`](IDSW_REPORT.md) §10). Predicted-box IoU beats the old S\* there too: IDF1 +0.046 [+0.018, +0.075], IDSW 214 → 121.
+It is level with SORT on IDF1 and MOTA, but SORT still has about half the identity switches.

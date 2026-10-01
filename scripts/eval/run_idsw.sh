@@ -76,3 +76,28 @@ python scripts/eval/run_idsw_eval.py --round 3 --raw "$RAW/dev3_kitti_tiled" --s
     --out "$R/dev3_selection.json" --events-csv "$R/dev3_events.csv"
 python scripts/eval/run_idsw_eval.py --round 3 --raw "$RAW/test3_kitti_tiled" --seqs $TEST --variants $TEST3_V --mode report \
     --selection "$R/dev3_selection.json" --out "$R/test3_report.json" --events-csv "$R/test3_events.csv"
+
+# ---- round 4 (IDSW_PLAN.md): wider dev (11), fresh test (10 never-used sequences) ----
+DEV4="0000 0003 0017 0001 0002 0004 0007 0008 0010 0012 0016"
+TEST4="0005 0006 0009 0011 0013 0014 0015 0018 0019 0020"
+if [ "${1:-}" != "--score-only" ]; then
+    python scripts/fetch_kitti_sequence.py $TEST4 --max-frames 150 --out data/kitti
+    for S in 0000 0003 0017; do
+        $RUN /b/apps/eval_kitti --kitti-root /data/kitti --sequence "$S" --config configs/kitti_tiled.yaml \
+            --model /src/models/yolov8n.onnx --variants configs/eval/variants_idsw4_dev.txt --out /out/dev4_kitti_tiled
+    done
+    for S in $TEST; do
+        $RUN /b/apps/eval_kitti --kitti-root /data/kitti --sequence "$S" --config configs/kitti_tiled.yaml \
+            --model /src/models/yolov8n.onnx --variants configs/eval/variants_idsw4_dev.txt --frames 150 --out /out/dev4_kitti_tiled
+    done
+    for S in $TEST4; do
+        $RUN /b/apps/eval_kitti --kitti-root /data/kitti --sequence "$S" --config configs/kitti_tiled.yaml \
+            --model /src/models/yolov8n.onnx --variants configs/eval/variants_idsw4_test.txt --frames 150 --out /out/test4_kitti_tiled
+    done
+fi
+DEV4_V=$(grep -v '^#' configs/eval/variants_idsw4_dev.txt | awk '{print $1}')
+TEST4_V=$(grep -v '^#' configs/eval/variants_idsw4_test.txt | awk '{print $1}')
+python scripts/eval/run_idsw_eval.py --round 4 --raw "$RAW/dev4_kitti_tiled" --seqs $DEV4 --variants $DEV4_V --mode select \
+    --out "$R/dev4_selection.json" --events-csv "$R/dev4_events.csv"
+python scripts/eval/run_idsw_eval.py --round 4 --raw "$RAW/test4_kitti_tiled" --seqs $TEST4 --variants $TEST4_V --mode report \
+    --selection "$R/dev4_selection.json" --out "$R/test4_report.json" --events-csv "$R/test4_events.csv"
