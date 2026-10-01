@@ -1,0 +1,6 @@
+# IDSW_PLAN.md round 5 -- MOT17 candidates (2D association only)
+A_iou_last assoc=iou2d score=0 min_hits=3
+C_iou_pred assoc=iou2d score=0 min_hits=3 iou_pred=1
+Woff10 assoc=iou2d score=0 min_hits=3 iou_pred=1 filt_box=1
+R1 assoc=iou2d score=0 min_hits=3 iou_pred=1 reconfirm=1
+D1 assoc=two_stage score=0 min_hits=3 lost_cost=iou

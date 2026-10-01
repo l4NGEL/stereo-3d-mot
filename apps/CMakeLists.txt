@@ -1,5 +1,5 @@
 # Shared app glue (CLI parsing, frame-source factory).
-add_library(app_common STATIC common.cpp)
+add_library(app_common STATIC common.cpp variants.cpp)
 target_include_directories(app_common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(app_common PUBLIC s3m::s3m)
 s3m_set_target_warnings(app_common)
@@ -20,5 +20,6 @@ s3m_add_app(benchmark_vo)
 # Evaluation harness (docs/evaluation/PROTOCOL.md): these only produce data
 # and timings; scoring lives in scripts/eval/.
 s3m_add_app(eval_kitti)
+s3m_add_app(eval_mot2d)
 s3m_add_app(benchmark_e2e)
 s3m_add_app(dump_disparity)

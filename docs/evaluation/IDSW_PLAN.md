@@ -117,3 +117,38 @@ SORT with max_age 30.
 **Test (once):** the selected variant, C, A, SORT. Pre-registered comparisons, paired bootstrap over the 10 sequences
 (10,000 draws): selected − C, selected − SORT, C − SORT, C − A, on IDF1, MOTA, IDSW rate and recall. A comparison is
 "demonstrated" only if the 95 % interval excludes 0. If the selected variant is C, only C − SORT and C − A are reported.
+
+## Round 5 — MOT17, an outside dataset (written 2026-10-01, before MOT17 was downloaded)
+
+All KITTI tracking training sequences are used up, so the remaining question is moved to data from a different domain:
+MOT17 train (pedestrians, static and moving cameras, 1920 × 1080 / 640 × 480, 14–30 fps).
+
+**What it can and cannot test.** MOT17 is monocular. The stereo/3D parts of the pipeline cannot run, so only
+*2D association logic* is evaluated: every variant below scores pairs by 2D IoU only and needs no depth. Each MOT17
+detection enters the tracker with `valid = true` and a placeholder 3D position, which no IoU variant reads.
+Conclusions are about the association rules, not about the stereo tracker as a whole.
+
+**Detections and scoring.**
+- Detections: the public FRCNN detections (`MOT17-XX-FRCNN/det/det.txt`), all of them, no extra score threshold.
+  Every tracker gets the same input.
+- Scoring follows the MOTChallenge convention. GT rows with class 1 (pedestrian) and the consider flag set are scored.
+  Tracker boxes matched (Hungarian, IoU ≥ 0.5) to a distractor GT (classes 2, 7, 8, 12, or consider flag 0) are
+  removed before scoring. This mirrors TrackEval's MOT17 preprocessing and is not the official server.
+  Counting uses py-motmetrics, IoU ≥ 0.5, pooled over sequences from raw counts.
+
+**Split** (seeded draw `RandomState(20261001).choice(7, 3)`): dev = 09, 10, 11; test = 02, 04, 05, 13.
+
+**Fixed, not tuned:** min_hits 3, max_age 30, iou_gate 0.3, E = 0 (the KITTI values). SORT keeps its own constants
+(max_age 1).
+
+**Candidates:**
+- A: last-box IoU.
+- C: predicted-box IoU.
+- `Woff10`: C + filtered box.
+- R1: C + reconfirm after miss.
+- D1: two-stage, lost tracks by predicted-box IoU.
+
+**Selection:** max pooled dev IDF1; ties within 0.005 → fewer IDSW → higher MOTA → listed order.
+
+**Test, once:** the selected variant, C, A, SORT. With 4 test sequences the bootstrap intervals will be wide;
+per-sequence results are reported alongside.

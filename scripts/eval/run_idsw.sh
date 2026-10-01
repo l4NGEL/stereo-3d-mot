@@ -101,3 +101,18 @@ python scripts/eval/run_idsw_eval.py --round 4 --raw "$RAW/dev4_kitti_tiled" --s
     --out "$R/dev4_selection.json" --events-csv "$R/dev4_events.csv"
 python scripts/eval/run_idsw_eval.py --round 4 --raw "$RAW/test4_kitti_tiled" --seqs $TEST4 --variants $TEST4_V --mode report \
     --selection "$R/dev4_selection.json" --out "$R/test4_report.json" --events-csv "$R/test4_events.csv"
+
+# ---- round 5 (IDSW_PLAN.md): MOT17 public FRCNN detections, 2D association only ----
+if [ "${1:-}" != "--score-only" ]; then
+    mkdir -p data/mot17 && curl -sSfL -o data/mot17/MOT17Labels.zip https://motchallenge.net/data/MOT17Labels.zip
+    python -c "import zipfile; z=zipfile.ZipFile('data/mot17/MOT17Labels.zip'); [z.extract(n, 'data/mot17') for n in z.namelist() if 'FRCNN' in n and n.startswith('train/')]"
+    mkdir -p out/eval/raw/mot17
+    docker run --rm -v "$SRC:/src:ro" -v "$SRC/data:/data:ro" -v "$SRC/out/eval/raw/mot17:/out" -v s3m-eval-build:/b -w /src $IMG bash -c \
+        'for S in 09 10 11 02 04 05 13; do Q=MOT17-$S-FRCNN; N=$(grep seqLength /data/mot17/train/$Q/seqinfo.ini | cut -d= -f2 | tr -d "\r"); /b/apps/eval_mot2d --det /data/mot17/train/$Q/det/det.txt --frames $N --config configs/kitti_tiled.yaml --variants configs/eval/variants_mot17.txt --out /out/$Q; done'
+fi
+python scripts/eval/run_mot17_eval.py --raw out/eval/raw/mot17 --seqs MOT17-09-FRCNN MOT17-10-FRCNN MOT17-11-FRCNN \
+    --variants A_iou_last C_iou_pred Woff10 R1 D1 --order A_iou_last C_iou_pred Woff10 R1 D1 --mode select \
+    --out "$R/mot17_dev_selection.json"
+python scripts/eval/run_mot17_eval.py --raw out/eval/raw/mot17 --seqs MOT17-02-FRCNN MOT17-04-FRCNN MOT17-05-FRCNN MOT17-13-FRCNN \
+    --variants R1 C_iou_pred A_iou_last --mode report --compare R1:C_iou_pred R1:SORT C_iou_pred:SORT C_iou_pred:A_iou_last \
+    --out "$R/mot17_test_report.json"

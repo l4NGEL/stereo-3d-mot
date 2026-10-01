@@ -290,3 +290,47 @@ warm-up rule raises recall slightly but adds IDSW.
 max_age 30, E = 0. It is a demonstrated improvement over the previous tracker. Matching SORT's switch count is still
 open. The remaining cause is lost tracks winning detections even with a predicted box (class A). Any further change
 needs evaluation data outside KITTI training (for example MOT17), because nothing clean remains here.
+
+## 11. Round 5: MOT17, an outside dataset (2D association only)
+
+Pre-registered in [`IDSW_PLAN.md`](IDSW_PLAN.md) round 5, before MOT17 was downloaded. MOT17 is monocular, so this
+checks the **2D association rules**, not the stereo pipeline.
+- Input: the public FRCNN detections, fed to the C++ `Tracker` through `apps/eval_mot2d` (variants that would need
+  depth are refused).
+- Scoring: `scripts/eval/run_mot17_eval.py`, MOTChallenge-style distractor removal, py-motmetrics, IoU 0.5.
+- Split (seeded draw): dev = 09, 10, 11; test = 02, 04, 05, 13.
+- Fixed, not tuned: min_hits 3, max_age 30, iou_gate 0.3.
+
+**Dev** (27,600 GT boxes): the rule selects **R1 = C + reconfirm after miss** (IDF1 0.520, 292 IDSW; C 0.517 / 398;
+`Woff10` 0.518 / 380; A 0.482 / 465; D1 0.510 / 332; SORT 0.485 / 288).
+
+**Test, once** (84,697 GT boxes; 4 sequences, so intervals are wide):
+
+| | IDF1 | MOTA | IDSW | Frag | Recall | Precision |
+|---|---|---|---|---|---|---|
+| A (last-box IoU) | 0.524 | 0.469 | 851 | 876 | 0.499 | 0.961 |
+| C (predicted box) | 0.551 | 0.475 | 558 | 810 | 0.501 | 0.963 |
+| **R1 (dev-selected: C + reconfirm)** | **0.551** | 0.471 | **406** | 654 | 0.488 | 0.975 |
+| SORT | 0.514 | 0.473 | 405 | 513 | 0.488 | 0.980 |
+
+| Comparison | ΔIDF1 | ΔMOTA | ΔIDSW rate | ΔRecall |
+|---|---|---|---|---|
+| **C − A** | **+0.028 [+0.011, +0.071]** 4/0 | +0.006 (noise) | −0.003 (noise) | +0.002 (noise) |
+| R1 − C | −0.001 (noise) | −0.004 [−0.010, −0.001] | −0.002 [−0.008, −0.000] 0/4 | **−0.012 [−0.036, −0.005]** 0/4 |
+| R1 − SORT | +0.037 [−0.017, +0.057] 3/1 | −0.002 (noise) | +0.000 (noise) | +0.000 (noise) |
+| C − SORT | +0.038 [−0.019, +0.059] 3/1 | +0.002 (noise) | +0.002 (noise) | +0.012 [+0.006, +0.034] |
+
+MOT17-13 (moving camera) dominates the switch counts: A 657, C 376, R1 240, SORT 181.
+
+**Reading:**
+- **The predicted-box fix replicates in a different domain** (pedestrians, MOT17 detections): IDF1 +0.028 over
+  last-box IoU, better on 4/4 test sequences. Together with §10, it is now confirmed on two independent clean sets.
+- **On MOT17 the identity-switch gap to SORT closes** with the dev-selected reconfirm rule (406 vs 405). IDF1 is
+  0.037 above SORT, which is not demonstrated (3/1 sequences, interval includes 0).
+- **Reconfirmation is a trade-off, not a free gain, in both datasets.** It always lowers switches and always costs
+  recall: −0.012 here, −0.045 on KITTI (§8). KITTI's dev rejected it, MOT17's dev accepted it. Whether to enable it
+  depends on whether the application values fewer identity changes or fewer missed objects. It stays off in
+  `configs/kitti_recommended.yaml` (KITTI dev decision) and is available as `reconfirm_after_miss`.
+
+**What this does not show:** anything about stereo depth or the 3D association modes, which cannot run on MOT17.
+MOT17 visibility levels were not used, and the scorer is not the official MOTChallenge server.
