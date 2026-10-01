@@ -115,6 +115,8 @@ Config Config::load(const std::string& path) {
     readScalar(tr, "lost_gating_chi2", cfg.tracking.lost_gating_chi2);
     readScalar(tr, "lost_max_appearance", cfg.tracking.lost_max_appearance);
     readBool(tr, "reconfirm_after_miss", cfg.tracking.reconfirm_after_miss);
+    readBool(tr, "sort_box_model", cfg.tracking.sort_box_model);
+    readBool(tr, "iou_max_total_assignment", cfg.tracking.iou_max_total_assignment);
 
     return cfg;
 }

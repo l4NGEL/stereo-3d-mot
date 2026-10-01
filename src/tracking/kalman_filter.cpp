@@ -1,5 +1,6 @@
 #include "s3m/tracking/kalman_filter.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace s3m {
@@ -111,6 +112,43 @@ KalmanFilter makeConstantVelocityBox2D(const cv::Rect2f& initial_box) {
     KalmanFilter::Mat p0 = KalmanFilter::Mat::Identity(8, 8) * 10.0;
     for (int i = 4; i < 8; ++i)
         p0(i, i) *= 1000.0;
+    kf.init(x0, p0);
+    return kf;
+}
+
+KalmanFilter makeSortBoxFilter(const cv::Rect2f& initial_box) {
+    KalmanFilter kf(7, 4);
+
+    KalmanFilter::Mat f = KalmanFilter::Mat::Identity(7, 7);
+    f(0, 4) = f(1, 5) = f(2, 6) = 1.0;
+    kf.F = f;
+
+    KalmanFilter::Mat h = KalmanFilter::Mat::Zero(4, 7);
+    for (int i = 0; i < 4; ++i)
+        h(i, i) = 1.0;
+    kf.H = h;
+
+    KalmanFilter::Mat r = KalmanFilter::Mat::Identity(4, 4);
+    r(2, 2) = r(3, 3) = 10.0;
+    kf.R = r;
+
+    KalmanFilter::Mat q = KalmanFilter::Mat::Identity(7, 7);
+    q(6, 6) *= 0.01;
+    for (int i = 4; i < 7; ++i)
+        q(i, i) *= 0.01;
+    kf.Q = q;
+
+    const double w = initial_box.width;
+    const double hh = initial_box.height;
+    KalmanFilter::Vec x0 = KalmanFilter::Vec::Zero(7);
+    x0(0) = static_cast<double>(initial_box.x) + w / 2.0;
+    x0(1) = static_cast<double>(initial_box.y) + hh / 2.0;
+    x0(2) = w * hh;
+    x0(3) = w / std::max(hh, 1e-9);
+    KalmanFilter::Mat p0 = KalmanFilter::Mat::Identity(7, 7);
+    for (int i = 4; i < 7; ++i)
+        p0(i, i) *= 1000.0;
+    p0 *= 10.0;
     kf.init(x0, p0);
     return kf;
 }

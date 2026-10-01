@@ -98,6 +98,10 @@ struct TrackingParams {
     /// SORT's reporting rule: a miss revokes confirmation until min_hits
     /// consecutive matches (off = the evaluated baseline).
     bool reconfirm_after_miss = false;
+    /// SORT's [u, v, s, r] box filter instead of [cx, cy, w, h].
+    bool sort_box_model = false;
+    /// iou2d: SORT's assignment objective (max total IoU, gate applied after).
+    bool iou_max_total_assignment = false;
 };
 
 /// Aggregated pipeline configuration.

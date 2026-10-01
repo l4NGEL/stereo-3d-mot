@@ -45,6 +45,8 @@ TrackerParams TrackerParams::fromConfig(const TrackingParams& tp) {
     p.lost_gating_chi2 = tp.lost_gating_chi2;
     p.lost_max_appearance = tp.lost_max_appearance;
     p.reconfirm_after_miss = tp.reconfirm_after_miss;
+    p.sort_box_model = tp.sort_box_model;
+    p.iou_max_total_assignment = tp.iou_max_total_assignment;
     return p;
 }
 
@@ -257,10 +259,28 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
     if (params_.association == AssociationMethod::kTwoStage) {
         associateTwoStage(usable, detections, track_to_det, stage_of_track);
     } else {
-        const std::vector<std::vector<double>> cost = buildCostMatrix(usable, detections);
-        const Assignment assign = params_.use_hungarian ? solveAssignmentHungarian(cost, gate())
-                                                        : solveAssignmentGreedy(cost, gate());
-        track_to_det = assign.row_to_col;
+        std::vector<std::vector<double>> cost = buildCostMatrix(usable, detections);
+        if (params_.association == AssociationMethod::kIou2D && params_.iou_max_total_assignment &&
+            params_.use_hungarian) {
+            // SORT: every pair feasible (class-incompatible = IoU 0 = cost 1), so the
+            // solver minimises total cost without a cardinality preference; the IoU
+            // gate is applied afterwards.
+            for (auto& row : cost)
+                for (double& c : row)
+                    if (!std::isfinite(c))
+                        c = 1.0;
+            const Assignment all = solveAssignmentHungarian(cost, 2.0);
+            track_to_det = all.row_to_col;
+            for (std::size_t i = 0; i < track_to_det.size(); ++i) {
+                const int k = track_to_det[i];
+                if (k >= 0 && cost[i][static_cast<std::size_t>(k)] > gate())
+                    track_to_det[i] = -1;
+            }
+        } else {
+            const Assignment assign = params_.use_hungarian ? solveAssignmentHungarian(cost, gate())
+                                                            : solveAssignmentGreedy(cost, gate());
+            track_to_det = assign.row_to_col;
+        }
         stage_of_track.assign(tracks_.size(), 0);
         for (std::size_t i = 0; i < tracks_.size(); ++i) {
             if (track_to_det[i] >= 0)
@@ -326,6 +346,8 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
                    params_.measurement_noise, d.class_id, d.box, d.appearance);
         born.setMinHits(params_.min_hits);
         born.setReconfirmAfterMiss(params_.reconfirm_after_miss);
+        if (params_.sort_box_model)
+            born.setSortBoxModel(true);
         result.detection_track_id[static_cast<std::size_t>(det_idx)] = born.id();
         tracks_.push_back(std::move(born));
     }

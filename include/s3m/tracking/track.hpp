@@ -53,6 +53,10 @@ class Track {
     /// the ability to be re-matched are unaffected either way.
     void setReconfirmAfterMiss(bool on) { reconfirm_after_miss_ = on; }
     int hitStreak() const { return hit_streak_; }
+    /// Use SORT's [u, v, s, r] box filter (makeSortBoxFilter) instead of the
+    /// default [cx, cy, w, h] one. Re-initialises the box filter from the last
+    /// observed box, so call it right after construction.
+    void setSortBoxModel(bool on);
 
     /// Squared Mahalanobis distance from the current prediction to a candidate
     /// measured position (gating for data association).
@@ -65,6 +69,7 @@ class Track {
     KalmanFilter kf_;
     KalmanFilter box_kf_;
     bool has_box_model_ = false;
+    bool sort_box_model_ = false;
     cv::Rect2f last_box_{};
     int class_id_;
     cv::Mat appearance_;

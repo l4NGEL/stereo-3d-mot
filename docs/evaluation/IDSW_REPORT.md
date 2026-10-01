@@ -204,3 +204,41 @@ else is as in C. The C-equivalent `R0_age30` reproduces C's tracks byte for byte
 **Verdict:** the IDSW gap to SORT can be closed (54 vs 60) with SORT's reporting rule, but only by giving up recall,
 with no IDF1 gain. The dev rule therefore keeps C. The third factor (box parameterisation) remains untested. Testing
 it would need a new dev-only round; held-out has now been used for two rounds.
+
+## 9. Round 3: SORT's box filter and assignment objective
+
+Pre-registered in [`IDSW_PLAN.md`](IDSW_PLAN.md) round 3. Two new options, both off by default, and both have unit tests:
+- `sort_box_model`: SORT's `[u, v, s, r]` filter and constants.
+- `iou_max_total_assignment`: SORT's objective. It maximises total IoU and applies the gate afterwards. The default
+  first maximises the number of gated pairs, which can prefer two weak matches over one strong one.
+
+`T000` reproduces C byte for byte on all 11 sequences.
+
+**Dev** (2 × 2 × 2 with reconfirm): the rule selects **C again** (`T000`, IDF1 0.718; `T001` 0.714 is inside the tie
+but has one IDSW more). The SORT box filter lowers dev IDF1 in every combination (`T010` 0.679, `T011` 0.674).
+
+**Held-out** (the 2 × 2 with reconfirm off; last use of held-out for this question):
+
+| | IDF1 | MOTA | IDSW | Frag | Recall | Precision |
+|---|---|---|---|---|---|---|
+| C `T000` (selected) | 0.644 | 0.529 | 84 | 162 | 0.686 | 0.832 |
+| `T010` SORT box | 0.632 | 0.531 | 84 | 167 | 0.687 | 0.834 |
+| `T001` SORT assignment | 0.645 | 0.530 | 88 | 160 | 0.687 | 0.834 |
+| `T011` both | 0.656 | 0.533 | 79 | 165 | 0.687 | 0.834 |
+| SORT | 0.624 | 0.551 | 60 | 112 | 0.653 | 0.880 |
+| SORT, max_age 30 (diagnostic) | 0.663 | 0.550 | 44 | 119 | 0.653 | 0.875 |
+
+- **SORT box alone** (`T010 − T000`): IDF1 **−0.013 [−0.019, −0.002]**, worse on 7/8 sequences. It is also worse on dev.
+- **SORT assignment alone** (`T001 − T000`): no difference on any metric.
+- **Both together** (`T011`) is the best held-out variant of this round (IDF1 0.656, 79 IDSW). On dev it is second to
+  last (0.674). The two splits disagree, so this is not evidence for it.
+
+**Verdict:** neither the box filter nor the assignment objective explains the remaining difference to SORT, and C stays
+the dev-selected tracker. The IDSW "gap" is also split-dependent. On dev, C has *fewer* switches than SORT (19 vs 22)
+and a much higher IDF1 (0.718 vs 0.610); only held-out shows SORT ahead. The held-out sequences are now used up for this
+question (three rounds), so the difference that remains is left unexplained rather than tuned against.
+
+Differences between C and SORT that were never isolated:
+- The box that is reported: SORT reports its filtered box, C the detection box.
+- SORT's first-`min_hits`-frames birth exception.
+- The 3D-state machinery the project's tracker still carries.

@@ -1,0 +1,9 @@
+# docs/evaluation/IDSW_PLAN.md round 3 -- dev grid
+T000 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=0 max_total=0
+T001 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=0 max_total=1
+T010 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=1 max_total=0
+T011 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=1 max_total=1
+T100 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=1 sort_box=0 max_total=0
+T101 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=1 sort_box=0 max_total=1
+T110 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=1 sort_box=1 max_total=0
+T111 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=1 sort_box=1 max_total=1

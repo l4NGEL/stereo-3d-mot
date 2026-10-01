@@ -75,3 +75,17 @@ Selection on dev with the same rule as round 1 (max pooled IDF1; ties within 0.0
 C: reconfirm off before on, then larger max_age). Diagnostic only, not candidates: SORT with max_age 30 on the same dev
 detections. The selected variant, plus `R0_age1`, `R1_age30` and `R1_age1` to separate the two factors, is then run once on
 held-out. Held-out remains the already-inspected set of round 1; (3) is not addressed in this round.
+
+## Round 3 — SORT's box filter and assignment objective (added 2026-09-30, before any run of these variants)
+
+Round 2 left SORT with max_age 30 (diagnostic) as the best held-out system, so the remaining difference is not lifetime or
+reporting. Two further differences to C are tested: (a) `sort_box` — SORT's `[u, v, s, r]` box filter and constants instead of
+`[cx, cy, w, h]`; (b) `max_total` — SORT's assignment objective (maximise total IoU, gate applied afterwards) instead of
+"maximise the number of gated pairs, then cost". Grid on dev, everything else as in C (predicted-box IoU, max_age 30):
+
+`reconfirm ∈ {0, 1}` × `sort_box ∈ {0, 1}` × `max_total ∈ {0, 1}` (`T{r}{b}{m}`; `T000` ≡ C).
+
+Selection on dev with the same rule (max pooled IDF1; ties within 0.005 → fewer IDSW → higher MOTA → fewest factors changed,
+then reconfirm, sort_box, max_total switched on last in that order). Held-out, run once: `T000`, `T010`, `T001`, `T011`
+(the 2 × 2 with reconfirm off) plus the selected variant if it is not among them. **This is the last use of the held-out
+sequences for this question**; any further change needs new data.

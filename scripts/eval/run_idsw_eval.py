@@ -168,13 +168,13 @@ def main() -> int:
     ap.add_argument("--n-boot", type=int, default=10000)
     ap.add_argument("--out", required=True)
     ap.add_argument("--events-csv")
-    ap.add_argument("--round", type=int, choices=[1, 2], default=1,
-                    help="2: IDSW_PLAN.md round 2 (reconfirm x max_age grid, base = R0_age30)")
+    ap.add_argument("--round", type=int, choices=[1, 2, 3], default=1,
+                    help="2 / 3: IDSW_PLAN.md rounds 2 and 3 (base = R0_age30 / T000, both == C)")
     a = ap.parse_args()
 
     bundles = {s: load_bundle(a.raw, a.kitti_root, s) for s in a.seqs}
     systems = [(v, "dump", v) for v in a.variants] + [("SORT", "sort", None), ("SORT_valid", "sort_valid", None)]
-    if a.round == 2:
+    if a.round >= 2:
         systems.append(("SORT_age30", "sort_age30", None))  # diagnostic, not a candidate
     per_seq, events = {}, []
     for name, kind, variant in systems:
@@ -202,7 +202,19 @@ def main() -> int:
             "per_sequence": {s: short(M.pool([c])) for s, c in per_seq[name].items()},
         }
 
-    if a.mode == "select" and a.round == 2:
+    if a.mode == "select" and a.round == 3:
+        def closeness3(n):  # fewest factors on, then reconfirm, sort_box, max_total switched last
+            r, bx, m = int(n[1]), int(n[2]), int(n[3])
+            return (r + bx + m, m, bx, r)
+        best = max(out["systems"][n]["pooled"]["idf1"] for n in a.variants)
+        tied = [n for n in a.variants if out["systems"][n]["pooled"]["idf1"] >= best - 0.005]
+        tied.sort(key=lambda n: (out["systems"][n]["pooled"]["num_switches"],
+                                 -out["systems"][n]["pooled"]["mota"], closeness3(n)))
+        out["selection"] = {"rule": "docs/evaluation/IDSW_PLAN.md round 3: max pooled dev IDF1, ties within 0.005 -> "
+                                    "fewer IDSW -> higher MOTA -> fewest factors changed",
+                            "selected": tied[0], "tied_within_0.005": tied}
+        print("round-3 selected:", tied[0], "| tied:", tied)
+    elif a.mode == "select" and a.round == 2:
         def closeness(n):  # reconfirm off first, then larger max_age (closer to C)
             r, age = n[1], int(n.split("_age")[1])
             return (int(r), -age)
@@ -239,7 +251,7 @@ def main() -> int:
         print("D2 selected:", d2, "| recommended:", rec)
     else:
         comps = []
-        base = "A_iou_last" if a.round == 1 else "R0_age30"
+        base = {1: "A_iou_last", 2: "R0_age30", 3: "T000"}[a.round]
         others = [v for v in a.variants if v != base]
         for v in others + ["SORT", "SORT_valid"]:
             comps.append((v, base))
@@ -252,6 +264,10 @@ def main() -> int:
                 [(v, "C_iou_pred") for v in d2] + [(v, "D1_two_stage_iou") for v in d2]:
             if x in a.variants and y in a.variants:
                 comps.append((x, y))
+        if a.round == 3:  # factor contrasts with the other factor fixed
+            for x, y in [("T010", "T000"), ("T001", "T000"), ("T011", "T010"), ("T011", "T001")]:
+                if x in a.variants and y in a.variants:
+                    comps.append((x, y))
         if a.round == 2:  # factor contrasts: each factor with the other held fixed
             for x, y in [("R1_age30", "R0_age30"), ("R1_age1", "R0_age1"),
                          ("R0_age1", "R0_age30"), ("R1_age1", "R1_age30")]:

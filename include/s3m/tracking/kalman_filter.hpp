@@ -68,4 +68,12 @@ KalmanFilter makeConstantVelocity3D(double dt, double accel_std, double meas_std
 /// in docs/evaluation/REPORT.md §3.
 KalmanFilter makeConstantVelocityBox2D(const cv::Rect2f& initial_box);
 
+/// SORT's own box filter, verbatim (Bewley et al., 2016; the reference
+/// implementation scripts/eval/sort_baseline.py mirrors):
+///   state       = [u, v, s, r, du, dv, ds]   (centre, area, aspect w/h; r constant)
+///   measurement = [u, v, s, r]
+/// R = diag(1, 1, 10, 10); P0 = 10 * diag(1, 1, 1, 1, 1000, 1000, 1000);
+/// Q = I with Q(6,6) and Q(4..6, 4..6) scaled by 0.01.
+KalmanFilter makeSortBoxFilter(const cv::Rect2f& initial_box);
+
 }  // namespace s3m

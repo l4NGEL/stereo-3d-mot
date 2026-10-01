@@ -166,6 +166,10 @@ Variant parseVariantLine(const std::string& line, const TrackerParams& base, flo
             v.params.lost_max_appearance = std::stod(val);
         else if (key == "reconfirm")
             v.params.reconfirm_after_miss = std::stoi(val) != 0;
+        else if (key == "sort_box")
+            v.params.sort_box_model = std::stoi(val) != 0;
+        else if (key == "max_total")
+            v.params.iou_max_total_assignment = std::stoi(val) != 0;
         else
             throw std::runtime_error("variant '" + v.name + "': unknown key '" + key + "'");
     }

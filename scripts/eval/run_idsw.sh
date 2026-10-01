@@ -58,3 +58,21 @@ python scripts/eval/run_idsw_eval.py --round 2 --raw "$RAW/dev2_kitti_tiled" --s
     --out "$R/dev2_selection.json" --events-csv "$R/dev2_events.csv"
 python scripts/eval/run_idsw_eval.py --round 2 --raw "$RAW/test2_kitti_tiled" --seqs $TEST --variants $TEST2_V --mode report \
     --selection "$R/dev2_selection.json" --out "$R/test2_report.json" --events-csv "$R/test2_events.csv"
+
+# ---- round 3 (IDSW_PLAN.md): reconfirm x sort_box x max_total ----
+if [ "${1:-}" != "--score-only" ]; then
+    for S in $DEV; do
+        $RUN /b/apps/eval_kitti --kitti-root /data/kitti --sequence "$S" --config configs/kitti_tiled.yaml \
+            --model /src/models/yolov8n.onnx --variants configs/eval/variants_idsw3_dev.txt --out /out/dev3_kitti_tiled
+    done
+    for S in $TEST; do
+        $RUN /b/apps/eval_kitti --kitti-root /data/kitti --sequence "$S" --config configs/kitti_tiled.yaml \
+            --model /src/models/yolov8n.onnx --variants configs/eval/variants_idsw3_test.txt --frames 150 --out /out/test3_kitti_tiled
+    done
+fi
+DEV3_V=$(grep -v '^#' configs/eval/variants_idsw3_dev.txt | awk '{print $1}')
+TEST3_V=$(grep -v '^#' configs/eval/variants_idsw3_test.txt | awk '{print $1}')
+python scripts/eval/run_idsw_eval.py --round 3 --raw "$RAW/dev3_kitti_tiled" --seqs $DEV --variants $DEV3_V --mode select \
+    --out "$R/dev3_selection.json" --events-csv "$R/dev3_events.csv"
+python scripts/eval/run_idsw_eval.py --round 3 --raw "$RAW/test3_kitti_tiled" --seqs $TEST --variants $TEST3_V --mode report \
+    --selection "$R/dev3_selection.json" --out "$R/test3_report.json" --events-csv "$R/test3_events.csv"

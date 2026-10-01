@@ -1,0 +1,5 @@
+# IDSW_PLAN.md round 3 -- held-out (last use): 2x2 with reconfirm off; selected = T000
+T000 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=0 max_total=0
+T001 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=0 max_total=1
+T010 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=1 max_total=0
+T011 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 reconfirm=0 sort_box=1 max_total=1

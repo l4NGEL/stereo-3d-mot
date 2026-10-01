@@ -129,6 +129,15 @@ struct TrackerParams {
     /// matches. Default false = the evaluated baseline.
     bool reconfirm_after_miss = false;
 
+    /// Track::setSortBoxModel for every track: SORT's [u, v, s, r] box filter.
+    bool sort_box_model = false;
+    /// kIou2D only: SORT's assignment objective -- maximise total IoU over all
+    /// pairs (a zero-IoU pair costs 1, not +inf), THEN drop pairs below
+    /// iou_gate. The default instead first maximises the number of pairs that
+    /// pass the gate (solveAssignmentHungarian), which can prefer two weak
+    /// matches over one strong one.
+    bool iou_max_total_assignment = false;
+
     /// Fill TrackerUpdateResult::diagnostics (costs off by default: every
     /// candidate pair's IoU / Mahalanobis / appearance is computed twice).
     bool collect_diagnostics = false;

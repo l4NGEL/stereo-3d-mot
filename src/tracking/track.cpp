@@ -1,6 +1,7 @@
 #include "s3m/tracking/track.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace s3m {
 namespace {
@@ -17,6 +18,22 @@ KalmanFilter::Vec toVec3(const cv::Point3f& p) {
 /// smoothing) so one noisy or partially-occluded frame can't overwrite a
 /// track's identity in a single update.
 constexpr double kAppearanceEma = 0.9;
+
+KalmanFilter makeBoxFilter(bool sort_style, const cv::Rect2f& box) {
+    return sort_style ? makeSortBoxFilter(box) : makeConstantVelocityBox2D(box);
+}
+
+/// The box as a measurement of the chosen box filter.
+KalmanFilter::Vec boxMeasurement(bool sort_style, const cv::Rect2f& box) {
+    const double w = box.width;
+    const double h = box.height;
+    KalmanFilter::Vec z(4);
+    if (sort_style)
+        z << box.x + w / 2.0, box.y + h / 2.0, w * h, w / std::max(h, 1e-9);
+    else
+        z << box.x + w / 2.0, box.y + h / 2.0, w, h;
+    return z;
+}
 
 }  // namespace
 
@@ -46,16 +63,28 @@ Track::Track(int id, const cv::Point3f& initial_position, double dt, double acce
 void Track::predict() {
     kf_.predict();
     if (has_box_model_) {
-        // SORT's guard, per dimension: a shrinking size that would cross zero
-        // stops shrinking instead of turning the box inside out.
+        // SORT's guard: a shrinking size that would cross zero stops shrinking
+        // instead of turning the box inside out (per dimension for w/h; on the
+        // area for the SORT parameterisation, exactly as SORT does).
         KalmanFilter::Vec& x = box_kf_.mutableState();
-        for (int i = 2; i < 4; ++i) {
-            if (x(i) + x(i + 4) <= 1.0)
-                x(i + 4) = 0.0;
+        if (sort_box_model_) {
+            if (x(2) + x(6) <= 0.0)
+                x(6) = 0.0;
+        } else {
+            for (int i = 2; i < 4; ++i) {
+                if (x(i) + x(i + 4) <= 1.0)
+                    x(i + 4) = 0.0;
+            }
         }
         box_kf_.predict();
     }
     ++age_;
+}
+
+void Track::setSortBoxModel(bool on) {
+    sort_box_model_ = on;
+    if (has_box_model_)
+        box_kf_ = makeBoxFilter(on, last_box_);
 }
 
 cv::Rect2f Track::predictedBox() const {
@@ -64,8 +93,19 @@ cv::Rect2f Track::predictedBox() const {
     const KalmanFilter::Vec& x = box_kf_.state();
     if (!x.head(4).allFinite())
         return last_box_;
-    const double w = std::max(x(2), 1.0);
-    const double h = std::max(x(3), 1.0);
+    double w = 0.0;
+    double h = 0.0;
+    if (sort_box_model_) {
+        if (x(2) <= 0.0 || x(3) <= 0.0)
+            return last_box_;
+        w = std::sqrt(x(2) * x(3));
+        h = x(2) / w;
+    } else {
+        w = x(2);
+        h = x(3);
+    }
+    w = std::max(w, 1.0);
+    h = std::max(h, 1.0);
     return {static_cast<float>(x(0) - w / 2.0), static_cast<float>(x(1) - h / 2.0),
             static_cast<float>(w), static_cast<float>(h)};
 }
@@ -84,14 +124,10 @@ void Track::correct(const cv::Point3f& measured_position) {
 void Track::correct(const Detection3D& detection) {
     correct(detection.position);
     if (detection.box.width > 0.0f && detection.box.height > 0.0f) {
-        KalmanFilter::Vec z(4);
-        z << static_cast<double>(detection.box.x) + detection.box.width / 2.0,
-            static_cast<double>(detection.box.y) + detection.box.height / 2.0,
-            static_cast<double>(detection.box.width), static_cast<double>(detection.box.height);
         if (has_box_model_) {
-            box_kf_.update(z);
+            box_kf_.update(boxMeasurement(sort_box_model_, detection.box));
         } else {
-            box_kf_ = makeConstantVelocityBox2D(detection.box);
+            box_kf_ = makeBoxFilter(sort_box_model_, detection.box);
             has_box_model_ = true;
         }
     }

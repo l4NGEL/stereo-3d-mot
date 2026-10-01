@@ -378,3 +378,70 @@ TEST(Reconfirm, FromConfig) {
     tp.reconfirm_after_miss = true;
     EXPECT_TRUE(TrackerParams::fromConfig(tp).reconfirm_after_miss);
 }
+
+// --- SORT box filter and SORT assignment objective -------------------------------------
+
+TEST(SortBoxModel, AdvancesOneStepAndStaysValid) {
+    TrackerParams p = twoStage();
+    p.association = AssociationMethod::kIou2D;
+    p.iou_use_predicted_box = true;
+    p.sort_box_model = true;
+    Tracker tracker(p);
+    for (int i = 0; i < 8; ++i)
+        tracker.update({det(cv::Rect2f(100.0f + 10.0f * i, 100, 40, 40), 5.0)});
+    const cv::Rect2f last = tracker.tracks()[0].lastBox();
+    tracker.update({});
+    const cv::Rect2f pred = tracker.tracks()[0].predictedBox();
+    EXPECT_NEAR(pred.x, last.x + 10.0f, 2.0f);
+    EXPECT_NEAR(pred.width, 40.0f, 1.0f);
+    EXPECT_NEAR(pred.height, 40.0f, 1.0f);
+}
+
+TEST(SortBoxModel, ShrinkingAreaNeverInvalid) {
+    Track t(1, cv::Point3f(0, 0, 5), 0.1, 1.0, 0.05, 0, cv::Rect2f(100, 100, 60, 60));
+    t.setSortBoxModel(true);
+    for (int i = 1; i < 6; ++i) {
+        t.predict();
+        const float w = 60.0f - 10.0f * i;
+        t.correct(det(cv::Rect2f(100, 100, w, w), 5.0));
+    }
+    for (int i = 0; i < 20; ++i) {
+        t.predict();
+        const cv::Rect2f b = t.predictedBox();
+        ASSERT_TRUE(std::isfinite(b.x) && std::isfinite(b.width));
+        EXPECT_GE(b.width, 1.0f);
+        EXPECT_GE(b.height, 1.0f);
+    }
+}
+
+// T1 (x=100) and T2 (x=121) exist; next frame D1 (x=102) overlaps T1 strongly (0.90)
+// and T2 weakly (0.36), D2 (x=79) overlaps only T1, weakly (0.31). Cardinality-first
+// matches both weak pairs (T1-D2, T2-D1); SORT's max-total-IoU keeps T1-D1.
+static std::vector<int> runAssignmentScene(bool max_total) {
+    TrackerParams p = twoStage();
+    p.association = AssociationMethod::kIou2D;
+    p.iou_max_total_assignment = max_total;
+    Tracker tracker(p);
+    TrackerUpdateResult r;
+    for (int i = 0; i < 3; ++i)
+        r = tracker.update(
+            {det(cv::Rect2f(100, 100, 40, 40), 5.0), det(cv::Rect2f(121, 100, 40, 40), 5.0)});
+    const int t1 = r.detection_track_id[0];
+    const int t2 = r.detection_track_id[1];
+    r = tracker.update(
+        {det(cv::Rect2f(102, 100, 40, 40), 5.0), det(cv::Rect2f(79, 100, 40, 40), 5.0)});
+    return {t1, t2, r.detection_track_id[0], r.detection_track_id[1]};
+}
+
+TEST(IouAssignment, DefaultPrefersMorePairs) {
+    const std::vector<int> ids = runAssignmentScene(false);
+    EXPECT_EQ(ids[2], ids[1]);  // D1 -> T2
+    EXPECT_EQ(ids[3], ids[0]);  // D2 -> T1
+}
+
+TEST(IouAssignment, MaxTotalKeepsStrongPair) {
+    const std::vector<int> ids = runAssignmentScene(true);
+    EXPECT_EQ(ids[2], ids[0]);  // D1 -> T1
+    EXPECT_NE(ids[3], ids[0]);  // D2 -> not T1 (T2's IoU 0 is dropped by the gate)
+    EXPECT_NE(ids[3], ids[1]);
+}
