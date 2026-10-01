@@ -78,6 +78,8 @@ Most portfolio projects report the numbers that came out of a training run. This
 
 **Found a real bug, fixed it, and proved the fix.** The evaluation surfaced that ~90% of the tracker's false positives on real KITTI data were "ghost" tracks — the pipeline was reporting a track's last known position for up to 30 frames after it stopped seeing the object, indistinguishable downstream from a real detection. Root-caused, fixed in the shipped code (`isEmittable()` in `include/s3m/tracking/tracker.hpp` — a track's *internal* state and ability to be re-matched are untouched; only what gets reported changes), covered by new unit tests, and verified two independent ways: the fixed binary's output matches the independent Python scorer exactly (6/6), and re-running the held-out evaluation reproduces the pre-registered numbers to the last digit. Full writeup, including three further root-cause investigations that were tried and honestly reported as *not* panning out: [`docs/evaluation/REPORT.md`](docs/evaluation/REPORT.md), §12–§15.
 
+**Diagnosed the identity switches, fixed them, and confirmed the fix on unseen data.** Event-level analysis of every identity switch (scorer events joined with the tracker's internal state) showed that most were not occlusion. A track that had lost its object kept a frozen last box, out-scored the still-active track, and took its detection. Visual inspection of one segment: a trail of stale boxes along a row of parked cars. Scoring IoU against a predicted 2D box fixes most of it. The work ran in four pre-registered rounds with thresholds chosen on development data only. On the 10 KITTI tracking sequences never used before (downloaded only after the plan was committed) the tracker improves on the previous one with intervals excluding zero: IDF1 0.661 → 0.706, identity switches 214 → 115. Five other ideas tested along the way did not help, and are reported as such: two-stage association, appearance + 3D recovery of lost tracks, shorter track lifetime, SORT's box filter, and freezing lost boxes. The tracker is now level with a SORT baseline on IDF1 and MOTA, but still has about twice SORT's identity switches. That gap is open. Writeup: [`docs/evaluation/IDSW_REPORT.md`](docs/evaluation/IDSW_REPORT.md).
+
 **Statistical honesty.** Comparisons between methods use paired bootstrap confidence intervals over sequences (10,000 resamples), not a single number — a difference is only called "demonstrated" when the interval excludes zero. Where an interval doesn't, the report says so instead of picking the more flattering point estimate.
 
 **The full scorecard, not a highlight reel.** [`docs/evaluation/REPORT.md`](docs/evaluation/REPORT.md) §15 lists all 32 pre-registered acceptance criteria against their held-out result — pass, fail, "not demonstrated," or "not measured" — with the measured number for every one, including the ones that don't look good. Data/hardware/software provenance for every number: [`docs/evaluation/INVENTORY.md`](docs/evaluation/INVENTORY.md).
@@ -91,6 +93,7 @@ Headline numbers on held-out KITTI data (sequences never used for any tuning dec
 | Stereo depth (real scenes, KITTI Stereo 2015) | D1-all 20.4% (counting pixels with no estimate as errors), 5.2% on pixels that got one | Meets the pre-registered target |
 | Detection (YOLOv8n, COCO weights, untuned) | Vehicle P 0.851 / R 0.716 · Person P 0.741 / R 0.648 | Vehicle meets target; Person close |
 | 3D tracking (KITTI-like protocol, dev-selected config) | MOTA 0.49 / IDF1 0.55 — a depth-free 2D baseline on the same detections scores higher (0.55 / 0.62) | Tracks correctly, but stereo/3D association isn't earning its cost on this data — stated plainly, see below |
+| Tracking follow-up, recommended tracker (`configs/kitti_recommended.yaml`), 10 never-used KITTI sequences | IDF1 0.706 / MOTA 0.546 / 115 ID switches, vs 0.661 / 0.518 / 214 for the previous tracker and 0.715 / 0.569 / 65 for SORT-2D | Improvement over the previous tracker demonstrated; level with SORT on IDF1/MOTA, about twice its identity switches ([`IDSW_REPORT.md`](docs/evaluation/IDSW_REPORT.md) §10) |
 | Visual odometry (standard KITTI segment metric) | t_rel 13.8% (target ≤ 5%) | Geometry is correct and physically sane; accuracy target not met without bundle adjustment/loop closure |
 | End-to-end speed (i9-9880H laptop CPU) | 5.84 FPS (target 20 FPS); CUDA detection measured 3–4× faster in steady state | Below target; bottleneck fully attributed (stereo 53%, detection 31% of frame time) |
 
@@ -110,11 +113,11 @@ The same `Track`/Kalman-filter state under four interchangeable association stra
 | Method | Association | Held-out finding |
 | --- | --- | --- |
 | `mahalanobis3d` | Chi-square-gated Mahalanobis distance in 3D | Worse than 2D IoU at current depth accuracy |
-| `iou2d` | 2D bounding-box IoU, no depth | Currently the strongest of the four |
+| `iou2d` | 2D bounding-box IoU, no depth | Currently the strongest of the four; with `iou_use_predicted_box` (IoU against a 2D constant-velocity box prediction, the recommended setting) identity switches drop by ~45 % on unseen data |
 | `fused` | 3D + 2D IoU + HSV-histogram appearance | Ties or beats plain IoU; not statistically demonstrated to |
 | `range_gated` | 3D within a confidence range, IoU beyond it | Beats naive 3D (demonstrated); not shown to beat plain IoU |
 
-Hungarian or greedy assignment, class gating, birth/death/coast logic, trajectory export. Only tracks actually matched this frame are reported (`isEmittable()`) — see [Verification & Validation](#verification--validation).
+Hungarian or greedy assignment, class gating, birth/death/coast logic, trajectory export. Further options, each evaluated and documented in [`IDSW_REPORT.md`](docs/evaluation/IDSW_REPORT.md): two-stage (active-then-lost) association, SORT's reporting rule, SORT's box filter, and per-pair association diagnostics (`eval_kitti --diag`). The recommended tracker is `configs/kitti_recommended.yaml`, which is also the ROS2 node's default. Only tracks actually matched this frame are reported (`isEmittable()`) — see [Verification & Validation](#verification--validation).
 
 ### Visual Odometry
 ORB + 5-point essential matrix (RANSAC) for rotation and translation *direction*; **metric scale recovered from the stereo rig**, not left ambiguous, by solving `X_curr = R·X_prev + s·t̂` per inlier point and taking the median. Standard Sturm et al. (2012) ATE/RPE plus the KITTI devkit's own segment metric.
@@ -244,6 +247,8 @@ scripts/download_kitti.sh 0000 --with-images
     --detector onnx --model models/yolov8n.onnx --config configs/kitti.yaml
 ```
 
+`configs/kitti.yaml` reproduces the published numbers below. For the recommended tracker use `--config configs/kitti_recommended.yaml`.
+
 **Current output, sequence 0000** (154 frames, 711 ground-truth object-frames; the shipped pipeline, after the ghost-track fix described in [Verification & Validation](#verification--validation)):
 
 | Method | MOTA | MOTP | IDF1 | IDSW | FP | FN | Precision | Recall |
@@ -365,6 +370,8 @@ docker build -f Dockerfile.ros2 -t stereo-3d-mot:deps-ros2 --target deps-ros2 .
 colcon build --cmake-args -DS3M_REPO_ROOT=/src
 ros2 launch s3m_ros2 stereo_3d_mot.launch.py model_path:=/src/models/yolov8n.onnx
 ```
+
+The node's tracker defaults to the recommended configuration (`tracker_association:=iou2d`, `tracker_predicted_box:=true`, `tracker_filtered_box:=true`); the other association methods remain selectable through the same parameters.
 
 **Runtime-verified, not just built.** A smoke test launched the real node with the real ONNX model and published synthetic stereo pairs: `/perception/pointcloud` carried real point clouds (97,152 points/message); `/perception/{detections,tracks}` were correctly empty, since the test pattern has no real objects in it. One real integration bug was found and fixed along the way: the package included the main project via a relative path that broke through colcon's symlinked workspace layout — fixed with an explicit `S3M_REPO_ROOT` CMake variable.
 
