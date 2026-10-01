@@ -1,0 +1,18 @@
+# docs/evaluation/IDSW_PLAN.md round 4 -- dev grid (11 sequences)
+Woff00 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=0 filt_box=0 warmup=0
+Woff01 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=0 filt_box=0 warmup=1
+Woff10 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=0 filt_box=1 warmup=0
+Woff11 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=0 filt_box=1 warmup=1
+W100 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=1 filt_box=0 warmup=0
+W101 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=1 filt_box=0 warmup=1
+W110 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=1 filt_box=1 warmup=0
+W111 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=1 filt_box=1 warmup=1
+W300 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=3 filt_box=0 warmup=0
+W301 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=3 filt_box=0 warmup=1
+W310 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=3 filt_box=1 warmup=0
+W311 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=3 filt_box=1 warmup=1
+W500 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=5 filt_box=0 warmup=0
+W501 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=5 filt_box=0 warmup=1
+W510 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=5 filt_box=1 warmup=0
+W511 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=5 filt_box=1 warmup=1
+A_iou_last assoc=iou2d score=0.25 min_hits=3

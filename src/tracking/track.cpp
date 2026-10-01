@@ -67,6 +67,10 @@ void Track::predict() {
         // instead of turning the box inside out (per dimension for w/h; on the
         // area for the SORT parameterisation, exactly as SORT does).
         KalmanFilter::Vec& x = box_kf_.mutableState();
+        // After box_coast_k_ unmatched frames, stop extrapolating: the box stays
+        // where it was last predicted instead of drifting into other objects.
+        if (box_coast_k_ > 0 && time_since_update_ >= box_coast_k_)
+            x.tail(x.size() - 4).setZero();
         if (sort_box_model_) {
             if (x(2) + x(6) <= 0.0)
                 x(6) = 0.0;
@@ -169,7 +173,9 @@ TrackState Track::snapshot() const {
     state.id = id_;
     state.position = position();
     state.velocity = velocity();
-    state.box = last_box_;
+    // After correct() the box filter holds its corrected estimate, so
+    // predictedBox() is the filtered box here (what SORT reports).
+    state.box = report_filtered_box_ ? predictedBox() : last_box_;
     state.class_id = class_id_;
     state.age = age_;
     state.hits = hits_;

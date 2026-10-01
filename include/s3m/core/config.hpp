@@ -102,6 +102,13 @@ struct TrackingParams {
     bool sort_box_model = false;
     /// iou2d: SORT's assignment objective (max total IoU, gate applied after).
     bool iou_max_total_assignment = false;
+    /// Stop moving a lost track's predicted box after this many unmatched
+    /// frames (0 = off).
+    int box_coast_frames = 0;
+    /// Report the box filter's estimate instead of the raw detection box.
+    bool report_filtered_box = false;
+    /// SORT's start-of-sequence rule (confirm everything in the first min_hits frames).
+    bool sort_warmup = false;
 };
 
 /// Aggregated pipeline configuration.

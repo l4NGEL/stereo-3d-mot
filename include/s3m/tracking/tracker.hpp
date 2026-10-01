@@ -138,6 +138,14 @@ struct TrackerParams {
     /// matches over one strong one.
     bool iou_max_total_assignment = false;
 
+    /// Track::setBoxCoastFrames for every track (0 = off, the default).
+    int box_coast_frames = 0;
+    /// Track::setReportFilteredBox for every track.
+    bool report_filtered_box = false;
+    /// SORT's start-of-sequence rule: during the first `min_hits` update()
+    /// calls every matched or newly born track is confirmed at once.
+    bool sort_warmup = false;
+
     /// Fill TrackerUpdateResult::diagnostics (costs off by default: every
     /// candidate pair's IoU / Mahalanobis / appearance is computed twice).
     bool collect_diagnostics = false;
@@ -228,6 +236,7 @@ class Tracker {
     TrackerParams params_;
     std::vector<Track> tracks_;
     int next_id_ = 1;
+    int frame_count_ = 0;  ///< update() calls since construction / reset()
 };
 
 }  // namespace s3m

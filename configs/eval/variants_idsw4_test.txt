@@ -1,0 +1,4 @@
+# IDSW_PLAN.md round 4 -- new test set (10 never-used sequences), run once; selected on dev = Woff10 (results/idsw/dev4_selection.json)
+Woff10 assoc=iou2d score=0.25 min_hits=3 iou_pred=1 max_age=30 box_coast=0 filt_box=1 warmup=0
+C_iou_pred assoc=iou2d score=0.25 min_hits=3 iou_pred=1
+A_iou_last assoc=iou2d score=0.25 min_hits=3

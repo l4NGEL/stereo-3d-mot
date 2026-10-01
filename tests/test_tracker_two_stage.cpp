@@ -445,3 +445,99 @@ TEST(IouAssignment, MaxTotalKeepsStrongPair) {
     EXPECT_NE(ids[3], ids[0]);  // D2 -> not T1 (T2's IoU 0 is dropped by the gate)
     EXPECT_NE(ids[3], ids[1]);
 }
+
+// --- round 4 options --------------------------------------------------------------------
+
+namespace {
+TrackerParams predIou() {
+    TrackerParams p = twoStage();
+    p.association = AssociationMethod::kIou2D;
+    p.iou_use_predicted_box = true;
+    p.max_age = 30;
+    return p;
+}
+}  // namespace
+
+TEST(BoxCoast, PredictedBoxStopsAfterKUnmatchedFrames) {
+    for (const int k : {0, 1}) {
+        TrackerParams p = predIou();
+        p.box_coast_frames = k;
+        Tracker tracker(p);
+        for (int i = 0; i < 8; ++i)
+            tracker.update({det(cv::Rect2f(100.0f + 10.0f * i, 100, 40, 40), 5.0)});
+        const float last_x = tracker.tracks()[0].lastBox().x;  // 170
+        for (int i = 0; i < 5; ++i)
+            tracker.update({});
+        const float px = tracker.tracks()[0].predictedBox().x;
+        if (k == 0)
+            EXPECT_NEAR(px, last_x + 50.0f, 4.0f);  // keeps extrapolating
+        else
+            EXPECT_NEAR(px, last_x + 10.0f, 3.0f);  // one step, then frozen
+    }
+}
+
+TEST(BoxCoast, MovingAgainAfterRematch) {
+    TrackerParams p = predIou();
+    p.box_coast_frames = 1;
+    Tracker tracker(p);
+    for (int i = 0; i < 8; ++i)
+        tracker.update({det(cv::Rect2f(100.0f + 10.0f * i, 100, 40, 40), 5.0)});
+    tracker.update({});
+    tracker.update({});
+    // Re-matched near where it stopped: the track is tracked again (same id).
+    const TrackerUpdateResult r = tracker.update({det(cv::Rect2f(185, 100, 40, 40), 5.0)});
+    ASSERT_EQ(r.tracks.size(), 1u);
+    EXPECT_EQ(r.tracks[0].time_since_update, 0);
+}
+
+TEST(FilteredBox, SnapshotReportsFilterEstimateOnlyWhenEnabled) {
+    for (const bool on : {false, true}) {
+        TrackerParams p = predIou();
+        p.report_filtered_box = on;
+        Tracker tracker(p);
+        TrackerUpdateResult r;
+        for (int i = 0; i < 4; ++i)
+            r = tracker.update({det(cv::Rect2f(100, 100, 40, 40), 5.0)});
+        const cv::Rect2f jumped(112, 100, 40, 40);  // a noisy detection
+        r = tracker.update({det(jumped, 5.0)});
+        ASSERT_EQ(r.tracks.size(), 1u);
+        if (on) {
+            EXPECT_LT(r.tracks[0].box.x, 112.0f);  // smoothed towards the track
+            EXPECT_GT(r.tracks[0].box.x, 100.0f);
+            EXPECT_GE(r.tracks[0].box.width, 1.0f);
+        } else {
+            EXPECT_EQ(r.tracks[0].box, jumped);  // baseline: raw detection box
+        }
+        EXPECT_EQ(tracker.tracks()[0].lastBox(), jumped);  // observed box kept either way
+    }
+}
+
+TEST(SortWarmup, TracksInFirstMinHitsFramesAreEmittedAtOnce) {
+    TrackerParams p = predIou();
+    p.sort_warmup = true;  // min_hits = 3
+    Tracker tracker(p);
+    TrackerUpdateResult r = tracker.update({det(cv::Rect2f(100, 100, 40, 40), 5.0)});
+    ASSERT_EQ(r.tracks.size(), 1u);
+    EXPECT_TRUE(isEmittable(r.tracks[0]));  // frame 1: born and emitted
+    tracker.update({det(cv::Rect2f(100, 100, 40, 40), 5.0)});
+    tracker.update({det(cv::Rect2f(100, 100, 40, 40), 5.0)});
+    // frame 4: a newly born track is tentative again, as usual
+    r = tracker.update(
+        {det(cv::Rect2f(100, 100, 40, 40), 5.0), det(cv::Rect2f(400, 100, 40, 40), 5.0)});
+    ASSERT_EQ(r.tracks.size(), 2u);
+    EXPECT_FALSE(isEmittable(r.tracks[1]));
+}
+
+TEST(SortWarmup, OffByDefaultAndResetRestartsTheWindow) {
+    TrackerParams p = predIou();
+    EXPECT_FALSE(p.sort_warmup);
+    EXPECT_EQ(p.box_coast_frames, 0);
+    EXPECT_FALSE(p.report_filtered_box);
+    p.sort_warmup = true;
+    Tracker tracker(p);
+    for (int i = 0; i < 5; ++i)
+        tracker.update({});
+    tracker.reset();
+    const TrackerUpdateResult r = tracker.update({det(cv::Rect2f(100, 100, 40, 40), 5.0)});
+    EXPECT_TRUE(isEmittable(r.tracks[0]));
+}

@@ -117,6 +117,9 @@ Config Config::load(const std::string& path) {
     readBool(tr, "reconfirm_after_miss", cfg.tracking.reconfirm_after_miss);
     readBool(tr, "sort_box_model", cfg.tracking.sort_box_model);
     readBool(tr, "iou_max_total_assignment", cfg.tracking.iou_max_total_assignment);
+    readScalar(tr, "box_coast_frames", cfg.tracking.box_coast_frames);
+    readBool(tr, "report_filtered_box", cfg.tracking.report_filtered_box);
+    readBool(tr, "sort_warmup", cfg.tracking.sort_warmup);
 
     return cfg;
 }

@@ -89,3 +89,31 @@ Selection on dev with the same rule (max pooled IDF1; ties within 0.005 → fewe
 then reconfirm, sort_box, max_total switched on last in that order). Held-out, run once: `T000`, `T010`, `T001`, `T011`
 (the 2 × 2 with reconfirm off) plus the selected variant if it is not among them. **This is the last use of the held-out
 sequences for this question**; any further change needs new data.
+
+## Round 4 — fresh test data, wider dev, targeted fixes (written 2026-10-01, before any image of the new sequences was downloaded)
+
+**Splits.** The 8 former held-out sequences are no longer clean for this question (three rounds), so they join dev.
+- **Dev (11):** 0000, 0003, 0017 (all frames) + 0001, 0002, 0004, 0007, 0008, 0010, 0012, 0016 (first 150 frames, 0012 all 78).
+- **New test (10):** every KITTI tracking training sequence not used so far — 0005, 0006, 0009, 0011, 0013, 0014, 0015, 0018,
+  0019, 0020 — first 150 frames, the same prefix rule as `PROTOCOL.md`. All ten are taken, so there is no draw to choose.
+  Their *labels* have been on disk since the original evaluation and were summarised in aggregate (`INVENTORY.md` §3); their
+  images have never been downloaded or looked at. Nothing is selected or tuned on them; they are scored once, at the end.
+
+**Targets.** On the former held-out set C differs from SORT mainly in class B (after a gap, the object goes to another
+*existing* track: 31 vs 14) and class D (swaps between active tracks: 20 vs 9). Candidates, each a new option, off by default,
+unit-tested, everything else as in C:
+- `box_coast_k ∈ {off, 1, 3, 5}`: after a track has been unmatched for k frames, its predicted box stops moving (box-filter
+  velocity zeroed) instead of extrapolating for up to 30 frames into other objects. Targets class B.
+- `report_filtered_box ∈ {0, 1}`: the reported box of a matched track is the box filter's corrected state (what SORT reports)
+  instead of the raw detection box. Targets class D / localisation.
+- `sort_warmup ∈ {0, 1}`: SORT's start-of-sequence exception — tracks matched during the first `min_hits` frames are reported
+  at once.
+
+Grid on dev = 4 × 2 × 2 = 16 variants (`W{k}{f}{w}`, `Woff00` ≡ C). References, not candidates: A (old S\*), SORT,
+SORT with max_age 30.
+
+**Selection (dev, 11 sequences):** max pooled IDF1; ties within 0.005 → fewer IDSW → higher MOTA → fewest options changed.
+
+**Test (once):** the selected variant, C, A, SORT. Pre-registered comparisons, paired bootstrap over the 10 sequences
+(10,000 draws): selected − C, selected − SORT, C − SORT, C − A, on IDF1, MOTA, IDSW rate and recall. A comparison is
+"demonstrated" only if the 95 % interval excludes 0. If the selected variant is C, only C − SORT and C − A are reported.

@@ -57,6 +57,14 @@ class Track {
     /// default [cx, cy, w, h] one. Re-initialises the box filter from the last
     /// observed box, so call it right after construction.
     void setSortBoxModel(bool on);
+    /// Once unmatched for k frames, the box filter's velocity is zeroed on
+    /// every predict (0 = never; the default).
+    void setBoxCoastFrames(int k) { box_coast_k_ = k; }
+    /// snapshot().box = the box filter's estimate instead of the last
+    /// observed box (default false).
+    void setReportFilteredBox(bool on) { report_filtered_box_ = on; }
+    /// Confirm now regardless of min_hits (SORT's start-of-sequence rule).
+    void markConfirmed() { confirmed_ = true; }
 
     /// Squared Mahalanobis distance from the current prediction to a candidate
     /// measured position (gating for data association).
@@ -70,6 +78,8 @@ class Track {
     KalmanFilter box_kf_;
     bool has_box_model_ = false;
     bool sort_box_model_ = false;
+    int box_coast_k_ = 0;
+    bool report_filtered_box_ = false;
     cv::Rect2f last_box_{};
     int class_id_;
     cv::Mat appearance_;

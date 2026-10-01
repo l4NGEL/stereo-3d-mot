@@ -168,7 +168,7 @@ def main() -> int:
     ap.add_argument("--n-boot", type=int, default=10000)
     ap.add_argument("--out", required=True)
     ap.add_argument("--events-csv")
-    ap.add_argument("--round", type=int, choices=[1, 2, 3], default=1,
+    ap.add_argument("--round", type=int, choices=[1, 2, 3, 4], default=1,
                     help="2 / 3: IDSW_PLAN.md rounds 2 and 3 (base = R0_age30 / T000, both == C)")
     a = ap.parse_args()
 
@@ -202,7 +202,20 @@ def main() -> int:
             "per_sequence": {s: short(M.pool([c])) for s, c in per_seq[name].items()},
         }
 
-    if a.mode == "select" and a.round == 3:
+    if a.mode == "select" and a.round == 4:
+        def changes4(n):  # W{k}{f}{w}: number of options switched on, then smaller k
+            k, f, w = n[1:-2], int(n[-2]), int(n[-1])
+            return ((k != "off") + f + w, 0 if k == "off" else int(k), f, w)
+        cands = [v for v in a.variants if v.startswith("W")]
+        best = max(out["systems"][n]["pooled"]["idf1"] for n in cands)
+        tied = [n for n in cands if out["systems"][n]["pooled"]["idf1"] >= best - 0.005]
+        tied.sort(key=lambda n: (out["systems"][n]["pooled"]["num_switches"],
+                                 -out["systems"][n]["pooled"]["mota"], changes4(n)))
+        out["selection"] = {"rule": "docs/evaluation/IDSW_PLAN.md round 4: max pooled dev IDF1 (11 sequences), ties "
+                                    "within 0.005 -> fewer IDSW -> higher MOTA -> fewest options changed",
+                            "selected": tied[0], "tied_within_0.005": tied}
+        print("round-4 selected:", tied[0], "| tied:", tied)
+    elif a.mode == "select" and a.round == 3:
         def closeness3(n):  # fewest factors on, then reconfirm, sort_box, max_total switched last
             r, bx, m = int(n[1]), int(n[2]), int(n[3])
             return (r + bx + m, m, bx, r)
@@ -251,7 +264,7 @@ def main() -> int:
         print("D2 selected:", d2, "| recommended:", rec)
     else:
         comps = []
-        base = {1: "A_iou_last", 2: "R0_age30", 3: "T000"}[a.round]
+        base = {1: "A_iou_last", 2: "R0_age30", 3: "T000", 4: "C_iou_pred"}[a.round]
         others = [v for v in a.variants if v != base]
         for v in others + ["SORT", "SORT_valid"]:
             comps.append((v, base))
@@ -264,6 +277,8 @@ def main() -> int:
                 [(v, "C_iou_pred") for v in d2] + [(v, "D1_two_stage_iou") for v in d2]:
             if x in a.variants and y in a.variants:
                 comps.append((x, y))
+        if a.round == 4:  # pre-registered test comparisons (IDSW_PLAN.md round 4)
+            comps = [(v, "SORT") for v in a.variants] + [("C_iou_pred", "A_iou_last")] +                     [(v, "C_iou_pred") for v in a.variants if v.startswith("W")]
         if a.round == 3:  # factor contrasts with the other factor fixed
             for x, y in [("T010", "T000"), ("T001", "T000"), ("T011", "T010"), ("T011", "T001")]:
                 if x in a.variants and y in a.variants:

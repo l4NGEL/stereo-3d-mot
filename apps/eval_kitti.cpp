@@ -170,6 +170,12 @@ Variant parseVariantLine(const std::string& line, const TrackerParams& base, flo
             v.params.sort_box_model = std::stoi(val) != 0;
         else if (key == "max_total")
             v.params.iou_max_total_assignment = std::stoi(val) != 0;
+        else if (key == "box_coast")
+            v.params.box_coast_frames = std::stoi(val);
+        else if (key == "filt_box")
+            v.params.report_filtered_box = std::stoi(val) != 0;
+        else if (key == "warmup")
+            v.params.sort_warmup = std::stoi(val) != 0;
         else
             throw std::runtime_error("variant '" + v.name + "': unknown key '" + key + "'");
     }

@@ -47,6 +47,9 @@ TrackerParams TrackerParams::fromConfig(const TrackingParams& tp) {
     p.reconfirm_after_miss = tp.reconfirm_after_miss;
     p.sort_box_model = tp.sort_box_model;
     p.iou_max_total_assignment = tp.iou_max_total_assignment;
+    p.box_coast_frames = tp.box_coast_frames;
+    p.report_filtered_box = tp.report_filtered_box;
+    p.sort_warmup = tp.sort_warmup;
     return p;
 }
 
@@ -55,6 +58,7 @@ Tracker::Tracker(TrackerParams params) : params_(params) {}
 void Tracker::reset() {
     tracks_.clear();
     next_id_ = 1;
+    frame_count_ = 0;
 }
 
 double Tracker::gate() const {
@@ -243,6 +247,8 @@ void Tracker::associateTwoStage(const std::vector<int>& usable,
 }
 
 TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) {
+    ++frame_count_;
+    const bool warmup = params_.sort_warmup && frame_count_ <= params_.min_hits;
     for (Track& t : tracks_)
         t.predict();
 
@@ -328,6 +334,8 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
         }
         const int det_idx = usable[static_cast<std::size_t>(k)];
         tracks_[i].correct(detections[static_cast<std::size_t>(det_idx)]);
+        if (warmup)
+            tracks_[i].markConfirmed();
         det_matched[static_cast<std::size_t>(k)] = 1;
         result.detection_track_id[static_cast<std::size_t>(det_idx)] = tracks_[i].id();
     }
@@ -349,6 +357,10 @@ TrackerUpdateResult Tracker::update(const std::vector<Detection3D>& detections) 
         if (params_.sort_box_model)
             born.setSortBoxModel(true);
         result.detection_track_id[static_cast<std::size_t>(det_idx)] = born.id();
+        born.setBoxCoastFrames(params_.box_coast_frames);
+        born.setReportFilteredBox(params_.report_filtered_box);
+        if (warmup)
+            born.markConfirmed();
         tracks_.push_back(std::move(born));
     }
 
